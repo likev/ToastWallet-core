@@ -9,3 +9,5 @@ www/.index.html.swp
 .DS_Store
 package-lock.json
 info.txt
+node_modules/
+utils-build/node_modules/
