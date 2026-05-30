@@ -54,6 +54,7 @@
 	    <textarea oninput="$(this).val($(this).data('content'));" style="color:black;" id="walletbackup"></textarea>
     </div>
 </div>
+
 <div id="tabrestore2" class="screentab" data-primarytab="false" data-hasback="true" data-title="Restore Backup" data-dark="true" data-noright="true">  
     <div style="text-align:justify;">If you have a backup code you exported from another copy of Toast Wallet you can import it here. Doing so will create a copy of that wallet on this device.</div>
     <div id="divrestorerror" style="text-align:justify;"></div>
@@ -74,6 +75,7 @@
     <button class="btn btn-success btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doRestoreBackupFreshInstall();})">Restore Backup</button></div>
     </div>
 </div>
+
 <div id="tabrestore" class="screentab" data-primarytab="false" data-hasback="true" data-title="Restore Wallet" style="display: none;">  
     <p style="color:black; text-align:justify;">To restore a previously backed up wallet paste it below. This will DESTROY any data in your current wallet and cannot be undone. Further, this will restore your PIN, passphrase and recovery phrase AT THE TIME THE BACKUP WAS MADE.</p>
     <b style="color:black; text-align:justify;">If you wish to reset Toast Wallet and create a new wallet type DELETE into the backup code field.</b>
@@ -96,6 +98,7 @@
     
     <button  class="btn btn-danger btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doRestoreBackup();})">Restore Backup</button></div>
 </div>
+
 <div id="tabshowrecovery" class="screentab" data-title="Your Recovery Phrase" data-primarytab="true" data-hasback="false" data-noright="true" style="display: none;">
     <h1 style="color:red; text-align:center;">IMPORTANT!!!</h1>
 <div><p style="color:black; font-weight:bold; text-align:justify;">Your six(6) word recovery phrase appears below. <u style="color:red;">Write it down on paper</u> and store it in a safe location. If you ever forget your passphrase this code will be the <u style="
@@ -113,11 +116,13 @@ I sincerely promise I've written my recovery phrase down.</p><br>
 I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 <center><button  class="btn btn-success btnbig" id="btnfinishedsetup" type="button" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doFinishSetup();})">Finish Setup</button></center>
 </div>
+
 <div id="tabaccounts" class="screentab" data-title="Accounts" data-primarytab="true" style="display:none">
 	<ul class="list-group" id="accountslist">
 	<li class="list-group-item bottom-list-button" id="btnaddaccount" ontouchstart="ts(event)" ontouchend="te(event, ()=>{showTab('#tabaddaccount');})"><a href="#"><i class="fa fa-plus-circle" style="font-size: 2.7em; color: #2f7bdd;" aria-hidden="true"></i></a></li>
 	</ul>
 </div>
+
 <div id="tabaccountsecret" class="screentab" data-title="Secret" data-hasback="true" style="display:none">
         <label>Account Public Address</label>
 	<center>
@@ -152,6 +157,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 	<br>
 	<center><div id="accsecretqr"></div></center>
 </div>
+
 <div id="tabaccountdelete" class="screentab" data-title="Delete Account" data-hasback="true" style="display:none">
     <br>
     <center>
@@ -170,6 +176,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
         <br>
 	<center><div><button  type="button" class="btn btn-danger btnbig" id="btnimport" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doDeleteAccount($('#delaccpassword').val(), $('#accdeleteaddress').data('content'), $('#tabaccountdelete .toggleswitch').data('checked') == 'true'); })">DELETE ACCOUNT</button></div></center>
 </div>
+
 <div id="tabnickchange" class="screentab" data-hasback="true" data-title="Change Nickname" style="display:none">
 	<label >Account Address</label>
     <div class="input-group">
@@ -189,6 +196,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 			<button  type="button" class="btn btn-primary btnbig" id="btnimport" 
 				ontouchstart="ts(event)" ontouchend="te(event, ()=>{doChangeNickname($('#nickchangeaddress').data('content'), $('#nickchangenick').val());})">Change Nickname</button></div></center>
 </div>
+
 <div id="tabaccountflags" class="screentab" data-hasback="true" data-title="Set Account Flags" style="display:none">
     <label >Account Address</label>   
     <div class="input-group">
@@ -252,6 +260,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 			<button  type="button" class="btn btn-primary btnbig" id="btnsetaccountflags" 
     ontouchstart="ts(event)" ontouchend="te(event, ()=>{doSetAccountFlags(sodium.randombytes_random());})">Set Account Flags</button></div></center>
 </div>
+
 <div id="tabaccountflagsconfirm" class="screentab" data-primarytab="false" data-hasback="true" data-title="Confirm Flags" style="display: none;">
 	<div class="paygrouping">
     <label>Account</label>
@@ -304,6 +313,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
     <br>
 	<center><div><button  type="button" class="btn btn-success btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doConfirmAccountFlags($('#confirmafpassword').val());})">Submit Settings</button></div></center>
 </div>
+
 <div id="tabviewtransaction" class="screentab" data-hasback="true" data-title="Transaction Details" style="display:none">
     <label>Transaction Hash (ID)</label>
 		<div class="input-group">
@@ -361,6 +371,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
     </div>
     <br>
 </div>
+
 <div id="tabaddtrustline" class="screentab" data-hasback="true" data-title="Add Trustline" style="display:none">
     <label >Account Address</label>
 	<div class="input-group">
@@ -415,6 +426,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 			<button  type="button" class="btn btn-primary btnbig" id="btnaddtrustline" 
 		ontouchstart="ts(event)" ontouchend="te(event, ()=>{doAddTrustline(sodium.randombytes_random());})">Add Trustline</button></div></center>
 </div>
+
 <div id="tabmodifytrustline" class="screentab" data-hasback="true" data-title="Modify Trustline" style="display:none">
     <label >Account Address</label>
     <div class="input-group">
@@ -463,6 +475,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 			<button  type="button" class="btn btn-primary btnbig" id="btnmodifytrustline" 
 		ontouchstart="ts(event)" ontouchend="te(event, ()=>{doModifyTrustline(sodium.randombytes_random());})">Modify Trustline</button></div></center>
 </div>
+
 <div id="tabtrustlineconfirm" class="screentab" data-primarytab="false" data-hasback="true" data-title="Confirm Trustline" style="display: none;">
 	<div class="paygrouping">
     <label>Address</label>
@@ -496,6 +509,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
     <br>
 	<center><div><button  type="button" class="btn btn-success btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doConfirmTrustline($('#confirmatlpassword').val());})">Submit Trustline</button></div></center>
 </div>
+
 <div id="tabrekeyaccount" class="screentab" data-hasback="true" data-title="Rekey Account" style="display:none">
 	<p style="color:red; text-align:justify;"><b>WARNING</b>&mdash;This will set a new secret for the below XRP Ledger address and will make <b>old backups invalid</b>. Only use this if your backup or secret is compromised!</p>
 	<p style="color:red; text-align:justify;">
@@ -514,6 +528,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 			<button  type="button" class="btn btn-danger btnbig" id="btndoaccrekey" 
 				ontouchstart="ts(event)" ontouchend="te(event, ()=>{})">Rekey the Account</button></div></center>
 </div>
+
 <div id="tabaccountdetails" class="screentab" data-title="Account Details" data-hasback="true" style="display:none">
 	<ul class="accountdetailsselector">
         <li id="btnaccdetailsselectaddress" class="accdetailsinnertabselected" ontouchstart="ts(event)" ontouchend="te(event, (x)=>{selectAccountDetailsSubTab(x, 'address')})">Address</li>
@@ -555,6 +570,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
         <ul id="adtrustlines"></ul>
     </div>
 </div>
+
 <div id="tabaddaccount" class="screentab" data-hasback="true" data-title="Add Account" style="display:none">
     <br>
 	<center>
@@ -562,6 +578,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 		<button  type="button" class="btn btn-primary btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{showTab('#tabaddexistingaccount');})">Add Existing Address</button><br />
 	</center>
 </div>
+
 <div id="tabaddexistingaccount" class="screentab" data-hasback="true" data-title="Add Existing Account" style="display:none">
 	<label >Account Secret</label>
     <span class="pasteqr">
@@ -591,6 +608,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
     <br>
 	<center><div><button  type="button" class="btn btn-primary btnbig" id="btnimport" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doImportExistingAccount($('#extaccpassword').val(), $('#extaccnick').val(), $('#txtsecret').val(), $('#vanityaddr').val());})">Import Account</button></div></center>
 </div>
+
 <div id="tabqrscan" class="screentab"  data-hasback="true"  data-dark="true" data-noright="true" data-title="Scan QR Code" style="display:none">
     <center>
 	    <div class="input-group"><video id="qrpreview"></video></div>
@@ -598,6 +616,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 	    <div class="input-group"><center><button  type="button" class="btn btn-primary btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{showTab(-1);})">Cancel</button></center></div>
     </center>
 </div>
+
 <div id="tablogin" class="screentab" data-primarytab="true" data-title="Toast Wallet" data-dark="true" data-recovery="true" style="display: none;">
     
 	<center>
@@ -627,6 +646,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 	</center>
     
 </div>
+
 <div id="tabpinset1" class="screentab" data-primarytab="false" data-title="Set New PIN"  data-dark="2" data-noright="true" style="display: none;">
     
 	<center>
@@ -656,6 +676,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 	</center>
     
 </div>
+
 <div id="tabpinset2" class="screentab" data-primarytab="false" data-hasback="true"  data-dark="2" data-noright="true" data-title="Repeat New PIN" style="display: none;">
     
 	<center>
@@ -685,6 +706,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 	</center>
     
 </div>
+
 <div id="tabsetpassphrase" class="screentab" data-primarytab="true" data-title="Set Passphrase" data-noright="true" style="display:none">
 	<p style="color:black; text-align: justify;">Your passphrase will be used to encrypt your wallet. You will only enter it when you wish to send XRP. It should be long and strong. Never share it with anyone.</p>
 	<br>
@@ -705,6 +727,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 		<button  class="btn btn-primary btnbig" id="btnsetpassphrase" type="button" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doResetPassphrase($('#setpassword1').val(), $('#setpassword2').val(), '', function(){blockInput(); setAndShowNewRecoveryPhrase($('#setpassword1').val());}, true);})">Set Passphrase</button>
 	</center>
 </div>
+
 <div id="tabchangepassphrase" class="screentab" data-hasback="true" data-title="Change Passphrase" style="display:none">
 	<div style="text-align:center; color:black;">New Passphrases must contain at least 8 characters comprising at least 1 uppercase, 1 lowercase, 1 number and 1 non-alphanumeric character.</div>
 	<br><label>Current Passphrase</label>
@@ -730,6 +753,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 		<button  class="btn btn-primary btnbig" id="btnsetpassphrase" type="button" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doResetPassphrase($('#setpassword4').val(), $('#setpassword5').val(), $('#setpassword3').val(), function(){showBackupReminderTab();});})">Set Passphrase</button>
 	</center>
 </div>
+
 <div id="tabgenaccount" class="screentab" data-hasback="true" data-title="New Account" style="display:none">
 	<label>Address</label>
 	<center><div id="generatedaddress"></div></center>
@@ -752,6 +776,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
         <div><button  type="button" class="btn btn-primary btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doImportGeneratedAccount($('#genaccpassword').val(), $('#newaccnick').val());})">Import this Address</button></div>
     </center>
     </div>
+
     <div id="tabneworder" class="screentab" data-hasback="true" data-title="New Order">
     <label>Account Address</label>
     <div class="input-group">
@@ -874,6 +899,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
         </div>
     </center>
 </div>
+
 <div id="taborderconfirm" class="screentab" data-primarytab="false" data-hasback="true" data-title="Confirm New Order" style="display: none;">
 	<div class="paygrouping">
     <label>Account</label>
@@ -914,6 +940,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
     <br>
 	<center><div><button  type="button" class="btn btn-success btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doConfirmOrder($('#confirmorderpassword').val());})">Confirm Order</button></div></center>
 </div>
+
 <div id="tabcancelorderconfirm" class="screentab" data-primarytab="false" data-hasback="true" data-title="Confirm Cancel Order" style="display: none;">
 	<div class="paygrouping">
     <label>Account</label>
@@ -938,6 +965,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
     <br>
 	<center><div><button  type="button" class="btn btn-success btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doConfirmCancelOrder($('#confirmcancelorderpassword').val());})">Confirm Cancel Order</button></div></center>
 </div>
+
 <div id="tabpaymentconfirm" class="screentab" data-primarytab="false" data-hasback="true" data-title="Confirm Send" style="display: none;">
 	<div class="paygrouping">
     <label>From Account</label>
@@ -978,6 +1006,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
     <br>
 	<center><div><button  type="button" class="btn btn-success btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doConfirmPay($('#confirmpaypassword').val());})">Confirm Payment</button></div></center>
 </div>
+
 <div id="tabgreenqr" class="screentab" data-primarytab="true" data-title="Offline Transaction" style="display:none">
     <center>
     <p style="color:black; font-weight: bold;">Scan this green QR code in your online Toast Wallet to submit the transaction.</p>
@@ -985,6 +1014,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
     </div>  
     </center>  
 </div>
+
 <div id="tabpayments" class="screentab" data-primarytab="false" data-hasback="true" data-title="Send" style="display:none">
 	<label >From Account</label>
 	<div>
@@ -1057,6 +1087,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
         <button class="btn btn-success btnbig" id="btnpay" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doPay(sodium.randombytes_random());})" type="button">Send</button>
     </div>
 </div>
+
 <div id="tabsubmitofflinetx" class="screentab" data-primarytab="false" data-hasback="true" data-dark="false" data-noright="true" data-title="Offline Transaction">
 	<center>
 		<p style="color: black;">Open Toast Wallet 2.2.0 or newer on your offline device and use the send tab to create a payment then follow the steps below to submit the payment.</p><br>
@@ -1086,6 +1117,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 	
 </div>
 </div>
+
 <div id="tabconnectionselect" class="screentab" data-primarytab="true" data-hasback="false" data-dark="true" data-noright="true" data-title="Connection Issue">
     <center>
         <h1>Connection Issue</h1>
@@ -1101,6 +1133,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 	</div>
     </center>
 </div>
+
 <div id="tabaddgateway" class="screentab" data-primarytab="false" data-hasback="true" data-dark="false" data-noright="false" data-title="Add Gateway">
     <center>
  	<p style="color:black;">Add a custom gateway you would like Toast Wallet to connect to. A connection will be attempted and if it is successful the gateway will be stored and remembered as your preferred gateway.</p>
@@ -1114,6 +1147,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 		<button class="btn btn-primary btnbig" type="button" id="btnconnect2" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doAddGateway($('#txtnewgateway2').val());})">Add Gateway</button><br><br>
     </center>
 </div>
+
 <div id="tabsettings" class="screentab" data-primarytab="true" data-title="Settings" style="display:none">
     <center>
         <div class="settingsbuttons">
@@ -1135,6 +1169,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 	    <center style="color:black;" class="currentgateway">Connected to: </center>
     </div>
 </div>
+
 <div id="tabinterface" class="screentab" data-primarytab="false" data-hasback="true" data-title="Interface Settings" style="display:none">
 	<label>Valuation Currency</label>
 	<div>
@@ -1162,6 +1197,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
         <button class="btn btn-success btnbig" id="btninterface" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doUpdateInterfaceSettings()})" type="button">Update Interface</button>
     </div>
 </div>
+
 <div id="tabrecovery" class="screentab" data-primarytab="false" data-hasback="true" data-title="Recovery Options"  data-noright="true" style="display: none;">  
     <br>
     <div>
@@ -1177,6 +1213,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
     <center>
         <button  class="btn btn-primary btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doResetPin($('#recoverypassword').val(), function(){showTab('#tabaccounts');}, function(){});})">Reset PIN</button></center>
 </div>
+
 <div id="tabcorruptionprompt" class="screentab" data-primarytab="true" data-hasback="false"  data-noright="true" data-title="Recover Corrupt Data" style="display: none;">
     <p style="color:red; text-align:justify;">Toast Wallet may be able to recover some of your data, please enter your passphrase and recovery phrase <u>if you know them</u>. If you only know one only then enter the one you know. If you don't know either then don't enter either. <b>Warning entering these incorrectly may result in further corruption.</b></p>
     <p style="color:black; text-align:justify;">A valid alternative, if you have a backup, is simply to reinstall the app and restore your backup from the settings menu.</p>
@@ -1201,6 +1238,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
     </div><br>
     <div><center><button  type="button" class="btn btn-primary btnbig" id="btncorruptionprompt" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doDataCorruptionRecovery(corruptionstate, $('#corruptionpp').val(), $('#corruptionrp').val());})">Attempt Recovery</button></center></div>
 </div>
+
 <div id="tabbackupreminder" class="screentab" data-primarytab="true" data-hasback="false" data-dark="true" data-noright="true" data-title="Backup Reminder">
    <center>
     <h1>Your recovery phrase is NOT a backup</h1>
@@ -1213,6 +1251,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 	</div>
     </center>
 </div>
+
 <div id="tabgoogle" class="screentab" data-primarytab="false" data-hasback="true" data-dark="true" data-noright="true" data-title="Support Toast Wallet">
    <center>
     <h1>Toast Wallet</h1>
@@ -1237,6 +1276,7 @@ Instead of donating to us, consider donating to <b>Project Veritas</b>, who are 
 </p>
    </center>
 </div>
+
 <div id="tabdonate" class="screentab" data-primarytab="false" data-hasback="true" data-dark="true" data-noright="true" data-title="Support Toast Wallet">
    <center>
     <h1>Toast Wallet</h1>
@@ -1255,6 +1295,7 @@ Instead of donating to us, consider donating to <b>Project Veritas</b>, who are 
 	
 </center>
     <p></p></center></div>
+
 <div id="tablicense" class="screentab" data-primarytab="true" data-hasback="false"  data-dark="true" data-noright="true" data-title="License Agreement" style="display: none;">
    <center>
 	<div style="padding: 0.4em;background: rgba(255,0,0,0.7);border-radius: 3px;margin-bottom: 1em;">
@@ -1332,6 +1373,7 @@ NO WARRANTY
 <p><center style="color:white;" data-version="version">Version: 3.0.1</p>
 <p><center style="color:white;" class="deviceversion"></center></p>
 </div>
+
 <div id="navheader" style="display:none"><span class="headerleft"></span><span class="headermiddle"></span><span class="headerright"><i class="fa fa-lock" aria-hidden="true"></i></span></div>
 <div id="navfooter" style="display:none">
     <span id="navaccounts" ontouchstart="showTab('#tabaccounts');"><i class="fa fa-home" aria-hidden="true"></i></span>

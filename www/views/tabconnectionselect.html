@@ -1,0 +1,15 @@
+<div id="tabconnectionselect" class="screentab" data-primarytab="true" data-hasback="false" data-dark="true" data-noright="true" data-title="Connection Issue">
+    <center>
+        <h1>Connection Issue</h1>
+	<p>Toast Wallet is unable to connect either because your device has no network connectivity, or because the public gateway servers Toast Wallet uses to connect to the XRP Ledger are down or under heavy load&mdash;this has nothing to do with the XRP Ledger itself, only the servers that Toast Wallet uses to <i>access</i> the network.</p><br>
+        <div>
+		<div align="left">
+	        	<label style="color:white; text-align:left;">Specify a different gateway server (optional)</label>
+			<input ontouchend="te(event, quickSelectInput)" type="text" id="txtnewgateway" class="form-control" placeholder="wss://">
+		</div>
+		<br>
+		<button class="btn btn-success btnbig" type="button" id="btnconnect1" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doRetryConnection($('#txtnewgateway').val());})">Retry Connection</button><br><br>
+		<button class="btn btn-primary btnbig" type="button" id="btnofflinemode" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doOfflineMode(true);})">Offline Mode</button><br>
+	</div>
+    </center>
+</div>

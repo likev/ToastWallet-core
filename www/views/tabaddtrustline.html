@@ -1,0 +1,54 @@
+<div id="tabaddtrustline" class="screentab" data-hasback="true" data-title="Add Trustline" style="display:none">
+    <label >Account Address</label>
+	<div class="input-group">
+        <span class="input-group-btn">
+            <button type="button" class="btn xrbtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{xrbtn_press(event)})"><i class="fa fa-redo-alt" aria-hidden="true"></i><span class="addrtype">r</span>
+            </button>
+        </span>
+        <input data-dispaddr="true" ontouchend="te(event, quickSelectInput)"  class="form-control" readonly="readonly" type="text" placeholder=""  id="atladdress">
+    </div>
+	<br>
+    <div id="atlofflinecodediv" style="display:none;">
+        <center>
+            <div id="atltabredqr">
+            </div>
+        </center>
+      	<br />    
+        <label>Confirmation Code</label>
+        <input ontouchend="te(event, quickSelectInput)"  type="text" id="atlofflinecode" class="form-control" placeholder="">
+        <br>
+    </div>
+    
+	<label >Issuer Address</label>
+    <span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{$('#atlissueraddr').val(content)})})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {$('#atlissueraddr').val(content)})})" type="button"><i class="fa fa-camera"></i></button>
+    </span>
+    <input data-dispaddr="true" ontouchend="te(event, quickSelectInput)"  class="form-control" type="text" placeholder=""  id="atlissueraddr">
+	<br>
+    <label >Currency</label>
+    <span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{$('#atlcurrency').val(content)})})"><i class="fa fa-paste"></i></button>
+    </span>
+    <input ontouchend="te(event, quickSelectInput)"  class="form-control" type="text" placeholder=""  id="atlcurrency">
+    <br>
+    <label >Trustline Limit</label>
+    <span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{$('#atllimit').val(content)})})"><i class="fa fa-paste"></i></button>
+    </span>
+    <input ontouchend="te(event, quickSelectInput)"  class="form-control" type="text" placeholder=""  id="atllimit">
+	<br>
+    
+    <label >Rippling</label>
+    <p style="color:black;">Leave disabled unless you understand this.</p>
+    <div>
+	<select ontouchend="te(event, quickSelectInput)" id="atlrippling" class="form-control" onchange="">
+        <option selected="selected">disabled</option>
+        <option>enabled</option>        
+	</select>
+    </div>
+    <br>
+    <center><div>
+			<button  type="button" class="btn btn-primary btnbig" id="btnaddtrustline" 
+		ontouchstart="ts(event)" ontouchend="te(event, ()=>{doAddTrustline(sodium.randombytes_random());})">Add Trustline</button></div></center>
+</div>

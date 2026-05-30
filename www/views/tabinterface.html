@@ -1,0 +1,27 @@
+<div id="tabinterface" class="screentab" data-primarytab="false" data-hasback="true" data-title="Interface Settings" style="display:none">
+	<label>Valuation Currency</label>
+	<div>
+	<select ontouchend="te(event, quickSelectInput)" id="valuationcurrency" class="form-control">
+        <!-- credit to theworldexchange.net for many of these pairs -->
+        <!-- pairs with insufficient orderbooks at time of publishing are commented out -->
+        <option data-currency="USD" data-counterparty="rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B">USD - Bitstamp</option>
+        <!--option data-currency="AUD" data-counterparty="rsP3mgGb2tcYUrxiLFiHJiQXhsziegtwBc">AUD - Coinex</option-->
+        <option data-currency="CNY" data-counterparty="rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y">CNY - Ripplefox</option>
+        <option data-currency="EUR" data-counterparty="rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq">EUR - Gatehub</option>
+        <!--option data-currency="GBP" data-counterparty="rBycsjqxD8RVZP5zrrndiVtJwht7Z457A8">GBP - Ripula</option-->
+        <!--option data-currency="JPY" data-counterparty="r9ZFPSb1TFdnJwbTMYHvVwFK1bQPUCVNfJ">JPY - Ripple Exch Tokyo</option-->
+        <!--option data-currency="KRW" data-counterparty="rPxU6acYni7FcXzPCMeaPSwKcuS2GTtNVN">KRW - EXRP</option-->
+        <!--option data-currency="MXN" data-counterparty="rG6FZ31hDHN1K5Dkbma3PSB5uVCuVVRzfn">MXN - Bitso</option-->
+        <!--option data-currency="NZD" data-counterparty="rsP3mgGb2tcYUrxiLFiHJiQXhsziegtwBc">NZD - Coinex</option-->
+    </select>
+	</div>
+    <br>
+    <div style="color:black;">
+    	<span class="toggleswitch" data-after="" id="tglUseXAddress"><i class="fa fa-toggle-off" aria-hidden="true"></i></span><div style="line-height: 2.5em; font-weight: bold;">Use X-Address Format</div>
+        <p>XRPL addresses that begin with an X do not require a destination tag. Not all services support this format.</p>
+    </div>    
+    <br>
+    <div style="text-align: center;">
+        <button class="btn btn-success btnbig" id="btninterface" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doUpdateInterfaceSettings()})" type="button">Update Interface</button>
+    </div>
+</div>

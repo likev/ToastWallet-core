@@ -1,0 +1,122 @@
+    <div id="tabneworder" class="screentab" data-hasback="true" data-title="New Order">
+    <label>Account Address</label>
+    <div class="input-group">
+        <span class="input-group-btn">
+            <button type="button" class="btn xrbtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{xrbtn_press(event)})"><i class="fa fa-redo-alt" aria-hidden="true"></i><span class="addrtype">r</span>
+            </button>
+        </span>
+		<input data-dispaddr="true" ontouchend="te(event, quickSelectInput)" class="form-control" readonly="readonly" type="text" placeholder="" id="ntloaddress">
+	</div>
+    <div id="ntloofflinecodediv" style="display:none;">
+        <center>
+            <div id="atltabredqr"></div>
+        </center>
+        <br>
+        <p style="color:black;">Please ensure the clock on your offline device is set correctly, otherwise your order's expiry date will be wrong when submitted to the XRP Ledger.</p>
+      	<br>    
+        <label>Confirmation Code (from Online Toast Wallet)</label>
+        <input ontouchend="te(event, quickSelectInput)" type="text" id="ntloofflinecode" class="form-control" placeholder="">
+        <br>
+    </div>
+    <br>
+    <label id="lblntlosell" style="display:none;">Sell Currency</label>
+    <label id="lblntlobuy" style="display:none;">Buy Currency</label>    
+        <div id="oflcurrencyselldiv" style="display:none">
+	    <input ontouchend="te(event, quickSelectInput)" type="text" id="ntloassetofl" class="form-control" placeholder="Leave blank for XRP">
+        <br>
+        <label>Issuer Addresss</label>
+        <input data-dispaddr="true" ontouchend="te(event, quickSelectInput)" type="text" id="ntloissuerofl" class="form-control" placeholder="Leave blank for XRP">
+	</div>
+    <div class="input-group">
+        <span class="input-group-btn">
+            <button type="button" class="btn xrbtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{xrbtn_press(event, false,false,false, $(ntloissuer).data('currency') + ' - ' )})"><i class="fa fa-redo-alt" aria-hidden="true"></i><span class="addrtype">r</span>
+            </button>
+        </span>
+    <input ontouchend="te(event, quickSelectInput)" class="form-control" readonly="readonly" type="text" placeholder="" id="ntloissuer">
+    </div>
+    <br>
+    <label>Amount</label><div class="input-group">
+        <input ontouchend="te(event, quickSelectInput)" ontouchstart="ts(event, renderOrderPreview)" type="text" id="ntloamount" class="form-control" placeholder="" onkeypress="renderOrderPreview()" onchange="renderOrderPreview()">
+	<span class="input-group-btn">
+        <button class="btn btn-info" id="btnntloall" ontouchstart="ts(event)" ontouchend="te(event, ()=>{})" type="button">All</button>
+	</span>
+	</div>
+    <br>
+	<label>Price</label>
+	<div class="input-group">
+        <span class="input-group-btn">
+            <button class="btn btn-danger" id="btnntlodownprice" ontouchstart="ts(event)" ontouchend="te(event, ()=>{adjustOrderPrice(-1)}) " type="button"><i class="fa fa-chevron-down" style="font-size: 1em !important;"></i></button>
+    	</span>
+	    <input ontouchend="te(event, quickSelectInput)" type="text" id="ntloprice" class="form-control" placeholder="" onkeypress="renderOrderPreview()" onchange="renderOrderPreview()">
+    	<span class="input-group-btn">
+            <button class="btn btn-success" id="btnntloupprice" ontouchstart="ts(event)" ontouchend="te(event, ()=>{adjustOrderPrice(+1)})" type="button"><i class="fa fa-chevron-up" style="font-size: 1em !important;"></i></button>
+    	</span>
+	</div>
+    <br>
+    <label>Preview</label>
+    <center>
+        <div id="ntlopriceupdate" class="orderpreview">
+        </div>
+    </center>
+    
+    <br>
+    <label>Expiry</label>
+    <br>
+    <div class="input-group">
+        <span id="customexpirydiv" style="display:none;">
+            <div class="input-group" style="display: flex;">
+                <input ontouchend="te(event, quickSelectInput)" type="text" id="ntloexpirycustom" class="form-control" placeholder="" style="flex: 2;" >
+                <select id="ntloexpirycustomunit" ontouchstart="ts(event,()=>{})" ontouchend="te(event, quickSelectInput)" class="form-control" style="flex: 1; max-width: 7.5em; width: 7.5em; margin-left: -1px; border-radius: 0 0 0 0 !important;" onchange="($('#ntloexpirycustomunit').find(':selected')[0].id == 'ntloexpirycustomunit-nocustom' ? $('#customexpirydiv').hide() + $('#ntloexpiry').show() + $('#ntloexpiry > option').removeAttr('selected') + $('#ntloexpiry-24h').attr('selected', 'selected') : $('#customexpirydiv').show() + $('#ntloexpiry').hide() )">
+                    <option id="ntloexpirycustomunit-minute" data-unit="minute">Minute(s)</option>
+                    <option id="ntloexpirycustomunit-hour" data-unit="hour">Hour(s)</option>
+                    <option id="ntloexpirycustomunit-day" data-unit="day">Day(s)</option>
+                    <option id="ntloexpirycustomunit-week" data-unit="week">Week(s)</option>
+                    <option id="ntloexpirycustomunit-month" data-unit="month">Month(s)</option>                
+                    <option id="ntloexpirycustomunit-year" data-unit="year">Years(s)</option>
+                    <option id="ntloexpirycustomunit-nocustom" data-unit="">Presets ...</option>                                
+                </select>                
+            </div>
+        </span>        
+        <select id="ntloexpiry" ontouchstart="ts(event,()=>{})" ontouchend="te(event, quickSelectInput)" class="form-control" onchange="($('#ntloexpiry').find(':selected')[0].id == 'ntloexpiry-opt-custom' ? $('#customexpirydiv').show() + $('#ntloexpiry').hide() + $('#ntloexpirycustomunit > option').removeAttr('selected') + $('#ntloexpirycustomunit-hour').attr('selected', 'selected') : $('#customexpirydiv').hide() + $('#ntloexpiry').show() )">
+            <option id="ntloexpiry-opt-custom" data-hours="0" data-minutes="0">Custom ...</option>
+            <option id="ntloexpiry-1m" data-hours="0" data-minutes="1">1 minute</option>
+            <option id="ntloexpiry-5m" data-hours="0" data-minutes="5">5 minutes</option>
+            <option id="ntloexpiry-15m" data-hours="0" data-minutes="15">Quarter Hour (15 minutes)</option>
+            <option id="ntloexpiry-30m" data-hours="0" data-minutes="30">Half Hour (30 minutes)</option>
+            <option id="ntloexpiry-1h" data-hours="1" data-minutes="0">Full Hour (1 hour)</option>
+            <option id="ntloexpiry-12h" data-hours="12" data-minutes="0">Half Day (12 hours)</option>
+            <option id="ntloexpiry-24h" data-hours="24" data-minutes="0" selected="selected">Full Day (24 hours)</option>
+            <option id="ntloexpiry-84h" data-hours="84" data-minutes="0">Half Week (84 hours)</option>
+            <option id="ntloexpiry-168h" data-hours="168" data-minutes="0">Full Week (168 hours)</option>
+            <option id="ntloexpiry-336h" data-hours="336" data-minutes="0">Fortnight (336 hours)</option>
+            <option id="ntloexpiry-730h" data-hours="730" data-minutes="0">Month (730 hours)</option>
+            <option id="ntloexpiry-2190h" data-hours="2190" data-minutes="0">Quarter Year (2190 hours)</option>
+            <option id="ntloexpiry-4380h" data-hours="4380" data-minutes="0">Half Year (4380 hours)</option>
+            <option id="ntloexpiry-8760h" data-hours="8760" data-minutes="0">Full Year (8760 hours)</option>
+        </select>        
+        <span class="input-group-btn">
+            <button class="btn btn-default" id="btnntlomore" ontouchstart="ts(event)" ontouchend="te(event, ()=>{ if ($('#divntlomore').is(':visible')) { $('#divntlomore').hide(); $('#btnntlomore')[0].innerText = 'More'; } else { $('#divntlomore').show(); $('#btnntlomore')[0].innerText = 'Less'; }})" type="button">More</button>
+	    </span>
+    </div>
+    <br>
+    <div id="divntlomore" style="display:none;">
+        <div style="color:black;">
+        	<span class="toggleswitch" data-after="onToggleNewOrder()" id="tglntloioc"><i class="fa fa-toggle-off" aria-hidden="true"></i></span><div style="line-height: 2.5em; font-weight: bold;">Immediate or Cancel</div>
+        </div>
+        <br>
+        <div style="color:black;">
+        	<span class="toggleswitch" data-after="onToggleNewOrder()" id="tglntlofok"><i class="fa fa-toggle-off" aria-hidden="true"></i></span><div style="line-height: 2.5em; font-weight: bold;">Fill or Kill</div>
+        </div>
+        <br>
+        <div style="color:black;">
+        	<span class="toggleswitch" data-after="onToggleNewOrder()" id="tglntlopas"><i class="fa fa-toggle-off" aria-hidden="true"></i></span><div style="line-height: 2.5em; font-weight: bold;">Passive</div>
+        </div>
+        <br>   
+    </div>
+    
+    <center>
+        <div>
+			<button type="button" class="btn btn-primary btnbig" id="btnntloplaceorder" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doPlaceOrder(sodium.randombytes_random());})">Place Order</button>
+        </div>
+    </center>
+</div>

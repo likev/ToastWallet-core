@@ -1,0 +1,22 @@
+<div id="tabgenaccount" class="screentab" data-hasback="true" data-title="New Account" style="display:none">
+	<label>Address</label>
+	<center><div id="generatedaddress"></div></center>
+	<br />
+        <label >Nickname</label>
+        <div>
+        <input ontouchend="te(event, quickSelectInput)"  type="text" id="newaccnick" class="form-control" placeholder="Optional">
+	</div>
+    <br><label>Passphrase</label>
+    <span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{$('#genaccpassword').val(content)})})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {$('#genaccpassword').val(content)})})" type="button"><i class="fa fa-camera"></i></button>        
+        <button class="btn btn-default" id="genaccpasswordeyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#genaccpassword', '#genaccpasswordeyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
+    </span>           
+    <input ontouchend="te(event, quickSelectInput)"  id="genaccpassword" type="password" class="form-control" placeholder="">
+    <br>
+	<div style="text-align:center; color:black;">Once imported your address will need to be activated by sending <span id="minxrp2"></span> XRP to it.</div>
+	<br>
+	<center>
+        <div><button  type="button" class="btn btn-primary btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doImportGeneratedAccount($('#genaccpassword').val(), $('#newaccnick').val());})">Import this Address</button></div>
+    </center>
+    </div>

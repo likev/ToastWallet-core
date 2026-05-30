@@ -1,0 +1,40 @@
+<div id="taborderconfirm" class="screentab" data-primarytab="false" data-hasback="true" data-title="Confirm New Order" style="display: none;">
+	<div class="paygrouping">
+    <label>Account</label>
+	<div id="confirmorderaccount"></div>
+    </div>
+	<div class="paygrouping">
+    <label>Action</label>
+	<div id="confirmorderdirection"></div>
+    </div>
+    <div class="paygrouping">
+    <label>Currency</label>
+    <div id="confirmorderasset"></div>
+    </div>
+    <div class="paygrouping">
+    <label>Issuer</label>
+    <div id="confirmorderissuer"></div>
+    </div>
+    <div class="paygrouping">
+	<label>Price</label>
+    <div id="confirmorderprice"></div></div>
+    <div class="paygrouping">
+	<label>Amount</label>
+    <div id="confirmorderamount"></div></div>
+    <div class="paygrouping">
+	<label>Expiry</label>
+    <div id="confirmorderexpiry"></div></div>
+    <div class="paygrouping">
+	<label>Extra Flags</label>
+    <div id="confirmorderextra"></div></div>
+    <br>
+    <label>Passphrase</label>    
+	<span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{ doConfirmOrder(content)})})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => { doConfirmOrder(content)})})" type="button"><i class="fa fa-camera"></i></button>
+        <button class="btn btn-default" id="confirmorderpasswordeyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#confirmorderpassword', '#confirmorderpasswordeyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
+    </span>
+    <input ontouchend="te(event, quickSelectInput)"  type="password" id="confirmorderpassword" class="form-control" placeholder="">
+    <br>
+	<center><div><button  type="button" class="btn btn-success btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doConfirmOrder($('#confirmorderpassword').val());})">Confirm Order</button></div></center>
+</div>

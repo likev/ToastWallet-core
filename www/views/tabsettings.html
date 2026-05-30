@@ -1,0 +1,21 @@
+<div id="tabsettings" class="screentab" data-primarytab="true" data-title="Settings" style="display:none">
+    <center>
+        <div class="settingsbuttons">
+            <button type="button" class="btn btn-success btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{showDonationTab();})">Support Toast Wallet</button>
+            <button type="button" class="btn btn-primary btnbig" id="btnfaq" ontouchstart="ts(event)" ontouchend="te(event, ()=>{openExternalUrl('https://toastwallet.com/faq')})">FAQ / Help</button>
+            <button type="button" class="btn btn-primary btnbig" id="btnint" ontouchstart="ts(event)" ontouchend="te(event, ()=>{showInterfaceTab()})">Interface Settings</button>
+            <button type="button" class="btn btn-primary btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doGenerateBackup();})">Backup Wallet</button>
+            <button type="button" class="btn btn-primary btnbig" id="btnsettingsresortbackup" ontouchstart="ts(event)" ontouchend="te(event, ()=>{showTab('#tabrestore');})">Restore or Reset Wallet</button>
+            <button type="button" class="btn btn-primary btnbig" id="btnsettingschangepassphrase" ontouchstart="ts(event)" ontouchend="te(event, ()=>{showTab('#tabrecovery');})">Change PIN</button>
+            <button type="button" class="btn btn-primary btnbig" id="btnsettingschangepassphrase" ontouchstart="ts(event)" ontouchend="te(event, ()=>{showTab('#tabchangepassphrase');})">Change Passphrase</button>
+            <button type="button" class="btn btn-primary btnbig" id="btnsettingsgateways" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doResetGatewayPrompt();})">Reset Gateways</button>
+            <button type="button" class="btn btn-primary btnbig" id="btnsettingsgateways2" ontouchstart="ts(event)" ontouchend="te(event, ()=>{showTab('#tabaddgateway');})">Add Gateway</button>
+            <button type="button" class="btn btn-info btnbig" id="btnsettingsofflinetx" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doSubmitOfflineTransaction(0);})">Submit Offline Transaction</button>
+        </div>
+    </center>
+    <div>
+        <center style="color:black;" data-version="version">Version: 3.0.1</center>
+    	<center style="color:black;" class="deviceversion"></center>
+	    <center style="color:black;" class="currentgateway">Connected to: </center>
+    </div>
+</div>

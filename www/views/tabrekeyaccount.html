@@ -1,0 +1,18 @@
+<div id="tabrekeyaccount" class="screentab" data-hasback="true" data-title="Rekey Account" style="display:none">
+	<p style="color:red; text-align:justify;"><b>WARNING</b>&mdash;This will set a new secret for the below XRP Ledger address and will make <b>old backups invalid</b>. Only use this if your backup or secret is compromised!</p>
+	<p style="color:red; text-align:justify;">
+	<span class="toggleswitch"><i class="fa fa-toggle-off" aria-hidden="true"></i></span>
+	I understand there's no way to undo this action and my old backups will be rendered useless.</p>
+	<label >Account Address</label>
+		<input data-dispaddr="true" ontouchend="te(event, quickSelectInput)"  class="form-control" readonly="readonly" type="text" placeholder=""  id="rekeyaddress">
+        <br><label>Passphrase</label>
+    	<span class="pasteqr">
+            <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{$('#rekeypassword').val(content)})})"><i class="fa fa-paste"></i></button>
+            <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {$('#rekeypassword').val(content)})})" type="button"><i class="fa fa-camera"></i></button>
+            <button class="btn btn-default" id="rekeypasswordeyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#rekeypassword', '#rekeypasswordeyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
+        </span>        
+        <input ontouchend="te(event, quickSelectInput)"  type="password" id="rekeypassword" class="form-control" placeholder=""><!--todo: enable REKEYING!!-->
+	<center><div>
+			<button  type="button" class="btn btn-danger btnbig" id="btndoaccrekey" 
+				ontouchstart="ts(event)" ontouchend="te(event, ()=>{})">Rekey the Account</button></div></center>
+</div>

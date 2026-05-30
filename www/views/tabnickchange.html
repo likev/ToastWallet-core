@@ -1,0 +1,19 @@
+<div id="tabnickchange" class="screentab" data-hasback="true" data-title="Change Nickname" style="display:none">
+	<label >Account Address</label>
+    <div class="input-group">
+        <span class="input-group-btn">
+            <button type="button" class="btn xrbtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{xrbtn_press(event)})"><i class="fa fa-redo-alt" aria-hidden="true"></i><span class="addrtype">r</span>
+            </button> 
+        </span>
+		<input data-dispaddr="true" ontouchend="te(event, quickSelectInput)"  class="form-control" readonly="readonly" type="text" placeholder=""  id="nickchangeaddress">
+    </div>
+	<br>
+        <label >Account Nickname (optional)</label>
+        <div>
+        <input ontouchend="te(event, quickSelectInput)"  type="text" id="nickchangenick" class="form-control" placeholder="">
+	</div>
+    <br>
+	<center><div>
+			<button  type="button" class="btn btn-primary btnbig" id="btnimport" 
+				ontouchstart="ts(event)" ontouchend="te(event, ()=>{doChangeNickname($('#nickchangeaddress').data('content'), $('#nickchangenick').val());})">Change Nickname</button></div></center>
+</div>

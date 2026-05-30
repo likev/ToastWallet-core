@@ -1,0 +1,63 @@
+<div id="tabaccountflags" class="screentab" data-hasback="true" data-title="Set Account Flags" style="display:none">
+    <label >Account Address</label>   
+    <div class="input-group">
+        <span class="input-group-btn">
+            <button type="button" class="btn xrbtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{xrbtn_press(event)})"><i class="fa fa-redo-alt" aria-hidden="true"></i><span class="addrtype">r</span>
+            </button> 
+        </span>
+		<input data-dispaddr="true" ontouchend="te(event, quickSelectInput)"  class="form-control" readonly="readonly" type="text" placeholder=""  id="afaddress">
+    </div>
+    	<br>
+        <div style="color:black; text-align:justify;">These are your XRP Account's global flags. You are strongly advised to research each setting before enabling it. To submit your changes scroll to the bottom.</div>
+        <br>
+        <div id="afoflwarningdiv" style="display:none; color:red; text-align:justify;">Warning: You are in offline mode and your account flags cannot be read from the XRP Ledger. Please ensure you are aware of the current flags before changing them.<br></div>
+    <div id="afofflinecodediv" style="display:none;">
+        <br>
+        <label>Scan Red QR into Online Toast</label>
+        <center>
+            <div id="aftabredqr">
+            </div>
+        </center>
+      	<br />    
+        <label>Confirmation Code</label>
+        <input ontouchend="te(event, quickSelectInput)"  type="text" id="afofflinecode" class="form-control" placeholder="">
+        <br>
+    </div>
+   
+    <div style="color:black;">
+    	<span class="toggleswitch"  data-after="" id="tglDefaultRipple"><i class="fa fa-toggle-off" aria-hidden="true"></i></span><div style="line-height: 2.5em; font-weight: bold;">Default Ripple</div>
+    </div>    
+	<br />       
+    <div style="color:black;">
+    	<span class="toggleswitch"  data-after="" id="tglDepositAuth"><i class="fa fa-toggle-off" aria-hidden="true"></i></span><div style="line-height: 2.5em; font-weight: bold;">Deposit Auth</div>
+    </div>    
+	<br />       
+    
+    <div style="color:black;">
+    	<span class="toggleswitch"  data-after="" id="tglDisableMasterKey"><i class="fa fa-toggle-off" aria-hidden="true"></i></span><div style="line-height: 2.5em; font-weight: bold;">Disable Master Key</div>
+    </div>    
+	<br />       
+    <div style="color:black;">
+    	<span class="toggleswitch"  data-after="" id="tglDisallowIncomingXRP"><i class="fa fa-toggle-off" aria-hidden="true"></i></span><div style="line-height: 2.5em; font-weight: bold;">Disallow Incoming XRP</div>
+    </div>    
+	<br />      
+    <div style="color:black;">
+    	<span class="toggleswitch"  data-after="" id="tglGlobalFreeze"><i class="fa fa-toggle-off" aria-hidden="true"></i></span><div style="line-height: 2.5em; font-weight: bold;">Global Freeze</div>
+    </div>    
+	<br />      
+    <div style="color:black;">
+    	<span class="toggleswitch"  data-after="" id="tglNoFreeze"><i class="fa fa-toggle-off" aria-hidden="true"></i></span><div style="line-height: 2.5em; font-weight: bold;">No Freeze</div>
+    </div>    
+	<br />      
+    <div style="color:black;">
+    	<span class="toggleswitch"  data-after="" id="tglRequireAuthorization"><i class="fa fa-toggle-off" aria-hidden="true"></i></span><div style="line-height: 2.5em; font-weight: bold;">Require Authorization</div>
+    </div>    
+	<br />      
+    <div style="color:black;">
+    	<span class="toggleswitch"  data-after="" id="tglRequireDestinationTag"><i class="fa fa-toggle-off" aria-hidden="true"></i></span><div style="line-height: 2.5em; font-weight: bold;">Require Destination Tag</div>
+    </div>    
+	<br />      
+    <center><div>
+			<button  type="button" class="btn btn-primary btnbig" id="btnsetaccountflags" 
+    ontouchstart="ts(event)" ontouchend="te(event, ()=>{doSetAccountFlags(sodium.randombytes_random());})">Set Account Flags</button></div></center>
+</div>

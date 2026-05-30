@@ -1,0 +1,18 @@
+<div id="tabaccountdelete" class="screentab" data-title="Delete Account" data-hasback="true" style="display:none">
+    <br>
+    <center>
+        <div id="accdeleteaddress" style="color:black; font-weight:bold;"></div>
+    </center><br>
+	<p style="color:red; text-align:justify;">
+	<span class="toggleswitch"><i class="fa fa-toggle-off" aria-hidden="true"></i></span>
+	I understand there's no way to undo this action if I don't have a backup.</p>
+        <br><label>Passphrase</label>
+        <span class="pasteqr">
+            <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste(function(content){$('#delaccpassword').val(content)})})"><i class="fa fa-paste"></i></button>
+    		<button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {$('#delaccpassword').val(content)})})" type="button"><i class="fa fa-camera"></i></button>
+            <button class="btn btn-default" id="delaccpasswordeyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#delaccpassword', '#delaccpasswordeyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
+        </span>
+        <input ontouchend="te(event, quickSelectInput)"  id="delaccpassword" type="password" class="form-control" placeholder="">
+        <br>
+	<center><div><button  type="button" class="btn btn-danger btnbig" id="btnimport" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doDeleteAccount($('#delaccpassword').val(), $('#accdeleteaddress').data('content'), $('#tabaccountdelete .toggleswitch').data('checked') == 'true'); })">DELETE ACCOUNT</button></div></center>
+</div>

@@ -1,0 +1,29 @@
+<div id="tabsubmitofflinetx" class="screentab" data-primarytab="false" data-hasback="true" data-dark="false" data-noright="true" data-title="Offline Transaction">
+	<center>
+		<p style="color: black;">Open Toast Wallet 2.2.0 or newer on your offline device and use the send tab to create a payment then follow the steps below to submit the payment.</p><br>
+	</center>
+    <div id="submitofflinetxstep1">
+	<label style="">Scan Red QR Code</label>
+	<span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  $('#txtredqr').val(content); doSubmitOfflineTransaction(1, content); })})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => { $('#txtredqr').val(content); doSubmitOfflineTransaction(1, content); })})" type="button"><i class="fa fa-camera"></i></button>        
+	</span>
+    <input ontouchend="te(event, quickSelectInput)" type="text" id="txtredqr" class="form-control" placeholder="">
+    </div>
+    <br>
+    <div id="submitofflinetxstep2">
+    <label>Enter this Confirmation Code</label><div id="lblofflinetxconfirm" style="color: blue; border: 1px dashed black; padding: 0.2em; font-size:1.3em; font-weight:bold; text-align:center;"></div>
+        <br>
+        <label>Press Pay in Offline Wallet, then...</label>
+    </div>
+    <br>
+	<div id="submitofflinetxstep3">
+        <label style="">Scan Green QR Code</label>
+	<span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{ $('#txtgreenqr').val(content);doSubmitOfflineTransaction(2, content); })})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => { $('#txtgreenqr').val(content);doSubmitOfflineTransaction(2, content); })})" type="button"><i class="fa fa-camera"></i></button>        
+	</span>    
+	<input ontouchend="te(event, quickSelectInput)" type="text" id="txtgreenqr" class="form-control" placeholder="">
+	
+</div>
+</div>

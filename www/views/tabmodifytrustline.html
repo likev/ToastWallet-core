@@ -1,0 +1,48 @@
+<div id="tabmodifytrustline" class="screentab" data-hasback="true" data-title="Modify Trustline" style="display:none">
+    <label >Account Address</label>
+    <div class="input-group">
+        <span class="input-group-btn">
+            <button type="button" class="btn xrbtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{xrbtn_press(event)})"><i class="fa fa-redo-alt" aria-hidden="true"></i><span class="addrtype">r</span>
+            </button>
+        </span>
+		<input data-dispaddr="true" ontouchend="te(event, quickSelectInput)"  class="form-control" readonly="readonly" type="text" placeholder=""  id="mtladdress">
+    </div>
+	<br>
+    <div id="mtlofflinecodediv" style="display:none;">
+        <center>
+            <div id="mtltabredqr">
+            </div>
+        </center>
+      	<br />    
+        <label>Confirmation Code (from Online Toast Wallet)</label>
+        <input ontouchend="te(event, quickSelectInput)"  type="text" id="mtlofflinecode" class="form-control" placeholder="">
+        <br>
+    </div>
+    
+	<label >Issuer Address</label>
+    <div class="input-group">
+        <span class="input-group-btn">
+            <button type="button" class="btn xrbtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{xrbtn_press(event)})"><i class="fa fa-redo-alt" aria-hidden="true"></i><span class="addrtype">r</span>
+            </button>
+        </span>
+        <input data-dispaddr="true" ontouchend="te(event, quickSelectInput)"  class="form-control" type="text" placeholder=""  id="mtlissueraddr"  readonly="readonly">
+    </div>
+    <br>
+    <label >Currency</label>
+    <div>
+    <input ontouchend="te(event, quickSelectInput)"  class="form-control" type="text" placeholder=""  id="mtlcurrency" maxlength="3"  readonly="readonly">
+    </div>
+    <br>
+    <p style="color:black; text-align: justify">To delete this trustline ensure balance is 0 then set trustline limit to 0.</p>
+    <label >Trustline Limit</label>
+    <div>
+        <span class="pasteqr">
+            <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{$('#mtllimit').val(content)})})"><i class="fa fa-paste"></i></button>            
+        </span>
+        <input ontouchend="te(event, quickSelectInput)"  class="form-control" type="text" placeholder=""  id="mtllimit" >
+    </div>
+    <br>
+    <center><div>
+			<button  type="button" class="btn btn-primary btnbig" id="btnmodifytrustline" 
+		ontouchstart="ts(event)" ontouchend="te(event, ()=>{doModifyTrustline(sodium.randombytes_random());})">Modify Trustline</button></div></center>
+</div>

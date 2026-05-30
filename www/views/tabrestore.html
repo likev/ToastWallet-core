@@ -1,0 +1,22 @@
+<div id="tabrestore" class="screentab" data-primarytab="false" data-hasback="true" data-title="Restore Wallet" style="display: none;">  
+    <p style="color:black; text-align:justify;">To restore a previously backed up wallet paste it below. This will DESTROY any data in your current wallet and cannot be undone. Further, this will restore your PIN, passphrase and recovery phrase AT THE TIME THE BACKUP WAS MADE.</p>
+    <b style="color:black; text-align:justify;">If you wish to reset Toast Wallet and create a new wallet type DELETE into the backup code field.</b>
+    <div>
+    <label>Backup code</label>
+	<span class="pasteqr">
+		<button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste(function(content){$('#restorebackup').val(content)})})"><i class="fa fa-paste"></i></button>
+		
+    </span><!--todo: add backup checking code to this screen as well-->
+    <textarea rows="3" ontouchend="te(event, quickSelectInput)" id="restorebackup" type="text" class="form-control" placeholder=""></textarea>
+    </div>
+    <br>
+    <p style="color:black;">
+    	<span class="toggleswitch"><i class="fa fa-toggle-off" aria-hidden="true"></i></span>
+	I understand this will <b style="color:red;">REMOVE</b> my current wallet from this device.
+    </p>
+    <br> 
+    <div align="center">
+    
+    
+    <button  class="btn btn-danger btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doRestoreBackup();})">Restore Backup</button></div>
+</div>

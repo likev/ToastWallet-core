@@ -1,0 +1,29 @@
+<div id="tabaddexistingaccount" class="screentab" data-hasback="true" data-title="Add Existing Account" style="display:none">
+	<label >Account Secret</label>
+    <span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{decodeSecretAddressURI(content, ()=>{}, '#txtsecret', '#vanityaddr', '#txtsecret')})})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR(decodeSecretAddressURI, ()=>{}, '#txtsecret', '#vanityaddr', '#txtsecret')})" type="button"><i class="fa fa-camera"></i></button>
+    </span>
+    <input ontouchend="te(event, quickSelectInput)"  class="form-control" type="text" placeholder="E.g shqTNuNzLjjNYH2oKNNrRLSaNK2Wr"  id="txtsecret">
+	<br>
+	<label >Account Address</label>
+    <span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{decodeSecretAddressURI(content, ()=>{}, '#txtsecret', '#vanityaddr', '#vanityaddr')})})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR(decodeSecretAddressURI, ()=>{}, '#txtsecret', '#vanityaddr', '#vanityaddr')})" type="button"><i class="fa fa-camera"></i></button>
+    </span>
+    <input data-dispaddr="true" ontouchend="te(event, quickSelectInput)"  class="form-control" type="text" placeholder="Optional unless a vanity address or rekeyed"  id="vanityaddr">
+	<br>
+        <label>Nickname</label>
+        <div>
+        <input ontouchend="te(event, quickSelectInput)"  type="text" id="extaccnick" class="form-control" placeholder="Optional short name for this address">
+	</div>
+    <br><label>Passphrase</label>
+    <span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{$('#extaccpassword').val(content)})})"><i class="fa fa-paste"></i></button>            
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {$('#extaccpassword').val(content)})})" type="button"><i class="fa fa-camera"></i></button>
+        <button class="btn btn-default" id="extaccpasswordeyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#extaccpassword', '#extaccpasswordeyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
+    </span>
+    <input ontouchend="te(event, quickSelectInput)"  id="extaccpassword" type="password" class="form-control" placeholder="">
+    <br>
+	<center><div><button  type="button" class="btn btn-primary btnbig" id="btnimport" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doImportExistingAccount($('#extaccpassword').val(), $('#extaccnick').val(), $('#txtsecret').val(), $('#vanityaddr').val());})">Import Account</button></div></center>
+</div>

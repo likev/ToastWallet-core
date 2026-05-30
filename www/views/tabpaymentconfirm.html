@@ -1,0 +1,40 @@
+<div id="tabpaymentconfirm" class="screentab" data-primarytab="false" data-hasback="true" data-title="Confirm Send" style="display: none;">
+	<div class="paygrouping">
+    <label>From Account</label>
+	<div id="confirmpayfromaccount"></div>
+    </div>
+    <div class="paygrouping">
+	<label>To Address</label>
+	<div id="confirmpaytoaddress"></div>
+    </div>
+    <div class="paygrouping">
+	<label>Destination Tag</label>
+	<div id="confirmdesttag"></div>
+    </div>
+    <div class="paygrouping">
+	<label>Invoice ID</label>
+	<div id="confirminvoiceid"></div>
+    </div>
+    <div class="paygrouping">
+    <label>Currency</label>
+    <div id="confirmasset"></div>
+    </div>
+    <div class="paygrouping" id="confirmissuerpaygroup">
+    <label>Issuer</label>
+    <div id="confirmissuer"></div>
+    </div>
+    <div class="paygrouping">
+	<label>Amount</label>
+	
+    <div id="confirmpayamount"></div></div>
+    <br>
+    <label>Passphrase</label>    
+	<span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  doConfirmPay(content) })})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {  doConfirmPay(content) })})" type="button"><i class="fa fa-camera"></i></button>
+        <button class="btn btn-default" id="confirmpaypasswordeyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#confirmpaypassword', '#confirmpaypasswordeyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
+    </span>
+    <input ontouchend="te(event, quickSelectInput)"  type="password" id="confirmpaypassword" class="form-control" placeholder="">
+    <br>
+	<center><div><button  type="button" class="btn btn-success btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doConfirmPay($('#confirmpaypassword').val());})">Confirm Payment</button></div></center>
+</div>

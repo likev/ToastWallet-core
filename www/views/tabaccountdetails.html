@@ -1,0 +1,41 @@
+<div id="tabaccountdetails" class="screentab" data-title="Account Details" data-hasback="true" style="display:none">
+	<ul class="accountdetailsselector">
+        <li id="btnaccdetailsselectaddress" class="accdetailsinnertabselected" ontouchstart="ts(event)" ontouchend="te(event, (x)=>{selectAccountDetailsSubTab(x, 'address')})">Address</li>
+        <li id="btnaccdetailsselecttrustlines" ontouchstart="ts(event)" ontouchend="te(event, (x)=>{selectAccountDetailsSubTab(x, 'trustlines')})">DEX</li>
+        <li id="btnaccdetailsselecttransactions" ontouchstart="ts(event)" ontouchend="te(event, (x)=>{selectAccountDetailsSubTab(x, 'transactions')})">Transactions</li>
+	</ul>
+	<div id="accdetailsaddressdetails" class="innertab">
+		<div style="color:black; margin-bottom:0.4em;"><span id="accdetailsnickname">XRP address</span><span id="accdetailsamount" class="amount" style="color:black;"></span></div>
+		<div class="input-group">
+            <span class="input-group-btn">
+				<button type="button" class="btn xrbtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{xrbtn_press(event, '#accdetailsqr')})"><i class="fa fa-redo-alt" aria-hidden="true"></i><span class="addrtype">r</span>
+                </button>
+			</span>
+			<input ontouchend="te(event, quickSelectInput)" type="text" data-dispaddr=true readonly="readonly" id="accdetailsaddress" style="color:black">
+			<span class="input-group-btn">
+				<button type="button" id="btncopyaddress" class="btn copybtn copybtnaction" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#accdetailsaddress').val())})" data-clipboard-target="#accdetailsaddress"><i class="far fa-copy" aria-hidden="true"></i></button>
+			</span>
+		</div>
+		<center><div id="accdetailsqr"></div></center>
+        <center>
+        <div class="accdetailbuttons">
+            <button type="button" class="btn btn-info" style=""  ontouchstart="ts(event)" ontouchend="te(event, ()=>{openExternalUrl('https://buy.toastwallet.com/' + forceraddr($('#accdetailsaddress').data('content')))})">Buy XRP <i class="fas fa-external-link-alt" style="font-size:0.9em"></i></button>
+            <br>
+            <button id="btnchangenick" type="button" class="accopt btn btn-success" ontouchstart="ts(event)" ontouchend="te(event, ()=>{$('#nickchangeaddress').data('content', $('#accdetailsaddress').data('content') );  showTab('#tabnickchange', true); })">Set Nickname</button>
+            <br>
+    		<button  id="btnaddtrustline" type="button" class="accopt btn btn-warning" ontouchstart="ts(event)" ontouchend="te(event, ()=>{$('#atladdress').data('content', $('#accdetailsaddress').data('content') ); $('#atladdress').val( dispaddr($('#accdetailsaddress').data('content')) ); showTab('#tabaddtrustline', true); })">Add Trustline</button>
+            <br>            
+            <button id="btnsetflags" type="button" class="accopt btn btn-warning" ontouchstart="ts(event)" ontouchend="te(event, ()=>{ showAccountFlags($('#accdetailsaddress').data('content')); })">Modify Flags</button>
+            <br>
+            <!--button  type="button" id="btnrekeyacc" class="accopt btn btn-danger" ontouchstart="ts(event)" ontouchend="te(event, ()=>{$('#rekeyaddress').data('content', $('#accdetailsaddress').data('content') );  showTab('#tabrekeyaccount', true);})">Rekey Address</button-->
+			<button  id="btnbackupkey" type="button" class="accopt btn btn-danger" ontouchstart="ts(event)" ontouchend="te(event, ()=>{$('#accdetailssecretaddress').data('content', $('#accdetailsaddress').data('content') ); $('#accdetailssecretaddress').val( dispaddr($('#accdetailsaddress').data('content')) ); showTab('#tabaccountsecret', true); })">Show Secret</button>
+            <br>
+ 			<button  type="button" class="accopt btn btn-danger" ontouchstart="ts(event)" ontouchend="te(event, ()=>{$('#accdeleteaddress').html($('#accdetailsaddress').data('content') + '<br>' + xaddr($('#accdetailsaddress').data('content'), false)); $('#accdeleteaddress').data('content', $('#accdetailsaddress').data('content')); showTab('#tabaccountdelete');})">Delete Account</button>
+		</div>
+        </center>
+	</div>
+    <div id="accdetailstransactiondetails" class="innertab" style="display:none"></div>
+    <div id="accdetailstrustlinedetails" class="innertab" style="display:none">
+        <ul id="adtrustlines"></ul>
+    </div>
+</div>

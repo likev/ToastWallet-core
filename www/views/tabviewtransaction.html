@@ -1,0 +1,57 @@
+<div id="tabviewtransaction" class="screentab" data-hasback="true" data-title="Transaction Details" style="display:none">
+    <label>Transaction Hash (ID)</label>
+		<div class="input-group">
+			<input ontouchend="te(event, quickSelectInput)" class="form-control" readonly="readonly" type="text" oninput="$(this).val($(this).data('content'));" id="vtxhash" style="color:black">
+			<span class="input-group-btn">
+				<button type="button" id="btncopyvtxhash" class="btn copybtn copybtnaction" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxhash').val())})" data-clipboard-target="#vtxhash"><i class="far fa-copy" aria-hidden="true"></i></button>
+			</span>
+		</div>        
+    <br>
+    <label>Type &amp; Status</label>
+		<input ontouchend="te(event, quickSelectInput)"  class="form-control" readonly="readonly" type="text" placeholder=""  id="vtxstatus">
+    <br>
+    <div id="vtxdetails">
+    <label>From Address</label>
+		<div class="input-group">
+            <span class="input-group-btn">
+                <button type="button" class="btn xrbtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{xrbtn_press(event)})"><i class="fa fa-redo-alt" aria-hidden="true"></i><span class="addrtype">r</span>
+                </button>
+            </span>
+			<input data-dispaddr="true" ontouchend="te(event, quickSelectInput)" class="form-control" readonly="readonly" type="text" oninput="$(this).val($(this).data('content'));" id="vtxfrom" style="color:black">
+			<span class="input-group-btn">
+				<button type="button" id="btncopyvtxfrom" class="btn copybtn copybtnaction" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxfrom').val())})" data-clipboard-target="#vtxfrom"><i class="far fa-copy" aria-hidden="true"></i></button>
+			</span>
+		</div> 
+    <br>
+    <label>To Address</label>
+		<div class="input-group">
+            <span class="input-group-btn">
+                <button type="button" class="btn xrbtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{xrbtn_press(event, false, (src,target)=>{$('#vtxdtgroup').hide(); if(target.value.substr(0,1) == 'r') $('#vtxdtgroup').show()}, $('#vtxdtag').val())})"><i class="fa fa-redo-alt" aria-hidden="true"></i><span class="addrtype">r</span>
+                </button>
+            </span>
+			<input data-dispaddr="true" ontouchend="te(event, quickSelectInput)" class="form-control" readonly="readonly" type="text" oninput="$(this).val($(this).data('content'));" id="vtxto" style="color:black">
+			<span class="input-group-btn">
+				<button type="button" id="btncopyvtxto" class="btn copybtn copybtnaction" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxto').val())})" data-clipboard-target="#vtxto"><i class="far fa-copy" aria-hidden="true"></i></button>
+			</span>
+		</div> 
+    <br>
+    <div id="vtxdtgroup">
+    <label>Destination Tag</label>
+		<div class="input-group">
+			<input ontouchend="te(event, quickSelectInput)" class="form-control" readonly="readonly" type="text" oninput="$(this).val($(this).data('content'));" id="vtxdtag" style="color:black">
+			<span class="input-group-btn">
+				<button type="button" id="btncopyvtxdtag" class="btn copybtn copybtnaction" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxdtag').val())})" data-clipboard-target="#vtxdtag"><i class="far fa-copy" aria-hidden="true"></i></button>
+			</span>
+		</div> 
+    <br>
+    </div>
+    <label id="vtxlbldeliveredamount">Delivered Amount</label>
+	    <input ontouchend="te(event, quickSelectInput)"  class="form-control" readonly="readonly" type="text" placeholder=""  id="vtxdeliveredamount">
+    <br>
+    <label id="vtxlbldeliveredamount">Raw Transaction</label>
+	<div id="vtxraw" class="textarealikediv">
+            <div id='vtxrawtx'></div>
+    </div>
+    </div>
+    <br>
+</div>

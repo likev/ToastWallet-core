@@ -1,0 +1,15 @@
+<div id="tabrecovery" class="screentab" data-primarytab="false" data-hasback="true" data-title="Recovery Options"  data-noright="true" style="display: none;">  
+    <br>
+    <div>
+	<label >Passphrase</label>
+	<span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{ doResetPin(content, function(){showTab('#tabaccounts');}, function(){}); })})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => { doResetPin(content, function(){showTab('#tabaccounts');}, function(){}); })})" type="button"><i class="fa fa-camera"></i></button>
+        <button class="btn btn-default" id="recoverypasswordeyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#recoverypassword', '#recoverypasswordeyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
+    </span>
+    <input ontouchend="te(event, quickSelectInput)"  id="recoverypassword" type="password" class="form-control" placeholder="Passphrase or recovery phrase">
+    </div>
+    <br>
+    <center>
+        <button  class="btn btn-primary btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doResetPin($('#recoverypassword').val(), function(){showTab('#tabaccounts');}, function(){});})">Reset PIN</button></center>
+</div>

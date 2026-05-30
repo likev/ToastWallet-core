@@ -1,8 +1,12 @@
 #!/bin/bash
+# Compile HTML views from template
+node build_views.js
+
 npm run build
 npx browserify rippleutils.js -o rippleutils-build.js
 cp rippleutils-build.js ../www/js/
 
 # Bundle app modules
 npx browserify ../www/js/app.js -o ../www/js/app-bundle.js
+
 

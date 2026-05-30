@@ -1,0 +1,72 @@
+<div id="tabpayments" class="screentab" data-primarytab="false" data-hasback="true" data-title="Send" style="display:none">
+	<label >From Account</label>
+	<div>
+	<select ontouchend="te(event, quickSelectInput)" id="payfromaccount" class="form-control" onchange="onPaymentSelectFromAccount();">
+	</select>
+	</div>
+    <div id="payofflinecodediv" style="display:none;">
+        <center>
+            <div id="paytabredqr">
+            </div>
+        </center>
+      	<br />    
+        <label>Confirmation Code</label>
+        <input ontouchend="te(event, quickSelectInput)"  type="text" id="payofflinecode" class="form-control" placeholder="(from Online Toast Wallet)">
+    </div>
+    <br>
+	<label >To Address</label>
+    <span class="pasteqr">
+        <button class="btn btn-default  btnqrpay" id="btnqrpay2" ontouchstart="ts(event)" type="button"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default  btnqrpay" id="btnqrpay1" ontouchstart="ts(event)" type="button"><i class="fa fa-camera"></i></button>
+    </span>
+    <input ontouchend="te(event, quickSelectInput)" type="text" id="toaddress" class="form-control" placeholder="" style="border-radius: 0.25em 0 0.25em 0.25em;" onpaste="(e)=>{populatePaymentTabFromURI(e.originalEvent.clipboardData.getData('Text'));}" onchange="checkPayToAddressForCommonErrors(); return true">
+	<br />
+	<label id='lblpaytodesttag'>Destination Tag</label>
+    <span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  $('#desttag').val(content) })})"><i class="fa fa-paste"></i></button>
+		<button  class="btn btn-default" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doToggleInvoiceId();})" id="btnpayshowmore" type="button"><i class="fa fa-ellipsis-v"></i></button>
+    </span>
+	<input ontouchend="te(event, quickSelectInput)"  type="text" id="desttag" class="form-control" placeholder="Only if provided by receiver">
+    <br />
+    <div id="invoiceiddiv" style="display:none">
+	<label>Invoice ID</label>
+    <span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  $('#invoiceid').val(content) })})"><i class="fa fa-paste"></i></button>
+    </span>
+    <div>
+	<input ontouchend="te(event, quickSelectInput)"  type="text" id="invoiceid" class="form-control" placeholder="Only if provided by receiver">
+	</div>
+	<br />
+    <div style="color:black;">
+    	<span class="toggleswitch"  data-after="onToggleIssueOwnCurrency();" id="tglIssueOwnCurrency"><i class="fa fa-toggle-off" aria-hidden="true"></i></span><div style="line-height: 2.5em; font-weight: bold;">Issue Own Currency</div>
+        <p>DefaultRipple must be enabled to allow peer to peer transfer of your currency.</p>
+    </div>    
+	<br />    
+    </div>
+	<label>Currency</label>
+    <div id="currencyerror" style="display:none; color:red;"></div>
+    <div id="oflcurrencydiv" style="display:none">
+        <span class="pasteqr" style="position: absolute; right: 0; transform: translate(0, -100%);">
+            <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  $('#payassetofl').val(content) })})"><i class="fa fa-paste"></i></button>
+        </span>
+        <input ontouchend="te(event, quickSelectInput)" type="text" id="payassetofl" class="form-control" placeholder="Leave blank for XRP">
+        <br />
+        <label>Issuer Addresss</label>
+        <span class="pasteqr" id="issueraddressbtnpaste">
+            <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  $('#payissuerofl').val(content) })})"><i class="fa fa-paste"></i></button>
+        </span>        
+        <input data-dispaddr="true"  ontouchend="te(event, quickSelectInput)" type="text" id="payissuerofl" class="form-control" placeholder="Leave blank for XRP">
+	</div>
+	<select ontouchend="te(event, quickSelectInput)" id="payasset" class="form-control" onchange=""><option id="optpa-xrp" data-asset="XRP" data-issuer="">XRP</option></select>
+    <br>
+    <br>
+	<label >Amount</label>
+    <span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  $('#payamount').val(content) })})"><i class="fa fa-paste"></i></button>
+    </span>
+	<input ontouchend="te(event, quickSelectInput)"  type="text" id="payamount" class="form-control" placeholder="">
+    <br>
+    <div style="text-align: center;">
+        <button class="btn btn-success btnbig" id="btnpay" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doPay(sodium.randombytes_random());})" type="button">Send</button>
+    </div>
+</div>

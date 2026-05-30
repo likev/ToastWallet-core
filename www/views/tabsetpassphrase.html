@@ -1,0 +1,20 @@
+<div id="tabsetpassphrase" class="screentab" data-primarytab="true" data-title="Set Passphrase" data-noright="true" style="display:none">
+	<p style="color:black; text-align: justify;">Your passphrase will be used to encrypt your wallet. You will only enter it when you wish to send XRP. It should be long and strong. Never share it with anyone.</p>
+	<br>
+	<label>Set a Passphrase</label>
+    <span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{$('#setpassword1').val(content);$('#setpassword2').val(content);})})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {$('#setpassword1').val(content); $('#setpassword2').val(content);})})" type="button"><i class="fa fa-camera"></i></button>
+        <button class="btn btn-default" id="setpassword1eyebtn" ontouchend="te(event, ()=>{toggleShowPassField(['#setpassword1', '#setpassword2'], '#setpassword1eyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
+    </span>      
+	<input ontouchend="te(event, quickSelectInput)"  type="password" id="setpassword1" class="form-control" placeholder="">
+	<br>
+    <label>Repeat Passphrase</label>
+	<input ontouchend="te(event, quickSelectInput)"  type="password" id="setpassword2" class="form-control" placeholder="">
+	<br>
+	<div style="text-align:justify; color:black;">Passphrases must contain at least 8 characters comprising at least 1 uppercase, 1 lowercase, 1 number and 1 non-alphanumeric character.</div>
+    <br>
+	<center>
+		<button  class="btn btn-primary btnbig" id="btnsetpassphrase" type="button" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doResetPassphrase($('#setpassword1').val(), $('#setpassword2').val(), '', function(){blockInput(); setAndShowNewRecoveryPhrase($('#setpassword1').val());}, true);})">Set Passphrase</button>
+	</center>
+</div>

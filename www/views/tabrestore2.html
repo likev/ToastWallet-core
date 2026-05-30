@@ -1,0 +1,20 @@
+<div id="tabrestore2" class="screentab" data-primarytab="false" data-hasback="true" data-title="Restore Backup" data-dark="true" data-noright="true">  
+    <div style="text-align:justify;">If you have a backup code you exported from another copy of Toast Wallet you can import it here. Doing so will create a copy of that wallet on this device.</div>
+    <div id="divrestorerror" style="text-align:justify;"></div>
+    <br>
+    <br>
+    <div>
+    <label style="color:white;">Backup Code</label>
+	<span class="pasteqr">
+		<button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste(function(content){$('#restorebackup2').val(content)})})"><i class="fa fa-paste"></i></button>
+	</span>    
+    <textarea rows="5" ontouchend="te(event, quickSelectInput)" type="text" class="form-control" id="restorebackup2" style="color:black"></textarea>
+    </div>
+    
+    <br> 
+    <div align="center">
+    
+    
+    <button class="btn btn-success btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doRestoreBackupFreshInstall();})">Restore Backup</button></div>
+    </div>
+</div>

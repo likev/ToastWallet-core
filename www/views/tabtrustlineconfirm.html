@@ -1,0 +1,33 @@
+<div id="tabtrustlineconfirm" class="screentab" data-primarytab="false" data-hasback="true" data-title="Confirm Trustline" style="display: none;">
+	<div class="paygrouping">
+    <label>Address</label>
+	<div id="ctladdress"></div>
+    </div>
+	<div class="paygrouping">
+    <label>Issuer</label>
+	<div id="ctlissueraddr"></div>
+    </div>
+	<div class="paygrouping">
+    <label>Currency</label>
+	<div id="ctlcurrency"></div>
+    </div>
+	<div class="paygrouping">
+    <label>Limit</label>
+	<div id="ctllimit"></div>
+    </div>
+	<div class="paygrouping">
+    <label>Rippling</label>
+	<div id="ctlrippling"></div>
+    </div>
+    <br>
+    <label>Passphrase</label>    
+	<span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{doConfirmTrustline(content)})})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {doConfirmTrustline(content)})})" type="button"><i class="fa fa-camera"></i></button>
+        <button class="btn btn-default" id="confirmatlpasswordeyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#confirmatlpassword', '#confirmatlpasswordeyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
+        
+    </span>
+    <input ontouchend="te(event, quickSelectInput)"  type="password" id="confirmatlpassword" class="form-control" placeholder="">
+    <br>
+	<center><div><button  type="button" class="btn btn-success btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doConfirmTrustline($('#confirmatlpassword').val());})">Submit Trustline</button></div></center>
+</div>

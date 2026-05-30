@@ -1,0 +1,52 @@
+<div id="tabaccountflagsconfirm" class="screentab" data-primarytab="false" data-hasback="true" data-title="Confirm Flags" style="display: none;">
+	<div class="paygrouping">
+    <label>Account</label>
+	<div id="cafaddress"></div>
+    </div>
+	<div class="paygrouping">
+    <label>Default Ripple</label>
+	<div id="cafdefaultripple"></div>
+    </div>
+	<div class="paygrouping">
+    <label>Deposit Auth</label>
+	<div id="cafdepositauth"></div>
+    </div>
+	<div class="paygrouping">
+    <label>Disable Master Key</label>
+	<div id="cafdisablemasterkey"></div>
+    </div>
+	<div class="paygrouping">
+    <label>Disallow Incoming XRP</label>
+	<div id="cafdisallowincomingxrp"></div>
+    </div>
+	<div class="paygrouping">
+    <label>Global Freeze</label>
+	<div id="cafglobalfreeze"></div>
+    </div>
+	<div class="paygrouping">
+    <label>No Freeze</label>
+	<div id="cafnofreeze"></div>
+    </div>
+	<div class="paygrouping">
+    <label>Require Authorization</label>
+	<div id="cafrequireauthorization"></div>
+    </div>
+	<div class="paygrouping">
+    <label>Require Destination Tag</label>
+	<div id="cafrequiredestinationtag"></div>
+    </div>
+	<div class="paygrouping">
+    <label>These changes require</label>
+	<div id="cafnotransactions"></div>
+    </div>
+    <br>
+    <label>Passphrase</label>    
+	<span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{doConfirmAccountFlags(content)})})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {doConfirmAccountFlags(content);})})" type="button"><i class="fa fa-camera"></i></button>	
+        <button class="btn btn-default" id="confirmafpasswordeyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#confirmafpassword', '#confirmafpasswordeyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
+    </span>
+    <input ontouchend="te(event, quickSelectInput)"  type="password" id="confirmafpassword" class="form-control" placeholder="">
+    <br>
+	<center><div><button  type="button" class="btn btn-success btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doConfirmAccountFlags($('#confirmafpassword').val());})">Submit Settings</button></div></center>
+</div>

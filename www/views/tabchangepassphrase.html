@@ -1,0 +1,25 @@
+<div id="tabchangepassphrase" class="screentab" data-hasback="true" data-title="Change Passphrase" style="display:none">
+	<div style="text-align:center; color:black;">New Passphrases must contain at least 8 characters comprising at least 1 uppercase, 1 lowercase, 1 number and 1 non-alphanumeric character.</div>
+	<br><label>Current Passphrase</label>
+    <span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{$('#setpassword3').val(content)})})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {$('#setpassword3').val(content)})})" type="button"><i class="fa fa-camera"></i></button>
+        <button class="btn btn-default" id="setpassword3eyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#setpassword3', '#setpassword3eyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
+    </span>
+	<input ontouchend="te(event, quickSelectInput)"  id="setpassword3" type="password" class="form-control" placeholder="">
+	<br><label>New Passphrase</label>
+	<span class="pasteqr">
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{$('#setpassword4').val(content);$('#setpassword5').val(content);})})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {$('#setpassword4').val(content);$('#setpassword5').val(content);})})" type="button"><i class="fa fa-camera"></i></button>
+        <button class="btn btn-default" id="setpassword4eyebtn" ontouchend="te(event, ()=>{toggleShowPassField(['#setpassword4', '#setpassword5'], '#setpassword4eyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
+	</span>
+	<input ontouchend="te(event, quickSelectInput)"  id="setpassword4" type="password" class="form-control" placeholder="">
+	<br><label>New Passphrase Again</label>
+	<div>
+		<input ontouchend="te(event, quickSelectInput)"  type="password" id="setpassword5" class="form-control" placeholder="">
+	</div>
+    <br><br>
+	<center>
+		<button  class="btn btn-primary btnbig" id="btnsetpassphrase" type="button" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doResetPassphrase($('#setpassword4').val(), $('#setpassword5').val(), $('#setpassword3').val(), function(){showBackupReminderTab();});})">Set Passphrase</button>
+	</center>
+</div>
