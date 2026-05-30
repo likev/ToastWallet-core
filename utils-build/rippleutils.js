@@ -1,14 +1,25 @@
 'use strict';
 if (typeof window !== 'undefined') {
-	window['assert'] = require('assert');
-	window['elliptic'] = require('elliptic');
-	window['rippleKeypairs'] = require('ripple-keypairs');
-	window['secp256k1'] = elliptic.ec('secp256k1');
-	window['rippleAddressCodec'] = require('ripple-address-codec');
-	window['R_B58_DICT'] = 'rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz';
-	window['base58'] = require('base-x')(R_B58_DICT);
-	window['BN'] = require('bn.js');
-	window['hashjs'] = require('hash.js');
+	class BN {
+		constructor(val) {
+			if (typeof val === 'string') {
+				if (val.trim() === '') {
+					throw new Error('invalid number');
+				}
+				if (!/^[+-]?\d+$/.test(val)) {
+					throw new Error('invalid number');
+				}
+			}
+			this.val = BigInt(val);
+		}
+		isNeg() {
+			return this.val < 0n;
+		}
+		isZero() {
+			return this.val === 0n;
+		}
+	}
+	window['BN'] = BN;
 	window['xrpl'] = require('xrpl');
 	window['utils'] = require('./utils.js');
 }

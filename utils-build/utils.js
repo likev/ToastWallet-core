@@ -1,28 +1,37 @@
 'use strict';
-const assert = require('assert');
-const hashjs = require('hash.js');
-const BN = require('bn.js');
+const { sha256 } = require('@noble/hashes/sha256');
+const { ripemd160 } = require('@noble/hashes/ripemd160');
+const { sha512 } = require('@noble/hashes/sha512');
 
 function bytesToHex(a) {
-  return a.map(function(byteValue) {
+  return Array.from(a).map(function(byteValue) {
     const hex = byteValue.toString(16).toUpperCase();
     return hex.length > 1 ? hex : '0' + hex;
   }).join('');
 }
 
 function hexToBytes(a) {
-  assert(a.length % 2 === 0);
-  return (new BN(a, 16)).toArray(null, a.length / 2);
+  if (a.length % 2 !== 0) {
+    throw new Error('Invalid hex string');
+  }
+  const bytes = [];
+  for (let i = 0; i < a.length; i += 2) {
+    bytes.push(parseInt(a.substr(i, 2), 16));
+  }
+  return bytes;
 }
 
 function computePublicKeyHash(publicKeyBytes) {
-  const hash256 = hashjs.sha256().update(publicKeyBytes).digest();
-  const hash160 = hashjs.ripemd160().update(hash256).digest();
-  return hash160;
+  const input = publicKeyBytes instanceof Uint8Array ? publicKeyBytes : new Uint8Array(publicKeyBytes);
+  const hash256 = sha256(input);
+  const hash160 = ripemd160(hash256);
+  return Array.from(hash160);
 }
 
 function seedFromPhrase(phrase) {
-  return hashjs.sha512().update(phrase).digest().slice(0, 16);
+  const input = typeof phrase === 'string' ? phrase : new Uint8Array(phrase);
+  const hash512 = sha512(input);
+  return Array.from(hash512.slice(0, 16));
 }
 
 module.exports = {

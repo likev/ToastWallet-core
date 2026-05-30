@@ -2430,7 +2430,7 @@ function populatePaymentTabFromURI(uri, targetfield) {
     var xto = false
     try { xto = raddr(parsed.to) } catch (e) {}
     if (!parsed || !parsed.to || (
-        !rippleAddressCodec.isValidAccountID(parsed.to) &&
+        !xrpl.isValidClassicAddress(parsed.to) &&
         !xto)) {
         // could not parse, that's fine we'll just populate it anyway
         if (targetfield) $(targetfield).val(uri)
@@ -2497,19 +2497,19 @@ function decodeSecretAddressURI(uri, after, secretfield, addrfield, defaultfield
 	return ( after ? after() : true )
 }
 function xaddr(raddr, tag) {
-	flag = tag === false ? 0 : tag < 4294967296  ? 1 : 2
-	if (flag == 2) return false
-	var decoded = rippleAddressCodec.decodeAccountID(raddr)
-	if (!decoded) return false
-	return rippleAddressCodec.codecs.ripple.encodeChecked([0x05, 0x44].concat(decoded.concat(
-		[flag, tag & 0xff, (tag  >> 8) & 0xff, (tag >> 16) & 0xff, (tag >> 24) & 0xff, 0,0,0,0])))
+	try {
+		return xrpl.classicAddressToXAddress(raddr, tag, false);
+	} catch (e) {
+		return false;
+	}
 }
 function raddr(xaddr) {
-	var decoded = rippleAddressCodec.codecs.ripple.decodeChecked(xaddr)
-	if (!decoded) return false
-	var raddr = rippleAddressCodec.encodeAccountID(decoded.slice(2,22))
-	var tag = decoded[22] == 0 ? false : decoded[23] + decoded[24] * 0x100 + decoded[25] * 0x10000 + decoded[26] * 0x1000000
-	return decoded[22] > 1 ? false : {raddr: raddr, tag: tag}
+	try {
+		var res = xrpl.xAddressToClassicAddress(xaddr);
+		return {raddr: res.classicAddress, tag: res.tag};
+	} catch (e) {
+		return false;
+	}
 }
 function isXAddress(x) {
     try {
@@ -2536,11 +2536,11 @@ function forceraddrtag(x, dt) {
     if (tag) tag = Math.round(tag)
     
     if (tag > 0xffffffff || tag < 0) tag = false
-    if (rippleAddressCodec.isValidAccountID(x)) return { raddr: x, tag: tag }
+    if (xrpl.isValidClassicAddress(x)) return { raddr: x, tag: tag }
     if (x.substr(0,1) == 'X') {
         try {
             var r = raddr(x)
-            return (rippleAddressCodec.isValidAccountID(r.raddr) ? r : false)
+            return (xrpl.isValidClassicAddress(r.raddr) ? r : false)
         } catch (e) {}
     }
     // execution should never reach here
@@ -5901,7 +5901,7 @@ function doCheckBackup(raw) {
         var accounts = backup['accounts'];
         for (var i in accounts) {
             try {
-                rippleAddressCodec.decodeAccountID(i);
+                xrpl.decodeAccountID(i);
                 if (accounts[i]['ppsalt'] == undefined) output += "Account " + i + " ppsalt missing<br/>";
                 if (!isvalidhex(accounts[i]['ppsalt'])) output += "Account " + i + " ppsalt invalid<br/>";
                 if (accounts[i]['rpsalt'] == undefined) output += "Account " + i + " rpsalt missing<br/>";
@@ -6645,7 +6645,7 @@ function importAddress(secret, address, nickname, passphrase, successfunc, failu
         return normalImport(secret, address, nickname, passphrase, successfunc, failurefunc);
 	} else {
 		// make sure the address is valid, either corresponding to the secret or corresponding to setregular key
-		var pubaddress = rippleKeypairs.deriveAddress(rippleKeypairs.deriveKeypair(secret).publicKey);
+		var pubaddress = xrpl.deriveAddress(xrpl.deriveKeypair(secret).publicKey);
 		if (pubaddress == address) {
             return normalImport(secret, address, nickname, passphrase, successfunc, failurefunc);
 		} else {
@@ -7038,7 +7038,7 @@ function generateAddress(secret) {
 	
 		return {
 			secret: secret,
-			address: 	rippleKeypairs.deriveAddress(	rippleKeypairs.deriveKeypair(secret).publicKey )
+			address: 	xrpl.deriveAddress(	xrpl.deriveKeypair(secret).publicKey )
 		};
 	}
 }
@@ -7981,8 +7981,8 @@ function validateAddress(x) {
 }
 function validateSecret(x) {
 	try {
-		rippleKeypairs.deriveAddress(
-			rippleKeypairs.deriveKeypair(x).publicKey
+		xrpl.deriveAddress(
+			xrpl.deriveKeypair(x).publicKey
 		); 
 	} catch(e) { return false; }
 	return true;
