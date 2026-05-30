@@ -290,6 +290,7 @@ function te(e, x) {
 }
 /* Run this to add a click proxy to all elements so that a browser can use the wallet */
 function clickProxy() {
+    rebindAllHandlers();
 	if ((device.platform + "").toLowerCase() == 'browser') {
         $('*:not(input):not(.select2):not([class^="select2-"]):not(.headerleft):not(.headerright):not(.toggleswitch):not(.morecontentindicator)').unbind('click');
 		$('*:not(input):not(.select2):not([class^="select2-"]):not(.headerleft):not(.headerright):not(.toggleswitch):not(.morecontentindicator)').on('click', function(e) {
@@ -575,6 +576,7 @@ onDeviceReady: function() {
 			if (debug) console.log("onDeviceReady:1");
 		       	db = new PouchDB('toastwallet');
 			if (debug) console.log("onDeviceReady:2");
+			rebindAllHandlers();
 			setTimeout(afterCordovaLoad, 0);
 			if (debug) console.log("onDeviceReady:3");
             // change all select boxes to the modern graphical format

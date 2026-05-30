@@ -271,8 +271,32 @@ function showTab(tab, dontClearText) {
 	setTimeout(unblockInput, 200);
 }
 
+function rebindAllHandlers() {
+    $('[ontouchstart], [ontouchend]').each(function() {
+        var $el = $(this);
+        var touchstartStr = $el.attr('ontouchstart');
+        var touchendStr = $el.attr('ontouchend');
+        
+        if (touchstartStr) {
+            $el.removeAttr('ontouchstart');
+            $el.on('touchstart', function(e) {
+                new Function('event', touchstartStr).call(this, e.originalEvent || e);
+            });
+        }
+        
+        if (touchendStr) {
+            $el.removeAttr('ontouchend');
+            $el.on('touchend', function(e) {
+                new Function('event', touchendStr).call(this, e.originalEvent || e);
+            });
+        }
+    });
+}
+
 // Expose functions globally
 window.selectAccountDetailsSubTab = selectAccountDetailsSubTab;
 window.showSpinner = showSpinner;
 window.hideSpinner = hideSpinner;
 window.showTab = showTab;
+window.rebindAllHandlers = rebindAllHandlers;
+
