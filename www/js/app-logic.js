@@ -1,25 +1,5 @@
-function clipboardCopy(data) {
-    try {
-        if (window.require && require('electron') && require('electron').clipboard) 
-            return require('electron').clipboard.writeText(data);
-        if (device.platform == 'browser')
-            return navigator.clipboard.writeText(data);
-        cordova.plugins.clipboard.copy(data);
-    } catch (E) {
-        console.log(E);
-    }
-}
-function clipboardPaste(f) {
-    try {
-        if (window.require && require('electron') && require('electron').clipboard) 
-            return f(require('electron').clipboard.readText());
-        if (device.platform == 'browser')
-            return navigator.clipboard.readText().then(f);
-        cordova.plugins.clipboard.paste(f);
-    } catch (E) {
-        console.log(E);
-    }
-}
+
+
 // adds ontouchend events to select2 boxes for more snappy use on mobile
 function select2EventProxy() {
     $('.select2').off('touchend')
@@ -315,26 +295,7 @@ function doAddGateway(gateway) {
 			// if the gateway is connectable then it will be automatically added to their saved gateway list
 			doRetryConnection(gateway);
 }
-function selectAccountDetailsSubTab(tabele, subtabname) {
-    $('.accdetailsinnertabselected').removeClass('accdetailsinnertabselected');
-    $(tabele).addClass('accdetailsinnertabselected');
-    if (subtabname == 'address') {
-        $('#accdetailstransactiondetails').hide(); 
-        $('#accdetailstrustlinedetails').hide(); 
-        $('#accdetailsaddressdetails').show();
-    } else if (subtabname == 'trustlines') {
-        $('#accdetailstransactiondetails').hide(); 
-        $('#accdetailstrustlinedetails').show(); 
-        $('#accdetailsaddressdetails').hide();
-        refreshTrustlines(activeaccount);
-    } else if (subtabname == 'transactions') {
-        $('#accdetailstransactiondetails').show(); 
-        $('#accdetailstrustlinedetails').hide(); 
-        $('#accdetailsaddressdetails').hide();
-        checkConnection(()=>{doGetTransactions($('#accdetailsaddress').data('content'), '');  renderMoreContentIndicator(); });
-    }
-    renderMoreContentIndicator();
-}
+
 function showDonationTab(){
 	if (offlinemode || emergencybackup) return;
 	if (('' + device.platform).toLowerCase() == 'android') {
@@ -792,71 +753,17 @@ function decodeSecretAddressURI(uri, after, secretfield, addrfield, defaultfield
 	}
 	return ( after ? after() : true )
 }
-function xaddr(raddr, tag) {
-	try {
-		return xrpl.classicAddressToXAddress(raddr, tag, false);
-	} catch (e) {
-		return false;
-	}
-}
-function raddr(xaddr) {
-	try {
-		var res = xrpl.xAddressToClassicAddress(xaddr);
-		return {raddr: res.classicAddress, tag: res.tag};
-	} catch (e) {
-		return false;
-	}
-}
-function isXAddress(x) {
-    try {
-        var r = raddr(x)
-        return true
-    } catch (e) {}
-    return false
-}
+
+
+
 //if the address is an x-address, converts to an r-address and uses the dtag in the x-address
 //if the address is an r-address and dt is a valid integer returns the same structure populated with these
 // return value = { raddr: "rdfasdfa...", tag: false|integer }
-function forceraddrtag(x, dt) {
-    if (!x || typeof(x) != 'string') return false
-    
-    tag = false
-    if (typeof(dt) == 'string') {
-        try { 
-            var pdt = parseInt(dt + '') 
-            tag = ( pdt + '' == (dt + '').trim() ? pdt : false )
-        } catch (e) {}
-    } else if (typeof(dt) == 'number') {
-        tag = dt
-    }
-    if (tag) tag = Math.round(tag)
-    
-    if (tag > 0xffffffff || tag < 0) tag = false
-    if (xrpl.isValidClassicAddress(x)) return { raddr: x, tag: tag }
-    if (x.substr(0,1) == 'X') {
-        try {
-            var r = raddr(x)
-            return (xrpl.isValidClassicAddress(r.raddr) ? r : false)
-        } catch (e) {}
-    }
-    // execution should never reach here
-    return false
-}
-function forceraddr(x) {
-    x = forceraddrtag(x)
-    if (x && x.raddr) return x.raddr
-    return false
-}
+
+
 // display an address according to the current interface settings
-function dispaddr(x, dt) {
-    if (x.substr(0,1) == 'r' && interface_settings.display_xaddresses) return xaddr(x, (dt == undefined ? false : dt))
-    if (x.substr(0,1) == 'X' && !interface_settings.display_xaddresses) return raddr(x).raddr
-    return x
-}
-function truncaddr(x) {
-    if (x.length > 33) return x.substr(0, 30) + '...'
-    return x
-}
+
+
 
 timeatlastQR = 0;
 function scanQR(parseContentFunc, after, ...intoFields) {
@@ -1920,247 +1827,7 @@ accountbalancestl = {};
 accountflags = {};
 userkey = ""; // user's sha1 of passphrase used to decrypt wallet secrets
 screentabpaddingbottom = 0; // we use this when calcualting keyboard offset
-function showTab(tab, dontClearText) {
-    // while a link is pending we will handle it as soon as we can
-    if (tab == '#tablogin') {
-        // once booting and/or wallet setup has finished we want to start processing paylinks
-        can_accept_paylink = true    
-        // show the prompt
-        if (paylink_pending)
-            $('#tablogin>center>div').addClass('pinpad_pending')
-    } else if (paylink_pending) { 
-        handleOpenURL(paylink_pending)
-    }
-    
-	if (tab == currenttab) return;
-    try {
-        $('select').select2('close')
-    } catch(e) {}
-    if (dontClearText == undefined) dontClearText = false;
-	blockInput(true);
-	if (debug) console.log("showTab(" + tab + ")");
-	document.activeElement.blur();
-	$(".pinpad").removeClass("shake");
-	enteredpin = ""; renderEnteredPin();
-	
-	$("#morecontentindicator").removeClass("moreindicatorabovenav");
-	$("#morecontentindicator").removeClass("moreindicatordark");
-    $("#accsecret").val('');
-    $("#accsecret").data('content', '');
-    $("#accsecretqr").empty();
-	$("#accsecret").hide();
-	if ( tab == -1 && (
-        currenttab == '#tabqrscan' || currenttab == '#taborderconfirm' || 
-        currenttab == '#tabneworder' || currenttab == '#tabpaymentconfirm' ||
-        currenttab == '#tabtrustlineconfirm'
-    )) {
-		// if the user has gone for a QR scan we dont want to wipe their form.
-        // we also make a special exception allowing a market order to go backward from confirmation
-        dontClearText = true;
-	}
-    if (!dontClearText) {
-   
-    	$("input[type='password']").val("");
-        $("input[type='text']").val("");
-        $("textarea").val("");
-        $('#paytabredqr').empty();
-        $('#atltabredqr').empty();
-        $('#mtltabredqr').empty();
-        $('#paytabgreenqr').empty();
-        $('.fa-toggle-on').addClass('fa-toggle-off').removeClass('fa-toggle-on');
-    }
-    reset_xrbtns()        
-    $("#navheader").show();
-	
-	if (tab == -1) {
-		// unwind mode
-		if (previoustabs.length == 0) {
-			unblockInput();
-			return; // cannot unwind so do nothing
-		}
-		tab = currenttab = previoustabs.pop();
-        if (tab == '#tabaccountflags' && validateAddress($('#cafaddress').text())) {
-            showAccountFlags($('#cafaddress').text(), true);
-        }
-	} else {
-		//windup mode
-		previoustabs.push(currenttab);
-		currenttab = tab;
-	}
-	if ($(tab).data('primarytab')) previoustabs = [];
-	if (tab != "#tabqrscan" && scanner != undefined) {
-		scanner.stop();
-	}
-    if (tab == "#tabpayments" && !dontClearText) {
-            clearPaymentScreen();
-    } else if (tab == "#tabaccounts") {
-        if ( !dontClearText ) {
-           // $('#payasset').html('<option id="optpa-xrp" data-asset="XRP" data-issuer="">XRP</option>');
-            refreshAccounts( onPaymentSelectFromAccount );	
-        }
-	} else if (tab == "#tabaccountsecret") {
-        $("#divrsecaccpassword").show();
-		$("#lblacpassword").show();
-		$("#lblaccsecret").hide();
-		$("#btnrevealsecret").show();
-		$("#rsecaccpassword").show();
-		$("#btncopysecret").hide();
-		$("#accsecret").hide();
-    } else if (tab == '#tabaddtrustline' && offlinemode) {
-        var account = $("#atladdress").data('content');
-        $("#atltabredqr").empty();
-        $("#atltabredqr").append(kjua({text: account, fill:"#ff0000"}));    
-        $('#atlofflinecodediv').css('display', 'block')
-    } else if (tab == '#tabmodifytrustline' && offlinemode) {
-        var account = $("#mtladdress").data('content');
-        $("#mtltabredqr").empty();
-        $("#mtltabredqr").append(kjua({text: account, fill:"#ff0000"}));    
-        $('#mtlofflinecodediv').css('display', 'block')
-    } else if (tab == '#tabaccountflags' && offlinemode) {
-        var account = $("#afaddress").data('content');
-        $("#aftabredqr").empty();
-        $("#aftabredqr").append(kjua({text: account, fill:"#ff0000"}));    
-        $('#afofflinecodediv').css('display', 'block');
-        $('#afoflwarningdiv').css('display', 'block');
-    }
-	if (tab == '#tabpayments') {
-		var to = $('#toaddress').val();
-		if (to == 'rToastMYRQh8boeo5Ys1CnPySmt3c9x3Y') {
-			$('#toaddress').css('background-color', 'rgba(92, 184, 104, 0.63)');
-			$('#toaddress').css('color', 'white');
-			$('#toaddress').attr('readonly', 'readonly');
-			$('.btnqrpay').attr('disabled', 'disabled');
-            $('.btnqrpay').removeAttr('ontouchend');
-		} else {
-			$('#toaddress').css('background-color', '');
-			$('#toaddress').css('color', '');
-			$('#toaddress').attr('readonly', null);
-			$('.btnqrpay').removeAttr('disabled');
-            $('#btnqrpay1').attr('ontouchend', "te(event, ()=>{scanQR((x)=>{populatePaymentTabFromURI(x, '#toaddress')} )})");
-            $('#btnqrpay2').attr('ontouchend', "te(event, ()=>{clipboardPaste((content)=>{populatePaymentTabFromURI(content, '#toaddress')})})");
-		}
-	}
-	if (tab == '#tabaccounts') {
- 
-		var donorreminder = function() {
-			getLastDonation(function(donation) {
-                if(setupcompletedthissession) return; // no point asking people who just set up the wallet to donate
-                if (('' + device.platform).toLowerCase() == 'android') return; // no point pestering people who can't donate because Google is evil
-				if ('lastdonation' in donation && Math.floor(new Date().getTime()/1000) - parseInt(donation['lastdonation']) < 15552000 /* 180 days */) {
-					// do nothing
-					return;
-				}
-				if (!('lastreminder' in donation) ||  Math.floor(new Date().getTime()/1000) - parseInt(donation['lastreminder']) > 604800 /* 1 week */ ) {
-					// reminder
-					
-					donation['lastreminder'] = "" + Math.floor(new Date().getTime()/1000);
-					db.upsert("lastdonated",
-						function(doc) {
-						return { data: JSON.stringify(donation)	}; 
-					}).then( function() {
-						showDonationTab();
-					})
-				}
-			});
-		};
-		getAccounts(function(acc) {
-			var acccount = 0;
-			for (var i in acc) acccount++;
-			if (debug) console.log("number of accounts: " + acccount);
-			if (acccount > 0) {
-				getLastBackupReminder(function(backupreminder) {
-					if (!('lastreminder' in backupreminder)) {
-						showBackupReminderTab();
-					} else {
-						donorreminder();
-					}
-				});
-			} else {
-				donorreminder();
-			}
-		});
-		
-	}
-	var tabs = $(".screentab");
-	for (var i = 0; i < tabs.length; i++) $("#" + tabs[i].id).hide();
-    try {
-        $(tab + ' select').select2({templateResult:formatSelect2, templateSelection:formatSelect2})
-    } catch(e) {}
-    select2EventProxy()
-    //clean up stray dropdown
-    if (offlinemode) 
-        try {
-            $("#payasset").select2('destroy')
-        } catch (e) {}
-    $(tab).show();
-    if (tab != '#tabaccounts') $(tab).scrollTop(0);
-    if ($(tab).data('hasback') && previoustabs.length > 0 && 
-            !( currenttab == '#tabpayments' && previoustabs.length == 1 && (previoustabs[0] == '#tabaccounts' || previoustabs[0] == '#tabsettings' ) )
-    ) {
-        console.log("previous tabs: "); console.log(previoustabs);
-		$(".headerleft").html('<i class="fa fa-chevron-left" aria-hidden="true"></i>');
-		$(".headerleft").off();
-		$(".headerleft").on('touchstart', function() {showTab(-1);});
-		if ((device.platform + "").toLowerCase() == 'browser') $(".headerleft").on('click', function() {showTab(-1);});
-		$(".headerleft").show();
-	} else {
-		$(".headerleft").empty();
-		$(".headerleft").off();
-	}
-	if ($(tab).data('title')) {
-		$(".headermiddle").html('<div>' + $(tab).data('title') + "</div>");
-	} else {
-		$(".headermiddle").empty();
-	}
-	if ($(tab).data('recovery')) { // set recovery icon for logged out tabs
-		$(".headerright").show();
-                $("#navfooter").hide();
-                $(".headerright>i").removeClass("fa-lock");
-                $(".headerright>i").addClass("fa-medkit");
-                $(".headerright").off();
-                $(".headerright").on('touchend', function(){ showTab("#tabrecovery"); });
-                if ((device.platform + "").toLowerCase() == 'browser') $(".headerright").on('click', function(){ showTab("#tabrecovery"); });
-	} else if ($(tab).data('noright')) {
-                $(".headerright").hide();
-                $("#navfooter").hide();
-    } else { // set logout icon for logged in tabs
-        		$(".headerright").show();
-                $("#navfooter").show();
-                $(".headerright>i").removeClass("fa-medkit");
-                $(".headerright>i").addClass("fa-lock");
-                $(".headerright").off();
-                $(".headerright").on('touchend', function(){ doShowLogin(); });
-                if ((device.platform + "").toLowerCase() == 'browser') $(".headerright").on('click', function(){ doShowLogin(); });
-	        $("#morecontentindicator").addClass("moreindicatorabovenav");
-    }	
-	$("body").removeClass("darkbackground");
-	$("body").removeClass("darkbackground2");
-	if ($(tab).data('dark')) { // dark background
-		if ($(tab).data('dark') == '2') {
-			$("body").addClass("darkbackground2");
-		} else {
-			$("body").addClass("darkbackground");
-		}
-	} else {
-		$("#morecontentindicator").addClass("moreindicatordark");
-	}
-	renderMoreContentIndicator();
-	// make sure the values of various input boxes are set correctly before displaying
-	var inputs = $(currenttab + " input");
-	for (var i = 0; i < inputs.length; i++) {
-		var ele = $('#' + inputs[i].id);
-        if (!ele || !ele.data || !ele.val) continue;
-        var content = ele.data('content');
-        var isaddress = ele.data('dispaddr')
-		if (content != undefined) ele.val(isaddress ? dispaddr(content) : content);
-	}
-	
-	
-	if ((device.platform + "").toLowerCase() == 'browser') {
-		clickProxy();
-	}
-	setTimeout(unblockInput, 200);
-}
+
 generatedAccount = {};
 function doShowAndGenerateAccount() {
 	if (debug) console.log("doShowAndGenerateAccount");
@@ -3614,14 +3281,7 @@ function checkAccountIsFunded(payfrom, amount, asset, issuer, failurefunc, silen
 			[ "Yes continue", "Cancel" ]
 	);			
 }
-function randShuffleArray(array) {
-    for (var i = array.length - 1; i > 0; i--) {
-        var j = Math.floor((sodium.randombytes_buf(1)[0]/256) * (i + 1));
-        var temp = array[i];
-        array[i] = array[j];
-        array[j] = temp;
-    }
-}
+
 function injectCompatibilityLayer(client) {
     var parseFlags = (flagsInt) => {
         flagsInt = flagsInt || 0;
@@ -4033,14 +3693,8 @@ function resetServerStack() {
 }
 
 resetServerStack();
-function showSpinner(msg) {
-	if (debug) console.log("showSpinner");
-	$("body").addClass("loading");
-}
-function hideSpinner() {
-	if (debug) console.log("hideSpinner");
-	$("body").removeClass("loading");
-}
+
+
 
 
 function exportWallet(exportfunc) {
@@ -4374,20 +4028,11 @@ function dbgdumpdata() {
 	db.get("savedgateways").then(function(x){ console.log("savedgateways: " + x.data);});
 }
 /* Generate a checksum and prepend it to data, returns as hex */
-function tohex_chksum(data) {
-	if (typeof data == 'string') data = sodium.from_string(data);
-	return sodium.crypto_generichash(4, data, '', 'hex') + sodium.to_hex(data);
-}
+
 /* Remove a checksum from the front of data, check if the data matches 
 ** return the data if the checksum matches (as uint8array) or false
 ** if data does not match */
-function fromhex_chksum(hex, format) {
-	var chksum = hex.slice(0,8);
-	var payload = sodium.from_hex(hex.slice(8));
-	if (sodium.crypto_generichash(4, payload, '', 'hex') != chksum) return false;
-	if (format == 'string') return sodium.to_string(payload);
-	return payload;
-}
+
 function validateDataStores(funcok, funcnodata, funcdatacorrupt) {
 	var saltlen = 72;
 	var hashlen = 40;
@@ -4466,43 +4111,8 @@ function handle_error(e) {
 	console.log("Error: " + e);
 	console.log("Stack trace: " + e.stack);
 }
-function setPin(pin, successfunc, failfunc) {
-        var salt = sodium.randombytes_buf(32);
-        var hash = sodium.crypto_pwhash_scryptsalsa208sha256(32, pin, salt, 4, 33554432);
-        var pindata = {
-                salt: tohex_chksum(salt),
-                hash: tohex_chksum(hash)
-        };
-        db.upsert("pindata",
-                function(doc) {
-                return { data: JSON.stringify(pindata)}; }).then(
-                function(x){
-                        successfunc();
-                }).catch(function(x){
-                        failfunc();
-                });
-}
-function validatePin(pin, successfunc, failfunc, nopinsetfunc) {
-        var f = function(pindata) { try {
-                if (pindata.data == undefined || pindata.data == "") {
-                        // this means the app has never run before.
-                        return nopinsetfunc();
-                } else {
-                        pindata = JSON.parse(pindata.data);
-                        var salt = fromhex_chksum(pindata.salt);
-                        var hash;
-                        if (salt.length === 16) {
-                            hash = tohex_chksum(sodium.crypto_shorthash(pin, salt));
-                        } else {
-                            var scryptHash = sodium.crypto_pwhash_scryptsalsa208sha256(32, pin, salt, 4, 33554432);
-                            hash = tohex_chksum(scryptHash);
-                        }
-                        if (hash == pindata.hash)
-                                return successfunc();
-                        return failfunc();
-                } } catch(e) { handle_error(e); } };
-        db.get("pindata").then(f).catch(f);
-}
+
+
 function normalboot () {
 	/* To kick off the application, we attempt to validate an always incorrect pin
 	** of zero length, this will then in turn fire either the login procedure or
@@ -6272,17 +5882,8 @@ function sendPayment(passphrase, fromacc, xrpAmount, destination, sourceTag, des
 			failurefunc("Could not load secret. Wallet may be corrupted.");
 		});
 }
-function validateAddress(x) {
-    return forceraddr(x) !== false
-}
-function validateSecret(x) {
-	try {
-		xrpl.deriveAddress(
-			xrpl.deriveKeypair(x).publicKey
-		); 
-	} catch(e) { return false; }
-	return true;
-}
+
+
 function doViewTransaction(hash) {
     if (debug) console.log('doViewTransaction -- ' + hash);
     blockInput();	
