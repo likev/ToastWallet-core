@@ -1,117 +1,295 @@
-# Toast Wallet Core - Index.html Modularization Plan
+# Toast Wallet Core — `index.html` Modularization Plan
 
-This document outlines a systematic, step-by-step plan to modularize the monolithic [www/index.html](file:///root/downloads/core/www/index.html) file (which contains ~8,000 lines of mixed HTML, CSS, and inline JavaScript logic) into clean, maintainable, and testable modules.
+This document outlines a systematic plan to break the monolithic [www/index.html](file:///root/downloads/core/www/index.html) (~8,068 lines of mixed HTML, inline CSS, and JavaScript) into clean, maintainable, testable modules.
 
 ---
 
-## 1. High-Level Architecture Goal
+## 0. Current State Analysis
 
-The target state transforms the monolithic single-file application into a modern modular structure:
+| Metric | Value |
+|---|---|
+| Total lines | 8,068 |
+| Top-level functions | 144 |
+| Screen tabs (`class="screentab"`) | 42 |
+| Global `var` declarations (script scope) | ~30 key globals (`remote`, `db`, `offlinemode`, `accounts`, `interface_settings`, etc.) |
+| Inline `<script>` blocks | 3 (head shim at L12, config+layout at L23–54/L61–392, main logic at L1703–8066) |
+| HTML markup (views) | Lines 56–1702 |
+| Inline `ontouchstart`/`ontouchend` handlers | ~190 |
+
+### Key Coupling Risks
+- **Heavy shared mutable state.** Globals like `remote`, `db`, `offlinemode`, `accounts`, `walletsalt`, `xrpreserve`, `interface_settings`, and `serverStack` are read and written across dozens of functions. Any module split must explicitly surface these as a shared state object or singleton, not rely on implicit `window` scope.
+- **Circular HTML↔JS dependency.** HTML attributes contain inline `ontouchstart="ts(event)" ontouchend="te(event, ()=>{doSomething()})"` handlers that directly reference functions defined later in the page. Extracting JS to external files works only if those files are loaded *before* the HTML is parsed, or handlers are rebound after load via jQuery delegation.
+- **`injectCompatibilityLayer` is called inside `connectToRipple`** (L7126), meaning the XRPL service module cannot be fully isolated without also extracting the connection lifecycle.
+- **Encryption/PIN functions** (`setPin`, `validatePin`, `setPassphrase`, `validatePassphrase`) interleave PouchDB reads, sodium crypto, and UI navigation calls — they cross-cut db, crypto, and navigation concerns simultaneously.
+
+---
+
+## 1. Target Architecture
 
 ```
 www/
-├── index.html                  # Lightweight skeleton containing base layout & layout containers
-├── css/                        # Stylesheets (unmodified)
+├── index.html                  # Skeleton: <head>, <body>, view containers, <script> tags
+├── css/                        # Unchanged
 └── js/
-    ├── app-init.js             # Initial state definitions & runtime settings
+    ├── app.js                  # Entry point: boot sequence, global error handler, event delegation
+    ├── state.js                # Shared mutable state object (replaces bare globals)
     ├── modules/
-    │   ├── db-service.js       # PouchDB local database storage service
-    │   ├── xrpl-service.js     # XRPL client connectivity & API wrappers (compatibility layer)
-    │   ├── navigation.js       # Screen routing, page transits, & input block state manager
-    │   ├── utils.js            # General helper methods (formatting, QR derivation)
-    │   └── controllers/        # View-specific controllers (linking UI triggers to actions)
-    │       ├── accounts.js     # Accounts view handlers (nickname, secret view, delete)
-    │       ├── transaction.js  # Payments, offline codes, rekeying
-    │       └── settings.js     # Settings, flags, backups/restore
-    └── app.js                  # Main bundle combining all modules (compiled via build step)
+    │   ├── db.js               # PouchDB wrapper: get/upsert accounts, profiles, settings
+    │   ├── crypto.js           # PIN hashing, passphrase derivation, wallet encryption/decryption (sodium)
+    │   ├── xrpl-client.js      # Connection lifecycle, server cycling, compatibility layer
+    │   ├── xrpl-tx.js          # Transaction builders: sendPayment, sendTrustLineTx, sendOfferCreate, etc.
+    │   ├── address.js          # Address helpers: xaddr/raddr, forceraddr, validateAddress/Secret, dispaddr
+    │   ├── navigation.js       # showTab, blockInput/unblockInput, showSpinner/hideSpinner
+    │   ├── clipboard.js        # clipboardCopy, clipboardPaste, scanQR
+    │   ├── orderbook.js        # renderOrderbookChart, getExchangeRate, getOrders
+    │   └── ui/                 # Per-screen controllers
+    │       ├── login.js        # PIN pad, doShowLogin, runPinPad
+    │       ├── accounts.js     # Account list, import, delete, nickname, secret reveal
+    │       ├── payments.js     # Payment form, confirm, offline code generation
+    │       ├── trustlines.js   # Add/modify trustline, confirm
+    │       ├── orders.js       # New order, confirm, cancel
+    │       ├── flags.js        # Account flags, confirm flags
+    │       ├── backup.js       # Export/import wallet, restore, backup reminder
+    │       ├── settings.js     # Interface settings, passphrase change, recovery, rekey
+    │       └── transactions.js # View transaction, transaction history list
+    └── vendor/                 # Existing 3rd-party libs (unchanged, already separate files)
+```
+
+> [!IMPORTANT]
+> The `controllers/` directory from the previous plan only had 3 files. With 42 screen tabs, 3 controller files would each be 500+ lines and still hard to navigate. The revised `ui/` directory maps closer to actual screen groups.
+
+---
+
+## 2. Phased Execution
+
+### Phase 1: Extract Inline Scripts (Zero Behavioral Change)
+
+**Goal:** Move all `<script>` content out of `index.html` into external `.js` files without changing a single line of logic.
+
+| Step | Action | Output File |
+|---|---|---|
+| 1a | Extract head shim (L23–54): `blockInput`, `unblockInput`, `window.onerror` | `js/head-shim.js` |
+| 1b | Extract config + layout block (L61–392): globals, `showTab`, touch helpers, Electron paylink handler | `js/app-init.js` |
+| 1c | Extract main logic block (L1703–8066): all 144 functions | `js/app-logic.js` |
+| 1d | Replace inline blocks in `index.html` with `<script src="...">` tags in the same order | — |
+
+**Verification:** App should behave identically. Run in browser/Electron, confirm all tabs navigate, PIN works, connection attempt fires.
+
+> [!WARNING]
+> The head shim (`blockInput`/`unblockInput`) is referenced by the error handler which fires during parse. It **must** load synchronously in `<head>`, before `<body>` is parsed. Place it as: `<script src="js/head-shim.js"></script>` inside `<head>`.
+
+---
+
+### Phase 2: Introduce Shared State Object
+
+Replace bare globals with a single namespaced object to make dependencies explicit:
+
+```javascript
+// js/state.js
+window.AppState = {
+    debug: true,
+    ontestnet: false,
+    offlinemode: false,
+    xrpreserve: 20,
+    toastepoc: 36225052,
+    remote: null,           // xrpl.Client instance
+    db: null,               // PouchDB instance
+    walletsalt: null,
+    accounts: {},
+    interface_settings: {
+        valuation_counterparty: 'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B',
+        valuation_currency: 'USD',
+        display_xaddresses: false
+    },
+    serverStack: [],
+    defaultServerStack: [/* ... */],
+    can_accept_paylink: false,
+    paylink_pending: null
+};
+```
+
+Then do a mechanical find-and-replace across `app-logic.js`:
+- `offlinemode` → `AppState.offlinemode`
+- `remote.` → `AppState.remote.`
+- `db.` → `AppState.db.`
+- etc.
+
+> [!TIP]
+> This step is purely mechanical and can be partially automated with a script. It makes every cross-module dependency grep-able and eliminates implicit globals.
+
+---
+
+### Phase 3: Extract Leaf Modules (No Cross-Dependencies)
+
+Start with modules that have **zero inbound callers from other modules** — they only call standard APIs:
+
+| Module | Functions | Depends On |
+|---|---|---|
+| `address.js` | `xaddr`, `raddr`, `isXAddress`, `forceraddrtag`, `forceraddr`, `dispaddr`, `truncaddr`, `validateAddress`, `validateSecret` | `xrpl` (global) |
+| `clipboard.js` | `clipboardCopy`, `clipboardPaste` | Cordova/Electron APIs |
+| `navigation.js` | `showTab`, `blockInput`, `unblockInput`, `showSpinner`, `hideSpinner`, `selectAccountDetailsSubTab` | jQuery, `AppState` |
+| `crypto.js` | `setPin`, `validatePin`, `tohex_chksum`, `fromhex_chksum`, `isvalidhex`, `randShuffleArray` | `sodium`, `AppState.db` |
+
+Each module attaches its exports to `window` (e.g. `window.Address = { xaddr, raddr, ... }`) so existing inline HTML handlers continue to work without changes.
+
+---
+
+### Phase 4: Extract Core Service Modules
+
+| Module | Functions | Depends On |
+|---|---|---|
+| `db.js` | `getAccounts`, `getAccountInfo`, `getSavedGateways`, `loadSavedInterfaceSettings`, `saveInterfaceSettings`, `validateDataStores` | `AppState.db`, PouchDB |
+| `xrpl-client.js` | `connectToRipple`, `injectCompatibilityLayer`, `resetServerStack`, `setRemoteGateway`, `serverCycle`, `doRetryConnection`, `doOfflineMode`, `checkConnection` | `AppState.remote`, `xrpl` |
+| `xrpl-tx.js` | `sendPayment`, `sendPaymentOffline`, `sendTrustLineTx`, `sendTrustLineTxOffline`, `sendOfferCreate`, `sendOfferCreateOffline`, `sendOfferCancel`, `sendOfferCancelOffline`, `sendAccountFlagsTx`, `sendAccountFlagsTxOffline`, `submitSignedTransaction` | `xrpl-client.js`, `AppState`, `crypto.js` |
+
+---
+
+### Phase 5: Extract UI Controllers
+
+Each controller file handles a group of related screens. They wire up jQuery event handlers and call into the service modules.
+
+| Controller | Screens Covered | Key Functions |
+|---|---|---|
+| `ui/login.js` | `#tablogin`, `#tabpinset1`, `#tabpinset2`, `#tablicense` | `doShowLogin`, `runPinPad`, `normalboot`, `recoveryboot` |
+| `ui/accounts.js` | `#tabaccounts`, `#tabaccountsecret`, `#tabaccountdelete`, `#tabnickchange`, `#tabaddaccount`, `#tabaddexistingaccount`, `#tabgenaccount` | `importAddress`, `generateAddress`, `doDeleteAccount`, `doRevealRippleSecret`, `changeNickname`, `refreshAccounts`, `doSelectAccount` |
+| `ui/payments.js` | `#tabpayments`, `#tabpaymentconfirm`, `#tabgreenqr` | `showPaymentTab`, `doPay`, `confirmPayment`, `populatePaymentTabFromURI`, `checkPayToAddressForCommonErrors` |
+| `ui/trustlines.js` | `#tabaddtrustline`, `#tabmodifytrustline`, `#tabtrustlineconfirm` | `doAddTrustline`, `doModifyTrustline`, `doConfirmTrustline`, `refreshTrustlines` |
+| `ui/orders.js` | `#tabneworder`, `#taborderconfirm`, `#tabcancelorderconfirm` | `showNewOrder`, `doConfirmOrder`, `doConfirmCancelOrder`, `onToggleNewOrder` |
+| `ui/flags.js` | `#tabaccountflags`, `#tabaccountflagsconfirm` | `showAccountFlags`, `doSetAccountFlags`, `doConfirmAccountFlags` |
+| `ui/backup.js` | `#tabbackup2`, `#tabrestore`, `#tabrestore2`, `#tabbackupreminder` | `doGenerateBackup`, `exportWallet`, `importWallet`, `doRestoreBackup`, `doRestoreBackupFreshInstall`, `doCheckBackup` |
+| `ui/settings.js` | `#tabsettings`, `#tabinterface`, `#tabsetpassphrase`, `#tabchangepassphrase`, `#tabrecovery`, `#tabshowrecovery`, `#tabrekeyaccount` | `showInterfaceTab`, `doResetPassphrase`, `doResetPin`, `setAndShowNewRecoveryPhrase`, `doRekeyAccount` |
+| `ui/transactions.js` | `#tabviewtransaction`, `#tabaccountdetails` (transactions sub-tab) | `doViewTransaction`, `doGetTransactions` |
+
+---
+
+### Phase 6: Rebind Inline HTML Handlers → jQuery Delegation
+
+The 42 screen tabs contain ~190 inline `ontouchstart`/`ontouchend` handlers like:
+```html
+<button ontouchstart="ts(event)" ontouchend="te(event, ()=>{doSomething()})">
+```
+
+Refactor these to use delegated jQuery event binding:
+```javascript
+// In ui/accounts.js
+$(document).on('touchend', '#btnaddaccount', function(e) {
+    te(e, () => showTab('#tabaddaccount'));
+});
+```
+
+This decouples HTML from JS function names and allows HTML templates to be extracted cleanly in Phase 7.
+
+> [!CAUTION]
+> Do **not** do this in bulk — it is the highest-risk step. Rebind one screen at a time and test thoroughly. Touch event timing bugs (double-tap, ghost clicks) can appear when switching from inline to delegated handlers.
+
+---
+
+### Phase 7: Bundle with Browserify (Extend Existing Toolchain)
+
+The project already uses Browserify in `utils-build/update`. Extend this rather than introducing a new bundler:
+
+```bash
+# utils-build/update (revised)
+#!/bin/bash
+npm run build
+npx browserify rippleutils.js -o rippleutils-build.js
+cp rippleutils-build.js ../www/js/
+
+# Bundle app modules
+npx browserify ../www/js/app.js -o ../www/js/app-bundle.js
+```
+
+In `app.js`:
+```javascript
+require('./state');
+require('./modules/address');
+require('./modules/clipboard');
+require('./modules/navigation');
+require('./modules/crypto');
+require('./modules/db');
+require('./modules/xrpl-client');
+require('./modules/xrpl-tx');
+require('./modules/orderbook');
+require('./ui/login');
+// ... etc
+```
+
+Final `index.html` script section:
+```html
+<script src="js/head-shim.js"></script>
+<!-- vendor libs -->
+<script src="js/jquery-3.7.1.min.js"></script>
+<script src="js/pouchdb.min.js"></script>
+<script src="js/pouchdb.upsert.min.js"></script>
+<script src="cordova.js"></script>
+<script src="js/kjua-0.1.1.min.js"></script>
+<script src="js/sodium.js"></script>
+<script src="js/instascan.min.js"></script>
+<script src="js/rippleutils-build.js"></script>
+<script src="js/hashicon.js"></script>
+<script src="js/select2.js"></script>
+<!-- app bundle -->
+<script src="js/app-bundle.js"></script>
 ```
 
 ---
 
-## 2. Refactoring Phases
+### Phase 8 (Optional): Extract HTML Templates
 
-### Phase 1: Separate HTML Views & JavaScript Scripts
+Split the 42 `screentab` divs into individual files under `www/views/`:
+```
+www/views/
+├── login.html
+├── accounts.html
+├── account-details.html
+├── payments.html
+├── ...
+```
 
-Currently, `index.html` has two massive `<script>` blocks:
-1. **Script Block 1 (Lines 61–392):** Handles layout helper logic, styling swaps, and initial configuration.
-2. **Script Block 2 (Lines 1703–8066):** Contains the primary application logic, database bindings, transaction handling, and XRPL wrappers.
+Load at boot using a simple include mechanism:
+```javascript
+// In app.js boot sequence
+const viewFiles = ['login', 'accounts', 'account-details', 'payments', ...];
+Promise.all(viewFiles.map(v =>
+    fetch(`views/${v}.html`).then(r => r.text())
+)).then(htmls => {
+    htmls.forEach(html => $('#view-container').append(html));
+    // Now bind all event handlers
+    initAllControllers();
+});
+```
 
-**Steps:**
-1. Extract Script Block 1 into a new file: `www/js/app-init.js`.
-2. Extract Script Block 2 into a new temporary file: `www/js/app-logic.js`.
-3. In `www/index.html`, replace both inline blocks with references:
-   ```html
-   <script src="js/app-init.js"></script>
-   <script src="js/app-logic.js"></script>
-   ```
-4. Verify application behavior to ensure no runtime errors are introduced by the initial separation.
-
----
-
-### Phase 2: Split JavaScript Logic into Independent Modules
-
-Break down the giant `app-logic.js` (~6,300 lines) into separate functional modules under `www/js/modules/`:
-
-#### 1. `db-service.js` (Database Operations)
-* **Responsibility:** Manages all data persistence using `PouchDB` and `pouchdb-upsert`.
-* **Functions to extract:** `db.get("accounts")`, `db.upsert`, profile storage/decryption, password validation.
-
-#### 2. `xrpl-service.js` (XRPL Interface)
-* **Responsibility:** Manages connection lifecycle to `xrpl.Client` clusters and signs/submits transactions.
-* **Functions to extract:** `checkConnection`, `connectremote`, `injectCompatibilityLayer`, transaction preparation wrappers (`preparePayment`, `prepareSettings`, etc.).
-
-#### 3. `navigation.js` (Routing & Layout Control)
-* **Responsibility:** Controls tab transits (`screentab` selection) and interface blocking states.
-* **Functions to extract:** `showTab`, `blockInput`, `unblockInput`, `displayTabHeader/Footer`.
-
-#### 4. `utils.js` (Helpers & Crypto Validation)
-* **Responsibility:** Input parsing, address formats, checksum validation, and QR code rendering.
-* **Functions to extract:** `validateAddress`, `validateSecret`, `forceraddr`, `forceraddrtag`, `xaddr`, `raddr`.
-
-#### 5. `controllers/` (UI Event Handlers)
-* **Responsibility:** Binds jQuery click/touch handlers to their actions and manages state updates.
-* **Modules:**
-  * **`accounts.js`**: `importAccount`, `normalImport`, `generateAddress`, nickname changing, account deletion.
-  * **`transaction.js`**: `doSendPayment`, `confirmPayment`, `doViewTransaction`, offline code signature generation.
-  * **`settings.js`**: `backup`, `restore`, flag updates (`doRekey`, `confirmRekey`).
+> [!NOTE]
+> For Cordova `file://` protocol, `fetch` may not work on all platforms. An alternative is to use a build-time HTML include tool (e.g. `html-include` or a simple Node script) to concatenate views into `index.html` at build time, keeping the runtime simple.
 
 ---
 
-### Phase 3: Setup Bundling & Development Workflow
+## 3. Execution Order & Priority
 
-Since mobile/Cordova platforms load files via local schemas (`file://`), using raw ES6 native modules (`import`/`export`) directly in index.html is discouraged due to CORS constraints on some older webviews.
-
-**Steps:**
-1. Initialize a minimal bundler toolchain in `utils-build/package.json` (such as `Vite`, `Webpack`, or adding ESBuild/Browserify compilation support).
-2. Refactor modules to use standard `export` / `require` declarations.
-3. Configure the build step to bundle and minify all files in `www/js/modules/` into a single `www/js/app.js` file.
-4. Replace the separate script tags in `www/index.html` with a single entry point:
-   ```html
-   <script src="js/app.js"></script>
-   ```
-
----
-
-### Phase 4: Modularize HTML Screen Views (Optional Enhancement)
-
-Currently, all page layouts (`#tabaccounts`, `#tabrestore`, etc.) sit as flat markup siblings within the main body of `index.html`.
-
-**Steps:**
-1. Split each major view into its own component file (e.g. `www/components/tabaccounts.html`).
-2. Utilize the build bundler or write a simple run-time bootstrap routine to fetch and insert components into `index.html`:
-   ```javascript
-   $(function() {
-       $("#tab-container").load("components/tabaccounts.html", function() {
-           // bind events after view injection
-       });
-   });
-   ```
-3. This creates a clean `index.html` file that is less than 100 lines long, leaving all presentation structures segregated.
+| Priority | Phase | Risk | Effort | Value |
+|---|---|---|---|---|
+| **P0** | Phase 1: Extract inline scripts | Very Low | 1 hour | Unblocks everything else |
+| **P0** | Phase 2: Shared state object | Low | 2–3 hours | Makes dependencies visible |
+| **P1** | Phase 3: Leaf modules | Low | 3–4 hours | First real structural win |
+| **P1** | Phase 4: Service modules | Medium | 4–6 hours | Isolates core business logic |
+| **P2** | Phase 5: UI controllers | Medium | 6–8 hours | Largest code movement |
+| **P2** | Phase 7: Browserify bundle | Low | 1–2 hours | Clean single entry point |
+| **P3** | Phase 6: Rebind HTML handlers | High | 8–12 hours | Highest risk, do incrementally |
+| **P3** | Phase 8: Extract HTML templates | Medium | 4–6 hours | Nice-to-have, not critical |
 
 ---
 
-## 3. Risk Mitigation & Verification Strategy
+## 4. Verification Strategy
 
-* **Namespace Clashes:** Wrap modules in IIFEs or namespace them clearly (e.g. `window.App.Navigation`, `window.App.XRPL`) during migration before transitioning to a module bundler.
-* **Offline Functionality:** Ensure no external assets are required, preserving the offline-signing capabilities of the app.
-* **Testing:** Run the existing `/scratch/test_compat.js` and `/scratch/test_helpers_validation.js` test suites after every module extraction to catch regression bugs instantly.
+- **After every phase:** Run `test_compat.js` and `test_helpers_validation.js` against the built bundle.
+- **Manual smoke test checklist:**
+  1. Fresh install → license → passphrase → PIN → recovery phrase → finish setup
+  2. Add account (generate new + import existing)
+  3. Navigate all primary tabs (Accounts / Send / Settings)
+  4. View account details → sub-tabs (Address / DEX / Transactions)
+  5. Attempt a payment (confirm screen renders correctly)
+  6. Backup → Restore flow
+  7. Offline mode toggle
+  8. Change PIN, change passphrase
+
+- **Regression guard:** After Phase 1, add a CI step that runs `npx browserify` and checks the exit code. This catches missing `require()` references immediately.
