@@ -1,17 +1,17 @@
-var debug = true;
-var ontestnet = false;
-var emergencybackup = false;
-var offlinemode = false;
-var toastepoc = 36225052; // this is the ledger seq number from which toast wallet bases its offline tx qr codes
+debug = true;
+ontestnet = false;
+emergencybackup = false;
+offlinemode = false;
+toastepoc = 36225052; // this is the ledger seq number from which toast wallet bases its offline tx qr codes
 if (ontestnet) toastepoc = 0;
-var xrpreserve = 20; // this will be updated by querying the server when it connects, if there's an error getting this data the default will be used
-var timepaused = 0;
-var paylink_pending;
+xrpreserve = 20; // this will be updated by querying the server when it connects, if there's an error getting this data the default will be used
+timepaused = 0;
+
 // this variable is set to true at the end of all boot and wallet setup, ie at the first login screen
-var can_accept_paylink = false
+can_accept_paylink = false
 // contains all interface settings like whether or not to use x-addresses by default
 // and which currency to display in
-var interface_settings = {
+interface_settings = {
     valuation_counterparty: 'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B', // bitstamp is default
     valuation_currency: 'USD',
     display_xaddresses: false
@@ -160,8 +160,8 @@ function find_label(ele) {
         return original_ele
     }
 }
-var nativekeyboardvisible = false;
-var prekeyboardscrollpos = 0;
+nativekeyboardvisible = false;
+prekeyboardscrollpos = 0;
 function afterCordovaLoad()  {
     if (debug) console.log("afterCordovaLoad");
     $('.deviceversion').text(device.model + " - " + device.platform + " - " + device.version);

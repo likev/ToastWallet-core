@@ -857,8 +857,8 @@ function truncaddr(x) {
     if (x.length > 33) return x.substr(0, 30) + '...'
     return x
 }
-var scanner;
-var timeatlastQR = 0;
+
+timeatlastQR = 0;
 function scanQR(parseContentFunc, after, ...intoFields) {
 	if (debug) console.log("scanQR");
 	timeatlastQR = $.now();
@@ -1550,7 +1550,7 @@ function showModifyTrustline(account, currency, issuer, limit) {
     $('#mtllimit').data('content', limit);        
     showTab('#tabmodifytrustline', true);
 }
-var trustlinesdropdown = {};
+trustlinesdropdown = {};
 function refreshAccounts(after) {
     // mark and sweep to remove any dead accounts
     
@@ -1725,7 +1725,7 @@ function doPayLink() {
     if (activeaccount == "") 
         refreshAccounts()
 }
-var pinpadvalidate = function(pin) { return false ; }
+pinpadvalidate = function(pin) { return false ; }
 var pinpadsuccess = function() {}
 var pinpadfailure = function() {}
 function runPinPad(tab, validationfunc, successfunc, failurefunc) {
@@ -1783,8 +1783,8 @@ function doShakeAndClearPinPad(afterfunc) {
 			}, 500);
 	}, 0);
 }
-var enteredpin = "";
-var PIN_MAX = 6;
+enteredpin = "";
+PIN_MAX = 6;
 function doPinPad(x) {
 	if (debug) console.log("doPinPad");
 	var val = x.trim();
@@ -1826,7 +1826,7 @@ function renderEnteredPin() {
 }
 /* ts and te are functions to handle touchstart and touchend events on active elements
    te in particular ensures that drag-to-scroll gesture does not cause accidental taps */
-var inClickProxy = false;
+inClickProxy = false;
 function ts(e) {
     if (inClickProxy) return;
 }
@@ -1912,14 +1912,14 @@ function clickProxy() {
 		});
 	}
 }
-var currenttab = "";
-var previoustabs = [];
-var activeaccount = "";
-var accountbalances = {};
-var accountbalancestl = {};
-var accountflags = {};
-var userkey = ""; // user's sha1 of passphrase used to decrypt wallet secrets
-var screentabpaddingbottom = 0; // we use this when calcualting keyboard offset
+currenttab = "";
+previoustabs = [];
+activeaccount = "";
+accountbalances = {};
+accountbalancestl = {};
+accountflags = {};
+userkey = ""; // user's sha1 of passphrase used to decrypt wallet secrets
+screentabpaddingbottom = 0; // we use this when calcualting keyboard offset
 function showTab(tab, dontClearText) {
     // while a link is pending we will handle it as soon as we can
     if (tab == '#tablogin') {
@@ -2161,7 +2161,7 @@ function showTab(tab, dontClearText) {
 	}
 	setTimeout(unblockInput, 200);
 }
-var generatedAccount = {};
+generatedAccount = {};
 function doShowAndGenerateAccount() {
 	if (debug) console.log("doShowAndGenerateAccount");
 	blockInput();
@@ -2535,9 +2535,9 @@ function doConfirmTrustline(passphrase) {
 function validateCurrency(cur) {
     return /^[A-Z0-9?!@#$%^&*<>(){}[\]|]{3}$/.test(""+cur);
 }
-var lasttrustlinenonce;
-var confirmtl = {};
-var confirmtlhash = "";
+
+confirmtl = {};
+confirmtlhash = "";
 function doModifyTrustline(nonce) {
     
 	if (debug) console.log("doModifyTrustline");
@@ -2757,9 +2757,9 @@ function doAddTrustline(nonce) {
 					unblockInput();                    
                 }, nextscreen);
 }
-var lastsetflagsnonce;
-var confirmfl = {};
-var confirmflhash = "";
+
+confirmfl = {};
+confirmflhash = "";
 function doSetAccountFlags(nonce) {
     
 	if (debug) console.log("doSetAccountFlags");
@@ -2921,9 +2921,9 @@ function adjustOrderPrice(x) {
 	$('#ntloprice').val("" + next);
     renderOrderPreview();
 }
-var confirmcancelorder = {};
-var confirmcancelorderhash = "";
-var lastcancelordernonce;
+confirmcancelorder = {};
+confirmcancelorderhash = "";
+
 //(sodium.randombytes_random(), confirmcancelorder={account:\''+account+'\', seq: '+seq+', currency1: \''+currency1+'\', amount1: '+amount1+', currency2: \''+currency2+'\', amount2: '+amount2+', sell: '+(direction == 'sell')+'} )
 function doPlaceCancelOrder(nonce, dataset) {
     // needed
@@ -3005,9 +3005,9 @@ function doPlaceCancelOrder(nonce, dataset) {
 	};
     return nextscreen();
 }
-var confirmorder = {};
-var confirmorderhash = "";
-var lastordernonce;
+confirmorder = {};
+confirmorderhash = "";
+
 function doPlaceOrder(nonce) {
 	if (debug) console.log("doPlaceOrder");
 	blockInput();
@@ -3348,9 +3348,9 @@ function doConfirmOrder(passphrase) {
 		}
 	);
 }
-var confirmpay = {};
-var confirmpayhash = "";
-var lastpaidnonce;
+confirmpay = {};
+confirmpayhash = "";
+
 function doPay(nonce) {
 	if (debug) console.log("doPay");
 	blockInput();
@@ -4014,10 +4014,10 @@ function injectCompatibilityLayer(client) {
         });
     };
 }
-var currentServer = '';
-var serverStack = [ 'wss://xrplcluster.com', 'wss://s1.ripple.com', 'wss://s2.ripple.com', 'wss://xrpl.ws' ];
-var defaultServerStack = [ 'wss://xrplcluster.com', 'wss://s1.ripple.com', 'wss://s2.ripple.com', 'wss://xrpl.ws' ];
-var testnetServer = 'wss://s.altnet.rippletest.net:51233';
+currentServer = '';
+serverStack = [ 'wss://xrplcluster.com', 'wss://s1.ripple.com', 'wss://s2.ripple.com', 'wss://xrpl.ws' ];
+defaultServerStack = [ 'wss://xrplcluster.com', 'wss://s1.ripple.com', 'wss://s2.ripple.com', 'wss://xrpl.ws' ];
+testnetServer = 'wss://s.altnet.rippletest.net:51233';
 function resetServerStack() {
 	serverStack = [];
     if (ontestnet) {
@@ -4031,7 +4031,7 @@ function resetServerStack() {
 	randShuffleArray(serverStack);
 	setRemoteGateway(serverStack[0]);
 }
-var remote;
+
 resetServerStack();
 function showSpinner(msg) {
 	if (debug) console.log("showSpinner");
@@ -4041,8 +4041,8 @@ function hideSpinner() {
 	if (debug) console.log("hideSpinner");
 	$("body").removeClass("loading");
 }
-var db;
-var walletsalt;
+
+
 function exportWallet(exportfunc) {
 	//todo: allow partial backup?
 	var f = function() {
@@ -4526,7 +4526,7 @@ function normalboot () {
 		);
 	}
 }
-var corruptionstate;
+
 function recoveryboot(corruption) {
 	var msg = "Your wallet data appears to be corrupted. Here's what we know: " + 
 		"PIN: " + corruption.pindata + ", Passphrase: " + corruption.ppdata + 
@@ -4986,7 +4986,7 @@ function validatePassphaseOrRecovery(passphrase, successfunc, failurefunc, nopas
 ** and in general guard against unwanted manipulation of data. To speed up the validation routine the first
 ** successful validation will cache as a lightweight hash which will thereafter be used for validation.
 */
-var validatePassphraseCache = {};
+validatePassphraseCache = {};
 function _validatePassphraseCacheHit(passphrase) {
 	
     return validatePassphraseCache.salt != undefined && validatePassphraseCache.hash == sodium.crypto_shorthash(passphrase, validatePassphraseCache.salt, 'hex');	
