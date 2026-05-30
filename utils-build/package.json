@@ -9,11 +9,14 @@
     "crypto": "^1.0.1",
     "elliptic": "^6.4.0",
     "hashjs": "^1.2.0",
+    "jquery": "^3.7.1",
+    "lodash": "^4.17.21",
     "node-pre-gyp": "^0.6.36",
+    "pouchdb": "^9.0.0",
+    "pouchdb-upsert": "^2.2.0",
     "random-bytes": "^1.0.0",
-    "ripple-address-codec": "^2.0.1",
-    "ripple-binary-codec": "^0.1.10",
-    "ripple-keypairs": "^0.10.0",
-    "ripple-lib": "^0.17.7"
+    "ripple-address-codec": "^5.0.0",
+    "ripple-keypairs": "^2.0.0",
+    "xrpl": "4.6.0"
   }
 }
