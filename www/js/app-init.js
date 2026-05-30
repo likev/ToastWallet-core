@@ -126,7 +126,7 @@ function handleOpenURL(link, e) {
 }
 function openExternalUrl(url) {
     try {
-        var electron = ( window.require ? require('electron') : false )
+        var electron = ( window.require ? window.require('electron') : false )
         if (electron && electron.shell && electron.shell.openExternal)
             return electron.shell.openExternal(url)
         if (device.platform == 'browser')
@@ -318,8 +318,8 @@ function afterCordovaLoad()  {
         handleOpenURL(link, e);
     };
     // in builds that support xrpl:// protocol handling we will receive those events here
-    if (typeof(require) == 'function' && typeof(require('electron')) == 'object' && typeof(require('electron').ipcRenderer) == 'object' && typeof(require('electron').ipcRenderer.on) == 'function') {
-        require('electron').ipcRenderer.on('pay-link', paylink_handler);
+    if (typeof(window.require) == 'function' && typeof(window.require('electron')) == 'object' && typeof(window.require('electron').ipcRenderer) == 'object' && typeof(window.require('electron').ipcRenderer.on) == 'function') {
+        window.require('electron').ipcRenderer.on('pay-link', paylink_handler);
     }
     // since we're booting, if the wallet was started with a pay link we need to process that now
     if (typeof(document.location) == 'object' && typeof(document.location.search) == 'string') {

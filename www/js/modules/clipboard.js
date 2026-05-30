@@ -1,7 +1,7 @@
 function clipboardCopy(data) {
     try {
-        if (window.require && require('electron') && require('electron').clipboard) 
-            return require('electron').clipboard.writeText(data);
+        if (window.require && window.require('electron') && window.require('electron').clipboard) 
+            return window.require('electron').clipboard.writeText(data);
         if (device.platform == 'browser')
             return navigator.clipboard.writeText(data);
         cordova.plugins.clipboard.copy(data);
@@ -11,8 +11,8 @@ function clipboardCopy(data) {
 }
 function clipboardPaste(f) {
     try {
-        if (window.require && require('electron') && require('electron').clipboard) 
-            return f(require('electron').clipboard.readText());
+        if (window.require && window.require('electron') && window.require('electron').clipboard) 
+            return f(window.require('electron').clipboard.readText());
         if (device.platform == 'browser')
             return navigator.clipboard.readText().then(f);
         cordova.plugins.clipboard.paste(f);
