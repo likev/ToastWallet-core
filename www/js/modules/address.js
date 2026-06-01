@@ -16,7 +16,7 @@ function raddr(xaddr) {
 function isXAddress(x) {
     try {
         var r = raddr(x)
-        return true
+        return r !== false
     } catch (e) {}
     return false
 }

@@ -300,11 +300,13 @@ function clickProxy() {
                 }
                 if (_ts != undefined || _te != undefined) srcEle = (ele[0] == undefined ? ele : ele[0]);
             } while (_ts == undefined && _te == undefined && (typeof($(ele).parent) === 'function') && (ele = $(ele).parent()) != undefined  && maxUp-- > 0 );
-            var executeHandler = (handler)=>{
+            var executeHandler = (handler, eventName)=>{
                 if (typeof(handler) == 'string') {
-                    event = {srcElement: srcEle};
-    				handler = '(function(){' + handler + ';})();';
-	    			eval(handler);
+                    var evt = new CustomEvent(eventName, { bubbles: true, cancelable: true });
+                    evt.touches = [];
+                    evt.targetTouches = [];
+                    evt.changedTouches = [{ clientX: e.clientX, clientY: e.clientY }];
+                    srcEle.dispatchEvent(evt);
                 } else if (typeof(handler) == 'object') {
                     if (handler[0] != undefined && handler[0].handler != undefined && typeof(handler[0].handler) == 'function') {
                         event = {srcElement: srcEle};
@@ -313,10 +315,10 @@ function clickProxy() {
                 }
             }
 			if (_ts != undefined) {
-                executeHandler(_ts);
+                executeHandler(_ts, 'touchstart');
 			}
 			if (_te != undefined) {
-                executeHandler(_te);
+                executeHandler(_te, 'touchend');
 			};
 			e.stopPropagation();
 			e.preventDefault();

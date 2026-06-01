@@ -193,10 +193,12 @@ function injectCompatibilityLayer(client) {
             return (res.result.lines || []).map(line => ({
                 specification: {
                     currency: line.currency,
-                    counterparty: line.account
+                    counterparty: line.account,
+                    limit: line.limit
                 },
-                balance: line.balance,
-                limit: line.limit
+                state: {
+                    balance: line.balance
+                }
             }));
         });
     };
@@ -540,7 +542,7 @@ function injectCompatibilityLayer(client) {
     };
     client.sign = function(txJSON, secret) {
         var tx = JSON.parse(txJSON);
-        var wallet = xrpl.Wallet.fromSeed(secret, { algorithm: "secp256k1" });
+        var wallet = xrpl.Wallet.fromSeed(secret, { algorithm: secret.startsWith('sEd') ? 'ed25519' : 'ecdsa-secp256k1' });
         var signed = wallet.sign(tx);
         return {
             signedTransaction: signed.tx_blob,

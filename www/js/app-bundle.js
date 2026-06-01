@@ -600,11 +600,13 @@ function clickProxy() {
                 }
                 if (_ts != undefined || _te != undefined) srcEle = (ele[0] == undefined ? ele : ele[0]);
             } while (_ts == undefined && _te == undefined && (typeof($(ele).parent) === 'function') && (ele = $(ele).parent()) != undefined  && maxUp-- > 0 );
-            var executeHandler = (handler)=>{
+            var executeHandler = (handler, eventName)=>{
                 if (typeof(handler) == 'string') {
-                    event = {srcElement: srcEle};
-    				handler = '(function(){' + handler + ';})();';
-	    			eval(handler);
+                    var evt = new CustomEvent(eventName, { bubbles: true, cancelable: true });
+                    evt.touches = [];
+                    evt.targetTouches = [];
+                    evt.changedTouches = [{ clientX: e.clientX, clientY: e.clientY }];
+                    srcEle.dispatchEvent(evt);
                 } else if (typeof(handler) == 'object') {
                     if (handler[0] != undefined && handler[0].handler != undefined && typeof(handler[0].handler) == 'function') {
                         event = {srcElement: srcEle};
@@ -613,10 +615,10 @@ function clickProxy() {
                 }
             }
 			if (_ts != undefined) {
-                executeHandler(_ts);
+                executeHandler(_ts, 'touchstart');
 			}
 			if (_te != undefined) {
-                executeHandler(_te);
+                executeHandler(_te, 'touchend');
 			};
 			e.stopPropagation();
 			e.preventDefault();
@@ -1018,7 +1020,7 @@ function raddr(xaddr) {
 function isXAddress(x) {
     try {
         var r = raddr(x)
-        return true
+        return r !== false
     } catch (e) {}
     return false
 }
@@ -1637,20 +1639,34 @@ function showTab(tab, dontClearText) {
 
 function rebindAllHandlers() {
     $('[ontouchstart], [ontouchend]').each(function() {
+        var el = this;
         var $el = $(this);
-        var touchstartStr = $el.attr('ontouchstart');
-        var touchendStr = $el.attr('ontouchend');
+        if ($el.data('touch-bound')) return;
+        $el.data('touch-bound', true);
         
-        if (touchstartStr) {
-            $el.removeAttr('ontouchstart');
-        }
-        
-        if (touchendStr) {
-            $el.removeAttr('ontouchend');
-            $el.on('click', function(e) {
-                new Function('event', touchendStr).call(this, e.originalEvent || e);
-            });
-        }
+        $el.on('click', function(e) {
+            if (e.originalEvent && e.originalEvent.sourceCapabilities && e.originalEvent.sourceCapabilities.firesTouchEvents) {
+                return;
+            }
+            
+            var hasTouchStart = el.hasAttribute('ontouchstart');
+            var hasTouchEnd = el.hasAttribute('ontouchend');
+            
+            if (hasTouchStart) {
+                var startEvt = new CustomEvent('touchstart', { bubbles: true, cancelable: true });
+                startEvt.touches = [];
+                startEvt.targetTouches = [];
+                startEvt.changedTouches = [{ clientX: e.clientX, clientY: e.clientY }];
+                el.dispatchEvent(startEvt);
+            }
+            if (hasTouchEnd) {
+                var endEvt = new CustomEvent('touchend', { bubbles: true, cancelable: true });
+                endEvt.touches = [];
+                endEvt.targetTouches = [];
+                endEvt.changedTouches = [{ clientX: e.clientX, clientY: e.clientY }];
+                el.dispatchEvent(endEvt);
+            }
+        });
     });
 }
 
@@ -2012,10 +2028,12 @@ function injectCompatibilityLayer(client) {
             return (res.result.lines || []).map(line => ({
                 specification: {
                     currency: line.currency,
-                    counterparty: line.account
+                    counterparty: line.account,
+                    limit: line.limit
                 },
-                balance: line.balance,
-                limit: line.limit
+                state: {
+                    balance: line.balance
+                }
             }));
         });
     };
@@ -2359,7 +2377,7 @@ function injectCompatibilityLayer(client) {
     };
     client.sign = function(txJSON, secret) {
         var tx = JSON.parse(txJSON);
-        var wallet = xrpl.Wallet.fromSeed(secret, { algorithm: "secp256k1" });
+        var wallet = xrpl.Wallet.fromSeed(secret, { algorithm: secret.startsWith('sEd') ? 'ed25519' : 'ecdsa-secp256k1' });
         var signed = wallet.sign(tx);
         return {
             signedTransaction: signed.tx_blob,
@@ -2575,7 +2593,7 @@ function sendTrustLineTx(passphrase, fromacc, issuer, currency, limit, rippling,
 					if ((fail + "").toLowerCase().indexOf("notconnected") != -1) {
 						return serverCycle(
 							function() {
-								preparepayment(fromacc, trustline, instructions, ptries + 1);
+								preparetrustline(fromacc, trustline, instructions, ptries + 1);
 							}, ptries + 1, failurefunc);
 					}
 					unblockInput();
@@ -2714,7 +2732,7 @@ function sendOfferCreate(passphrase, fromacc, amount, asset, issuer, price, sell
 
 function sendOfferCreateOffline(passphrase, fromacc, amount, asset, issuer, price, sell, fok, ioc, passive, expiry, accSeqID, ledSeqID, fee) {
 	
-	if (debug) console.log("sendOfferCreateOffline - " + fromacc + " asset: " + asset + " issuer: " + issuer + " price: " + price + " sell: " + sell + " fok: " + fok + " ioc: " + ioc + " passive: " + passive + ", accSeqId: " + accSeqId + ", ledSeqID: " + ledSeqID + ", fee: " + fee);
+	if (debug) console.log("sendOfferCreateOffline - " + fromacc + " asset: " + asset + " issuer: " + issuer + " price: " + price + " sell: " + sell + " fok: " + fok + " ioc: " + ioc + " passive: " + passive + ", accSeqID: " + accSeqID + ", ledSeqID: " + ledSeqID + ", fee: " + fee);
 	blockInput();
 	
 	getSecretForAccount(passphrase, fromacc, 
@@ -2935,7 +2953,7 @@ function sendAccountFlagsTx(passphrase, fromacc, defaultRipple, depositAuth, dis
                             if ((fail + "").toLowerCase().indexOf("notconnected") != -1) {
                                 return serverCycle(
                                     function() {
-                                        preparepayment(fromacc, settings, instructions, ptries + 1);
+                                         preparesettings(fromacc, settings, instructions, ptries + 1);
                                     }, ptries + 1, failurefunc);
                             }
                             unblockInput();
@@ -4095,6 +4113,15 @@ function importWallet(wallet, successfunc, failurefunc) {
 }
 
 function doCheckBackup(raw) {
+    function escapeHtml(text) {
+        if (text === undefined || text === null) return '';
+        return (text + '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
     var allowedkeys = ["walletversion", "pindata", "ppdata", "rpdata", "accounts"];
     function isvalidhex(h) {
         if (typeof h === 'object') {
@@ -4122,7 +4149,7 @@ function doCheckBackup(raw) {
         
         for (var i in backup) {
             if (allowedkeys.indexOf(i) == -1) {
-                output += "JSON key: " + i + " is not valid, should be one of " + '"walletversion", "pindata", "ppdata", "rpdata", "accounts"' + "<br />";
+                output += "JSON key: " + escapeHtml(i) + " is not valid, should be one of " + '"walletversion", "pindata", "ppdata", "rpdata", "accounts"' + "<br />";
             }
         }
         if (backup['pindata'] == undefined) output += "pindata is missing<br/>";
@@ -4156,22 +4183,23 @@ function doCheckBackup(raw) {
         for (var i in accounts) {
             try {
                 xrpl.decodeAccountID(i);
-                if (accounts[i]['ppsalt'] == undefined) output += "Account " + i + " ppsalt missing<br/>";
-                if (!isvalidhex(accounts[i]['ppsalt'])) output += "Account " + i + " ppsalt invalid<br/>";
-                if (accounts[i]['rpsalt'] == undefined) output += "Account " + i + " rpsalt missing<br/>";
-                if (!isvalidhex(accounts[i]['rpsalt'])) output += "Account " + i + " rpsalt invalid<br/>";
-                if (accounts[i]['ppsecret'] == undefined) output += "Account " + i + " ppsecret missing<br/>";
-                if (!isvalidhex(accounts[i]['ppsecret'])) output += "Account " + i + " ppsecret invalid<br/>";
-                if (accounts[i]['rpsecret'] == undefined) output += "Account " + i + " rpsecret missing<br/>";
-                if (!isvalidhex(accounts[i]['rpsecret'])) output += "Account " + i + " rpsecret invalid<br/>";
+                var escapedI = escapeHtml(i);
+                if (accounts[i]['ppsalt'] == undefined) output += "Account " + escapedI + " ppsalt missing<br/>";
+                if (!isvalidhex(accounts[i]['ppsalt'])) output += "Account " + escapedI + " ppsalt invalid<br/>";
+                if (accounts[i]['rpsalt'] == undefined) output += "Account " + escapedI + " rpsalt missing<br/>";
+                if (!isvalidhex(accounts[i]['rpsalt'])) output += "Account " + escapedI + " rpsalt invalid<br/>";
+                if (accounts[i]['ppsecret'] == undefined) output += "Account " + escapedI + " ppsecret missing<br/>";
+                if (!isvalidhex(accounts[i]['ppsecret'])) output += "Account " + escapedI + " ppsecret invalid<br/>";
+                if (accounts[i]['rpsecret'] == undefined) output += "Account " + escapedI + " rpsecret missing<br/>";
+                if (!isvalidhex(accounts[i]['rpsecret'])) output += "Account " + escapedI + " rpsecret invalid<br/>";
             } catch (e) {
-                output += "Account " + i + " invalid, check that it was transcribed correctly<br/>";
+                output += "Account " + escapeHtml(i) + " invalid, check that it was transcribed correctly<br/>";
             }
         }
         var json = JSON.stringify(backup);
         return {cleanedbackupcode: sodium.crypto_generichash(4, json, '', 'hex') + json, error: (output == "" ? false : output) };
     } catch(e) {
-        output +=  "<br/><b>" + e + "</b>";	
+        output +=  "<br/><b>" + escapeHtml(e) + "</b>";	
         var json = JSON.stringify(backup);
         return {cleanedbackupcode: ( json != undefined ? sodium.crypto_generichash(4, json, '', 'hex') + json : false ), error: (output == "" ? false : output) };
     }
@@ -4848,7 +4876,7 @@ function doPlaceOrder(nonce) {
     // ensure theres no garbage in the price field
     if (!/^[0-9\.]+$/m.test(price) ) return invalidPrice();  
     try {
-        var x = new BN(amount);
+        var x = new BN(price);
         if (x.isNeg() || x.isZero()) return invalidPrice();
     } catch (E) {
         return invalidPrice();
@@ -5672,106 +5700,109 @@ function doSubmitOfflineTransaction(stage, content) {
 				"Failure", "OK"
 			);
         }
-        var onApiFailure = function(fail, failurefunc) {
+        var onApiFailure = function(fail, failurefunc, ptries) {
 					console.log('API query failed: ' + fail);
 					if ((fail + "").toLowerCase().indexOf("notconnected") != -1) {
 						return serverCycle(
 							function() {
-								preparepayment(fromacc, payment, instructions, ptries + 1);
+								queryNetwork(ptries + 1);
 							}, ptries + 1, failurefunc);
 					}
 					unblockInput();
 					failurefunc("" + fail);
 		};
-        checkConnection(() => {
-            remote.getFee().then(fee => {
-                if (fee == undefined) {
-                    fee = 12;
-                } else {
-                    fee *= 1000000;
-                }
-                if (fee > 1000000) fee = 1000000; // we'd rather the tx fail than go through for more than 1 xrp
-                remote.getAccountInfo(account).then(info => {
-                   var accseqid = info.sequence;
-                    remote.getLedger({}).then(info2 => {
-                        var ledseqid = info2.ledgerVersion - toastepoc; // toast wallet epoc
-                        // encode these into a portable format
-                        console.log("Ledger Seq ID: " + ledseqid);
-                        console.log("Account Seq ID: " + accseqid);                        
-                        console.log("Fee: " + fee);                        
-                        var bytes = [];
-                        // 4 byte int for the accseqid
-                        bytes[0] = (accseqid & 0xff000000) >> 24;
-                        bytes[1] = (accseqid & 0xff0000) >> 16;
-                        bytes[2] = (accseqid & 0xff00) >> 8;
-                        bytes[3] = (accseqid & 0xff) >> 0;                        
-                        // 4 byte int for the ledseqid
-                        bytes[4] = (ledseqid & 0xff000000) >> 24;
-                        bytes[5] = (ledseqid & 0xff0000) >> 16;
-                        bytes[6] = (ledseqid & 0xff00) >> 8;
-                        bytes[7] = (ledseqid & 0xff) >> 0;                        
-               
-                        // 4 byte int for the fee
-                        bytes[8]  = (fee & 0xff000000) >> 24;
-                        bytes[9]  = (fee & 0xff0000) >> 16;
-                        bytes[10] = (fee & 0xff00) >> 8;
-                        bytes[11] = (fee & 0xff) >> 0;                        
-                        // 1 byte checksum
-                        var hex = utils.bytesToHex(bytes);
-                        var checksum = sodium.crypto_generichash(1, hex, 'offlinecode', 'hex');
-                       
-                        var fullhex = hex;
-                        var removedZerosLedId = 0;
-                        var removedZerosAccId = 0;
-                        var removedZerosFee = 0;
-                        // remove leading 0's from the ledgerid
-                        while(hex.charAt(8) == '0') {
-                            hex = hex.slice(0,8) + hex.slice(9);
-                            removedZerosLedId++;
-                        }
-                        // remove leading 0's from the fee
-                        while(hex.charAt(hex.length - 8 + removedZerosFee) == '0') {
-                            hex =  hex.slice(0, hex.length - 8 + removedZerosFee) + hex.slice( hex.length - 7 + removedZerosFee);
-                            removedZerosFee++;
-                        }
-                    
-                        // remove leading 0's from acc seq id
-                        while(hex.charAt(0) == '0') {
-                            hex = hex.slice(1);
-                            removedZerosAccId++;
-                        }
-                        // encode the zero removal
-                        var compressionByte = 0;
-                        compressionByte += removedZerosLedId; 
-                        compressionByte += removedZerosAccId * 8;
-                
-                        // add checksum to the beginning
-                        hex = checksum + utils.bytesToHex([compressionByte]) +hex;
-                        // due to the checksum we should be able to reconstruct this
-                        hex = hex.toUpperCase();
-                        console.log("Full offline code: " + checksum + utils.bytesToHex([compressionByte]) + fullhex);
-                        // add spaces for ease of copying
-                        var displayhex = "";
-                        for (var i = 0; i < hex.length; i+= 4) 
-                            displayhex += hex.slice(i, i + 4) + " ";
-                        displayhex = displayhex.trim();
-                        $('#lblofflinetxconfirm').text(displayhex);
-                        unblockInput();
-                        $('#submitofflinetxstep1').css('display', 'block');
-                        $('#submitofflinetxstep2').css('display', 'block' );
-                        $('#submitofflinetxstep3').css('display', 'block' );
-                        showTab('#tabsubmitofflinetx');
+        var queryNetwork = function(ptries) {
+            checkConnection(() => {
+                remote.getFee().then(fee => {
+                    if (fee == undefined) {
+                        fee = 12;
+                    } else {
+                        fee *= 1000000;
+                    }
+                    if (fee > 1000000) fee = 1000000; // we'd rather the tx fail than go through for more than 1 xrp
+                    remote.getAccountInfo(account).then(info => {
+                       var accseqid = info.sequence;
+                        remote.getLedger({}).then(info2 => {
+                            var ledseqid = info2.ledgerVersion - toastepoc; // toast wallet epoc
+                            // encode these into a portable format
+                            console.log("Ledger Seq ID: " + ledseqid);
+                            console.log("Account Seq ID: " + accseqid);                        
+                            console.log("Fee: " + fee);                        
+                            var bytes = [];
+                            // 4 byte int for the accseqid
+                            bytes[0] = (accseqid & 0xff000000) >> 24;
+                            bytes[1] = (accseqid & 0xff0000) >> 16;
+                            bytes[2] = (accseqid & 0xff00) >> 8;
+                            bytes[3] = (accseqid & 0xff) >> 0;                        
+                            // 4 byte int for the ledseqid
+                            bytes[4] = (ledseqid & 0xff000000) >> 24;
+                            bytes[5] = (ledseqid & 0xff0000) >> 16;
+                            bytes[6] = (ledseqid & 0xff00) >> 8;
+                            bytes[7] = (ledseqid & 0xff) >> 0;                        
+                   
+                            // 4 byte int for the fee
+                            bytes[8]  = (fee & 0xff000000) >> 24;
+                            bytes[9]  = (fee & 0xff0000) >> 16;
+                            bytes[10] = (fee & 0xff00) >> 8;
+                            bytes[11] = (fee & 0xff) >> 0;                        
+                            // 1 byte checksum
+                            var hex = utils.bytesToHex(bytes);
+                            var checksum = sodium.crypto_generichash(1, hex, 'offlinecode', 'hex');
+                           
+                            var fullhex = hex;
+                            var removedZerosLedId = 0;
+                            var removedZerosAccId = 0;
+                            var removedZerosFee = 0;
+                            // remove leading 0's from the ledgerid
+                            while(hex.charAt(8) == '0') {
+                                hex = hex.slice(0,8) + hex.slice(9);
+                                removedZerosLedId++;
+                            }
+                            // remove leading 0's from the fee
+                            while(hex.charAt(hex.length - 8 + removedZerosFee) == '0') {
+                                hex =  hex.slice(0, hex.length - 8 + removedZerosFee) + hex.slice( hex.length - 7 + removedZerosFee);
+                                removedZerosFee++;
+                            }
                         
+                            // remove leading 0's from acc seq id
+                            while(hex.charAt(0) == '0') {
+                                hex = hex.slice(1);
+                                removedZerosAccId++;
+                            }
+                            // encode the zero removal
+                            var compressionByte = 0;
+                            compressionByte += removedZerosLedId; 
+                            compressionByte += removedZerosAccId * 8;
+                    
+                            // add checksum to the beginning
+                            hex = checksum + utils.bytesToHex([compressionByte]) +hex;
+                            // due to the checksum we should be able to reconstruct this
+                            hex = hex.toUpperCase();
+                            console.log("Full offline code: " + checksum + utils.bytesToHex([compressionByte]) + fullhex);
+                            // add spaces for ease of copying
+                            var displayhex = "";
+                            for (var i = 0; i < hex.length; i+= 4) 
+                                displayhex += hex.slice(i, i + 4) + " ";
+                            displayhex = displayhex.trim();
+                            $('#lblofflinetxconfirm').text(displayhex);
+                            unblockInput();
+                            $('#submitofflinetxstep1').css('display', 'block');
+                            $('#submitofflinetxstep2').css('display', 'block' );
+                            $('#submitofflinetxstep3').css('display', 'block' );
+                            showTab('#tabsubmitofflinetx');
+                            
+                        }).catch(e => {
+                            return onApiFailure(e, failurefunc, ptries); 
+                        });
                     }).catch(e => {
-                        return onApiFailure(e, failurefunc); 
+                        return onApiFailure(e, failurefuncAccNotFound, ptries); 
                     });
                 }).catch(e => {
-                    return onApiFailure(e, failurefuncAccNotFound); 
+                    return onApiFailure(e, failurefunc, ptries); 
                 });
-            }).catch(e => {
-                return onApiFailure(e, failurefunc); 
             });
-        });
+        };
+        queryNetwork(0);
     } else if (stage == 2) {
         // ready to submit the transaction!
         blockInput();
@@ -6934,12 +6965,18 @@ function doModifyTrustline(nonce) {
     var accID = '';
     var ledID = '';
     var fee = '';
-    var pl = false
+    var pl = false;
     try { 
-        pl = parseInt(mtllimit)
-        if (pl < 0) pl = 0 
-   } catch (e) {}
-    if (mtllimit == $("#mtllimit").data("content") || (''+mtllimit).trim() != '' + pl ) {
+        pl = parseFloat(mtllimit);
+        if (isNaN(pl)) {
+            pl = false;
+        } else if (pl < 0) {
+            pl = 0;
+        }
+    } catch (e) {
+        pl = false;
+    }
+    if (pl === false || mtllimit == $("#mtllimit").data("content") || isNaN(Number(mtllimit))) {
         // disallow continuing if unmodified
 		return navigator.notification.alert("You must enter a new trustline limit or 0 if you wish to delete the trustline.", 
 			function(){

@@ -268,20 +268,34 @@ function showTab(tab, dontClearText) {
 
 function rebindAllHandlers() {
     $('[ontouchstart], [ontouchend]').each(function() {
+        var el = this;
         var $el = $(this);
-        var touchstartStr = $el.attr('ontouchstart');
-        var touchendStr = $el.attr('ontouchend');
+        if ($el.data('touch-bound')) return;
+        $el.data('touch-bound', true);
         
-        if (touchstartStr) {
-            $el.removeAttr('ontouchstart');
-        }
-        
-        if (touchendStr) {
-            $el.removeAttr('ontouchend');
-            $el.on('click', function(e) {
-                new Function('event', touchendStr).call(this, e.originalEvent || e);
-            });
-        }
+        $el.on('click', function(e) {
+            if (e.originalEvent && e.originalEvent.sourceCapabilities && e.originalEvent.sourceCapabilities.firesTouchEvents) {
+                return;
+            }
+            
+            var hasTouchStart = el.hasAttribute('ontouchstart');
+            var hasTouchEnd = el.hasAttribute('ontouchend');
+            
+            if (hasTouchStart) {
+                var startEvt = new CustomEvent('touchstart', { bubbles: true, cancelable: true });
+                startEvt.touches = [];
+                startEvt.targetTouches = [];
+                startEvt.changedTouches = [{ clientX: e.clientX, clientY: e.clientY }];
+                el.dispatchEvent(startEvt);
+            }
+            if (hasTouchEnd) {
+                var endEvt = new CustomEvent('touchend', { bubbles: true, cancelable: true });
+                endEvt.touches = [];
+                endEvt.targetTouches = [];
+                endEvt.changedTouches = [{ clientX: e.clientX, clientY: e.clientY }];
+                el.dispatchEvent(endEvt);
+            }
+        });
     });
 }
 

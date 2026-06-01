@@ -29218,17 +29218,20 @@ if (typeof window !== 'undefined') {
 				if (val.trim() === '') {
 					throw new Error('invalid number');
 				}
-				if (!/^[+-]?\d+$/.test(val)) {
+				if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(val)) {
 					throw new Error('invalid number');
 				}
 			}
-			this.val = BigInt(val);
+			this.val = Number(val);
+			if (isNaN(this.val)) {
+				throw new Error('invalid number');
+			}
 		}
 		isNeg() {
-			return this.val < 0n;
+			return this.val < 0;
 		}
 		isZero() {
-			return this.val === 0n;
+			return this.val === 0;
 		}
 	}
 	window['BN'] = BN;

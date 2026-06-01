@@ -244,7 +244,7 @@ function doPlaceOrder(nonce) {
     // ensure theres no garbage in the price field
     if (!/^[0-9\.]+$/m.test(price) ) return invalidPrice();  
     try {
-        var x = new BN(amount);
+        var x = new BN(price);
         if (x.isNeg() || x.isZero()) return invalidPrice();
     } catch (E) {
         return invalidPrice();

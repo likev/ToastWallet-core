@@ -551,106 +551,109 @@ function doSubmitOfflineTransaction(stage, content) {
 				"Failure", "OK"
 			);
         }
-        var onApiFailure = function(fail, failurefunc) {
+        var onApiFailure = function(fail, failurefunc, ptries) {
 					console.log('API query failed: ' + fail);
 					if ((fail + "").toLowerCase().indexOf("notconnected") != -1) {
 						return serverCycle(
 							function() {
-								preparepayment(fromacc, payment, instructions, ptries + 1);
+								queryNetwork(ptries + 1);
 							}, ptries + 1, failurefunc);
 					}
 					unblockInput();
 					failurefunc("" + fail);
 		};
-        checkConnection(() => {
-            remote.getFee().then(fee => {
-                if (fee == undefined) {
-                    fee = 12;
-                } else {
-                    fee *= 1000000;
-                }
-                if (fee > 1000000) fee = 1000000; // we'd rather the tx fail than go through for more than 1 xrp
-                remote.getAccountInfo(account).then(info => {
-                   var accseqid = info.sequence;
-                    remote.getLedger({}).then(info2 => {
-                        var ledseqid = info2.ledgerVersion - toastepoc; // toast wallet epoc
-                        // encode these into a portable format
-                        console.log("Ledger Seq ID: " + ledseqid);
-                        console.log("Account Seq ID: " + accseqid);                        
-                        console.log("Fee: " + fee);                        
-                        var bytes = [];
-                        // 4 byte int for the accseqid
-                        bytes[0] = (accseqid & 0xff000000) >> 24;
-                        bytes[1] = (accseqid & 0xff0000) >> 16;
-                        bytes[2] = (accseqid & 0xff00) >> 8;
-                        bytes[3] = (accseqid & 0xff) >> 0;                        
-                        // 4 byte int for the ledseqid
-                        bytes[4] = (ledseqid & 0xff000000) >> 24;
-                        bytes[5] = (ledseqid & 0xff0000) >> 16;
-                        bytes[6] = (ledseqid & 0xff00) >> 8;
-                        bytes[7] = (ledseqid & 0xff) >> 0;                        
-               
-                        // 4 byte int for the fee
-                        bytes[8]  = (fee & 0xff000000) >> 24;
-                        bytes[9]  = (fee & 0xff0000) >> 16;
-                        bytes[10] = (fee & 0xff00) >> 8;
-                        bytes[11] = (fee & 0xff) >> 0;                        
-                        // 1 byte checksum
-                        var hex = utils.bytesToHex(bytes);
-                        var checksum = sodium.crypto_generichash(1, hex, 'offlinecode', 'hex');
-                       
-                        var fullhex = hex;
-                        var removedZerosLedId = 0;
-                        var removedZerosAccId = 0;
-                        var removedZerosFee = 0;
-                        // remove leading 0's from the ledgerid
-                        while(hex.charAt(8) == '0') {
-                            hex = hex.slice(0,8) + hex.slice(9);
-                            removedZerosLedId++;
-                        }
-                        // remove leading 0's from the fee
-                        while(hex.charAt(hex.length - 8 + removedZerosFee) == '0') {
-                            hex =  hex.slice(0, hex.length - 8 + removedZerosFee) + hex.slice( hex.length - 7 + removedZerosFee);
-                            removedZerosFee++;
-                        }
-                    
-                        // remove leading 0's from acc seq id
-                        while(hex.charAt(0) == '0') {
-                            hex = hex.slice(1);
-                            removedZerosAccId++;
-                        }
-                        // encode the zero removal
-                        var compressionByte = 0;
-                        compressionByte += removedZerosLedId; 
-                        compressionByte += removedZerosAccId * 8;
-                
-                        // add checksum to the beginning
-                        hex = checksum + utils.bytesToHex([compressionByte]) +hex;
-                        // due to the checksum we should be able to reconstruct this
-                        hex = hex.toUpperCase();
-                        console.log("Full offline code: " + checksum + utils.bytesToHex([compressionByte]) + fullhex);
-                        // add spaces for ease of copying
-                        var displayhex = "";
-                        for (var i = 0; i < hex.length; i+= 4) 
-                            displayhex += hex.slice(i, i + 4) + " ";
-                        displayhex = displayhex.trim();
-                        $('#lblofflinetxconfirm').text(displayhex);
-                        unblockInput();
-                        $('#submitofflinetxstep1').css('display', 'block');
-                        $('#submitofflinetxstep2').css('display', 'block' );
-                        $('#submitofflinetxstep3').css('display', 'block' );
-                        showTab('#tabsubmitofflinetx');
+        var queryNetwork = function(ptries) {
+            checkConnection(() => {
+                remote.getFee().then(fee => {
+                    if (fee == undefined) {
+                        fee = 12;
+                    } else {
+                        fee *= 1000000;
+                    }
+                    if (fee > 1000000) fee = 1000000; // we'd rather the tx fail than go through for more than 1 xrp
+                    remote.getAccountInfo(account).then(info => {
+                       var accseqid = info.sequence;
+                        remote.getLedger({}).then(info2 => {
+                            var ledseqid = info2.ledgerVersion - toastepoc; // toast wallet epoc
+                            // encode these into a portable format
+                            console.log("Ledger Seq ID: " + ledseqid);
+                            console.log("Account Seq ID: " + accseqid);                        
+                            console.log("Fee: " + fee);                        
+                            var bytes = [];
+                            // 4 byte int for the accseqid
+                            bytes[0] = (accseqid & 0xff000000) >> 24;
+                            bytes[1] = (accseqid & 0xff0000) >> 16;
+                            bytes[2] = (accseqid & 0xff00) >> 8;
+                            bytes[3] = (accseqid & 0xff) >> 0;                        
+                            // 4 byte int for the ledseqid
+                            bytes[4] = (ledseqid & 0xff000000) >> 24;
+                            bytes[5] = (ledseqid & 0xff0000) >> 16;
+                            bytes[6] = (ledseqid & 0xff00) >> 8;
+                            bytes[7] = (ledseqid & 0xff) >> 0;                        
+                   
+                            // 4 byte int for the fee
+                            bytes[8]  = (fee & 0xff000000) >> 24;
+                            bytes[9]  = (fee & 0xff0000) >> 16;
+                            bytes[10] = (fee & 0xff00) >> 8;
+                            bytes[11] = (fee & 0xff) >> 0;                        
+                            // 1 byte checksum
+                            var hex = utils.bytesToHex(bytes);
+                            var checksum = sodium.crypto_generichash(1, hex, 'offlinecode', 'hex');
+                           
+                            var fullhex = hex;
+                            var removedZerosLedId = 0;
+                            var removedZerosAccId = 0;
+                            var removedZerosFee = 0;
+                            // remove leading 0's from the ledgerid
+                            while(hex.charAt(8) == '0') {
+                                hex = hex.slice(0,8) + hex.slice(9);
+                                removedZerosLedId++;
+                            }
+                            // remove leading 0's from the fee
+                            while(hex.charAt(hex.length - 8 + removedZerosFee) == '0') {
+                                hex =  hex.slice(0, hex.length - 8 + removedZerosFee) + hex.slice( hex.length - 7 + removedZerosFee);
+                                removedZerosFee++;
+                            }
                         
+                            // remove leading 0's from acc seq id
+                            while(hex.charAt(0) == '0') {
+                                hex = hex.slice(1);
+                                removedZerosAccId++;
+                            }
+                            // encode the zero removal
+                            var compressionByte = 0;
+                            compressionByte += removedZerosLedId; 
+                            compressionByte += removedZerosAccId * 8;
+                    
+                            // add checksum to the beginning
+                            hex = checksum + utils.bytesToHex([compressionByte]) +hex;
+                            // due to the checksum we should be able to reconstruct this
+                            hex = hex.toUpperCase();
+                            console.log("Full offline code: " + checksum + utils.bytesToHex([compressionByte]) + fullhex);
+                            // add spaces for ease of copying
+                            var displayhex = "";
+                            for (var i = 0; i < hex.length; i+= 4) 
+                                displayhex += hex.slice(i, i + 4) + " ";
+                            displayhex = displayhex.trim();
+                            $('#lblofflinetxconfirm').text(displayhex);
+                            unblockInput();
+                            $('#submitofflinetxstep1').css('display', 'block');
+                            $('#submitofflinetxstep2').css('display', 'block' );
+                            $('#submitofflinetxstep3').css('display', 'block' );
+                            showTab('#tabsubmitofflinetx');
+                            
+                        }).catch(e => {
+                            return onApiFailure(e, failurefunc, ptries); 
+                        });
                     }).catch(e => {
-                        return onApiFailure(e, failurefunc); 
+                        return onApiFailure(e, failurefuncAccNotFound, ptries); 
                     });
                 }).catch(e => {
-                    return onApiFailure(e, failurefuncAccNotFound); 
+                    return onApiFailure(e, failurefunc, ptries); 
                 });
-            }).catch(e => {
-                return onApiFailure(e, failurefunc); 
             });
-        });
+        };
+        queryNetwork(0);
     } else if (stage == 2) {
         // ready to submit the transaction!
         blockInput();

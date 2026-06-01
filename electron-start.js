@@ -67,7 +67,15 @@ function createWindow () {
 	width: 450, 
 	height: 680,
 	title: "Toast Wallet",
-	icon: '/img/64.png'
+	icon: '/img/64.png',
+	webPreferences: {
+		nodeIntegration: false,
+		nodeIntegrationInWorker: false,
+		nodeIntegrationInSubFrames: false,
+		contextIsolation: true,
+		enableRemoteModule: false,
+		sandbox: true
+	}
   })
 
   mainWindow.webContents.on('will-navigate', ev => {

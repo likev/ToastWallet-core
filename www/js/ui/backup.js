@@ -289,6 +289,15 @@ function importWallet(wallet, successfunc, failurefunc) {
 }
 
 function doCheckBackup(raw) {
+    function escapeHtml(text) {
+        if (text === undefined || text === null) return '';
+        return (text + '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
     var allowedkeys = ["walletversion", "pindata", "ppdata", "rpdata", "accounts"];
     function isvalidhex(h) {
         if (typeof h === 'object') {
@@ -316,7 +325,7 @@ function doCheckBackup(raw) {
         
         for (var i in backup) {
             if (allowedkeys.indexOf(i) == -1) {
-                output += "JSON key: " + i + " is not valid, should be one of " + '"walletversion", "pindata", "ppdata", "rpdata", "accounts"' + "<br />";
+                output += "JSON key: " + escapeHtml(i) + " is not valid, should be one of " + '"walletversion", "pindata", "ppdata", "rpdata", "accounts"' + "<br />";
             }
         }
         if (backup['pindata'] == undefined) output += "pindata is missing<br/>";
@@ -350,22 +359,23 @@ function doCheckBackup(raw) {
         for (var i in accounts) {
             try {
                 xrpl.decodeAccountID(i);
-                if (accounts[i]['ppsalt'] == undefined) output += "Account " + i + " ppsalt missing<br/>";
-                if (!isvalidhex(accounts[i]['ppsalt'])) output += "Account " + i + " ppsalt invalid<br/>";
-                if (accounts[i]['rpsalt'] == undefined) output += "Account " + i + " rpsalt missing<br/>";
-                if (!isvalidhex(accounts[i]['rpsalt'])) output += "Account " + i + " rpsalt invalid<br/>";
-                if (accounts[i]['ppsecret'] == undefined) output += "Account " + i + " ppsecret missing<br/>";
-                if (!isvalidhex(accounts[i]['ppsecret'])) output += "Account " + i + " ppsecret invalid<br/>";
-                if (accounts[i]['rpsecret'] == undefined) output += "Account " + i + " rpsecret missing<br/>";
-                if (!isvalidhex(accounts[i]['rpsecret'])) output += "Account " + i + " rpsecret invalid<br/>";
+                var escapedI = escapeHtml(i);
+                if (accounts[i]['ppsalt'] == undefined) output += "Account " + escapedI + " ppsalt missing<br/>";
+                if (!isvalidhex(accounts[i]['ppsalt'])) output += "Account " + escapedI + " ppsalt invalid<br/>";
+                if (accounts[i]['rpsalt'] == undefined) output += "Account " + escapedI + " rpsalt missing<br/>";
+                if (!isvalidhex(accounts[i]['rpsalt'])) output += "Account " + escapedI + " rpsalt invalid<br/>";
+                if (accounts[i]['ppsecret'] == undefined) output += "Account " + escapedI + " ppsecret missing<br/>";
+                if (!isvalidhex(accounts[i]['ppsecret'])) output += "Account " + escapedI + " ppsecret invalid<br/>";
+                if (accounts[i]['rpsecret'] == undefined) output += "Account " + escapedI + " rpsecret missing<br/>";
+                if (!isvalidhex(accounts[i]['rpsecret'])) output += "Account " + escapedI + " rpsecret invalid<br/>";
             } catch (e) {
-                output += "Account " + i + " invalid, check that it was transcribed correctly<br/>";
+                output += "Account " + escapeHtml(i) + " invalid, check that it was transcribed correctly<br/>";
             }
         }
         var json = JSON.stringify(backup);
         return {cleanedbackupcode: sodium.crypto_generichash(4, json, '', 'hex') + json, error: (output == "" ? false : output) };
     } catch(e) {
-        output +=  "<br/><b>" + e + "</b>";	
+        output +=  "<br/><b>" + escapeHtml(e) + "</b>";	
         var json = JSON.stringify(backup);
         return {cleanedbackupcode: ( json != undefined ? sodium.crypto_generichash(4, json, '', 'hex') + json : false ), error: (output == "" ? false : output) };
     }

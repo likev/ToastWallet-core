@@ -175,12 +175,18 @@ function doModifyTrustline(nonce) {
     var accID = '';
     var ledID = '';
     var fee = '';
-    var pl = false
+    var pl = false;
     try { 
-        pl = parseInt(mtllimit)
-        if (pl < 0) pl = 0 
-   } catch (e) {}
-    if (mtllimit == $("#mtllimit").data("content") || (''+mtllimit).trim() != '' + pl ) {
+        pl = parseFloat(mtllimit);
+        if (isNaN(pl)) {
+            pl = false;
+        } else if (pl < 0) {
+            pl = 0;
+        }
+    } catch (e) {
+        pl = false;
+    }
+    if (pl === false || mtllimit == $("#mtllimit").data("content") || isNaN(Number(mtllimit))) {
         // disallow continuing if unmodified
 		return navigator.notification.alert("You must enter a new trustline limit or 0 if you wish to delete the trustline.", 
 			function(){

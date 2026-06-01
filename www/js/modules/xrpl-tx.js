@@ -186,7 +186,7 @@ function sendTrustLineTx(passphrase, fromacc, issuer, currency, limit, rippling,
 					if ((fail + "").toLowerCase().indexOf("notconnected") != -1) {
 						return serverCycle(
 							function() {
-								preparepayment(fromacc, trustline, instructions, ptries + 1);
+								preparetrustline(fromacc, trustline, instructions, ptries + 1);
 							}, ptries + 1, failurefunc);
 					}
 					unblockInput();
@@ -325,7 +325,7 @@ function sendOfferCreate(passphrase, fromacc, amount, asset, issuer, price, sell
 
 function sendOfferCreateOffline(passphrase, fromacc, amount, asset, issuer, price, sell, fok, ioc, passive, expiry, accSeqID, ledSeqID, fee) {
 	
-	if (debug) console.log("sendOfferCreateOffline - " + fromacc + " asset: " + asset + " issuer: " + issuer + " price: " + price + " sell: " + sell + " fok: " + fok + " ioc: " + ioc + " passive: " + passive + ", accSeqId: " + accSeqId + ", ledSeqID: " + ledSeqID + ", fee: " + fee);
+	if (debug) console.log("sendOfferCreateOffline - " + fromacc + " asset: " + asset + " issuer: " + issuer + " price: " + price + " sell: " + sell + " fok: " + fok + " ioc: " + ioc + " passive: " + passive + ", accSeqID: " + accSeqID + ", ledSeqID: " + ledSeqID + ", fee: " + fee);
 	blockInput();
 	
 	getSecretForAccount(passphrase, fromacc, 
@@ -546,7 +546,7 @@ function sendAccountFlagsTx(passphrase, fromacc, defaultRipple, depositAuth, dis
                             if ((fail + "").toLowerCase().indexOf("notconnected") != -1) {
                                 return serverCycle(
                                     function() {
-                                        preparepayment(fromacc, settings, instructions, ptries + 1);
+                                         preparesettings(fromacc, settings, instructions, ptries + 1);
                                     }, ptries + 1, failurefunc);
                             }
                             unblockInput();
