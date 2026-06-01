@@ -259,7 +259,7 @@ function afterCordovaLoad()  {
         }
     });
     var toggleswitchfunc;
-    $(".toggleswitch").on('touchend',toggleswitchfunc = function(e) {
+    $(".toggleswitch").on('click',toggleswitchfunc = function(e) {
         if (debug) console.log("onToggleSwitch()");
         var ele; 
         var _this;
@@ -301,9 +301,7 @@ function afterCordovaLoad()  {
             }
         }
     });
-    if ((device.platform + "").toLowerCase() == 'browser') {
-        $(".toggleswitch").on('click', toggleswitchfunc);
-    }
+
     $('#navheader').on('cut copy paste',
             function(e){
                 if (debug) console.log("onHeaderCopyCutPaste()");
@@ -351,7 +349,9 @@ function select2EventProxy() {
         try {
             event.stopPropagation();
             event.preventDefault();
-            // this one is tricky!
+            if (!event.changedTouches || event.changedTouches.length === 0) {
+                return;
+            }
             if (event.target == document.elementFromPoint(event.changedTouches[0].pageX, event.changedTouches[0].pageY)) {
                 var e = event.target
                 while (e && e.parentNode && !(e.previousElementSibling && e.previousElementSibling.tagName == 'SELECT'))
@@ -366,7 +366,7 @@ function select2EventProxy() {
                         event.preventDefault();
                     } catch (E) {}
                     
-                    if (event.target == document.elementFromPoint(event.changedTouches[0].pageX, event.changedTouches[0].pageY))
+                    if (event.changedTouches && event.changedTouches.length > 0 && event.target == document.elementFromPoint(event.changedTouches[0].pageX, event.changedTouches[0].pageY))
                         $(event.target).trigger('mouseup')
                 })
             }
@@ -620,6 +620,14 @@ function te(e, x) {
         x(e.srcElement);
         return false;
     }
+    
+    if (!e || !e.changedTouches || e.changedTouches.length === 0) {
+        if (typeof x === "function") {
+            x(e.srcElement || e.target);
+        }
+        return false;
+    }
+
     if (e.srcElement == document.elementFromPoint(e.changedTouches[0].pageX, e.changedTouches[0].pageY)) {
         if (typeof x === "function")  {
             
@@ -910,6 +918,13 @@ initialize: function() {
 	    // 'load', 'deviceready', 'offline', and 'online'.
 bindEvents: function() {
 		    document.addEventListener('deviceready', this.onDeviceReady, false);
+		    if (typeof window.cordova === 'undefined') {
+		        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+		            setTimeout(() => this.onDeviceReady(), 1);
+		        } else {
+		            document.addEventListener('DOMContentLoaded', () => this.onDeviceReady(), false);
+		        }
+		    }
 	    },
 	    // deviceready Event Handler
 	    //
@@ -1642,8 +1657,7 @@ function showTab(tab, dontClearText) {
         console.log("previous tabs: "); console.log(previoustabs);
 		$(".headerleft").html('<i class="fa fa-chevron-left" aria-hidden="true"></i>');
 		$(".headerleft").off();
-		$(".headerleft").on('touchstart', function() {showTab(-1);});
-		if ((device.platform + "").toLowerCase() == 'browser') $(".headerleft").on('click', function() {showTab(-1);});
+		$(".headerleft").on('click', function() {showTab(-1);});
 		$(".headerleft").show();
 	} else {
 		$(".headerleft").empty();
@@ -1660,8 +1674,7 @@ function showTab(tab, dontClearText) {
                 $(".headerright>i").removeClass("fa-lock");
                 $(".headerright>i").addClass("fa-medkit");
                 $(".headerright").off();
-                $(".headerright").on('touchend', function(){ showTab("#tabrecovery"); });
-                if ((device.platform + "").toLowerCase() == 'browser') $(".headerright").on('click', function(){ showTab("#tabrecovery"); });
+                $(".headerright").on('click', function(){ showTab("#tabrecovery"); });
 	} else if ($(tab).data('noright')) {
                 $(".headerright").hide();
                 $("#navfooter").hide();
@@ -1671,8 +1684,7 @@ function showTab(tab, dontClearText) {
                 $(".headerright>i").removeClass("fa-medkit");
                 $(".headerright>i").addClass("fa-lock");
                 $(".headerright").off();
-                $(".headerright").on('touchend', function(){ doShowLogin(); });
-                if ((device.platform + "").toLowerCase() == 'browser') $(".headerright").on('click', function(){ doShowLogin(); });
+                $(".headerright").on('click', function(){ doShowLogin(); });
 	        $("#morecontentindicator").addClass("moreindicatorabovenav");
     }	
 	$("body").removeClass("darkbackground");
@@ -1712,14 +1724,11 @@ function rebindAllHandlers() {
         
         if (touchstartStr) {
             $el.removeAttr('ontouchstart');
-            $el.on('touchstart', function(e) {
-                new Function('event', touchstartStr).call(this, e.originalEvent || e);
-            });
         }
         
         if (touchendStr) {
             $el.removeAttr('ontouchend');
-            $el.on('touchend', function(e) {
+            $el.on('click', function(e) {
                 new Function('event', touchendStr).call(this, e.originalEvent || e);
             });
         }

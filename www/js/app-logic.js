@@ -8,7 +8,9 @@ function select2EventProxy() {
         try {
             event.stopPropagation();
             event.preventDefault();
-            // this one is tricky!
+            if (!event.changedTouches || event.changedTouches.length === 0) {
+                return;
+            }
             if (event.target == document.elementFromPoint(event.changedTouches[0].pageX, event.changedTouches[0].pageY)) {
                 var e = event.target
                 while (e && e.parentNode && !(e.previousElementSibling && e.previousElementSibling.tagName == 'SELECT'))
@@ -23,7 +25,7 @@ function select2EventProxy() {
                         event.preventDefault();
                     } catch (E) {}
                     
-                    if (event.target == document.elementFromPoint(event.changedTouches[0].pageX, event.changedTouches[0].pageY))
+                    if (event.changedTouches && event.changedTouches.length > 0 && event.target == document.elementFromPoint(event.changedTouches[0].pageX, event.changedTouches[0].pageY))
                         $(event.target).trigger('mouseup')
                 })
             }
@@ -277,6 +279,14 @@ function te(e, x) {
         x(e.srcElement);
         return false;
     }
+    
+    if (!e || !e.changedTouches || e.changedTouches.length === 0) {
+        if (typeof x === "function") {
+            x(e.srcElement || e.target);
+        }
+        return false;
+    }
+
     if (e.srcElement == document.elementFromPoint(e.changedTouches[0].pageX, e.changedTouches[0].pageY)) {
         if (typeof x === "function")  {
             
@@ -567,6 +577,13 @@ initialize: function() {
 	    // 'load', 'deviceready', 'offline', and 'online'.
 bindEvents: function() {
 		    document.addEventListener('deviceready', this.onDeviceReady, false);
+		    if (typeof window.cordova === 'undefined') {
+		        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+		            setTimeout(() => this.onDeviceReady(), 1);
+		        } else {
+		            document.addEventListener('DOMContentLoaded', () => this.onDeviceReady(), false);
+		        }
+		    }
 	    },
 	    // deviceready Event Handler
 	    //

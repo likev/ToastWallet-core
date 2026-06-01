@@ -258,7 +258,7 @@ function afterCordovaLoad()  {
         }
     });
     var toggleswitchfunc;
-    $(".toggleswitch").on('touchend',toggleswitchfunc = function(e) {
+    $(".toggleswitch").on('click',toggleswitchfunc = function(e) {
         if (debug) console.log("onToggleSwitch()");
         var ele; 
         var _this;
@@ -300,9 +300,7 @@ function afterCordovaLoad()  {
             }
         }
     });
-    if ((device.platform + "").toLowerCase() == 'browser') {
-        $(".toggleswitch").on('click', toggleswitchfunc);
-    }
+
     $('#navheader').on('cut copy paste',
             function(e){
                 if (debug) console.log("onHeaderCopyCutPaste()");

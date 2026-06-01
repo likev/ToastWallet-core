@@ -1,3 +1,27 @@
+if (typeof window.device === 'undefined') {
+    window.device = {
+        platform: 'browser',
+        model: 'Browser',
+        version: '1.0'
+    };
+}
+if (typeof navigator.notification === 'undefined') {
+    navigator.notification = {
+        alert: function(message, alertCallback, title, buttonName) {
+            window.alert(message);
+            if (typeof alertCallback === 'function') {
+                alertCallback();
+            }
+        },
+        confirm: function(message, confirmCallback, title, buttonLabels) {
+            var result = window.confirm(message);
+            if (typeof confirmCallback === 'function') {
+                confirmCallback(result ? 1 : 2);
+            }
+        }
+    };
+}
+
 if (window.module) module = window.module;
 function blockInput(noloading) {
     $("#inputblocker").show();
