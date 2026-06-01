@@ -40,7 +40,6 @@
   "publisherName": "StarStone Limited",
   "verifyUpdateCodeSignature": "true",
   "dependencies": {
-    "cordova-android-support-gradle-release": "^1.4.3",
     "electron-debug": "^2.0.0",
     "menu": "^0.2.5"
   }

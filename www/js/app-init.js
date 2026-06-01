@@ -170,7 +170,7 @@ function afterCordovaLoad()  {
         Keyboard.shrinkView(true);
         Keyboard.disableScrollingInShrinkView(true);
     }
-    if (window.cordova.plugins.Keyboard != undefined) {
+    if (window.cordova && window.cordova.plugins && window.cordova.plugins.Keyboard != undefined) {
         cordova.plugins.Keyboard.hideKeyboardAccessoryBar(false);
         cordova.plugins.Keyboard.disableScroll(true);	
         window.addEventListener('native.keyboardshow', 

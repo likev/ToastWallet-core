@@ -171,23 +171,27 @@ function scanQR(parseContentFunc, after, ...intoFields) {
 				}
 			);
 	} else {
-		cordova.plugins.barcodeScanner.scan(
-			function (result) {
-				if(!result.cancelled)
-				{
-					parseContentFunc(result.text, after, ...intoFields);
+		if (window.cordova && window.cordova.plugins && window.cordova.plugins.barcodeScanner) {
+			cordova.plugins.barcodeScanner.scan(
+				function (result) {
+					if(!result.cancelled)
+					{
+						parseContentFunc(result.text, after, ...intoFields);
+					}
+				},
+				function (e) {
+					navigator.notification.alert("Could not find a camera on your device", 
+						function(){
+							handle_error(e);
+						},
+						"Error",
+						"OK"
+					);
 				}
-			},
-			function (e) {
-				navigator.notification.alert("Could not find a camera on your device", 
-					function(){
-						handle_error(e);
-					},
-					"Error",
-					"OK"
-				);
-			}
-		);
+			);
+		} else {
+			console.error("Barcode scanner plugin not available");
+		}
 	}
 }
 

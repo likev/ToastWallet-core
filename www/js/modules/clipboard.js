@@ -4,7 +4,9 @@ function clipboardCopy(data) {
             return window.require('electron').clipboard.writeText(data);
         if (device.platform == 'browser')
             return navigator.clipboard.writeText(data);
-        cordova.plugins.clipboard.copy(data);
+        if (window.cordova && window.cordova.plugins && window.cordova.plugins.clipboard) {
+            cordova.plugins.clipboard.copy(data);
+        }
     } catch (E) {
         console.log(E);
     }
@@ -15,7 +17,9 @@ function clipboardPaste(f) {
             return f(window.require('electron').clipboard.readText());
         if (device.platform == 'browser')
             return navigator.clipboard.readText().then(f);
-        cordova.plugins.clipboard.paste(f);
+        if (window.cordova && window.cordova.plugins && window.cordova.plugins.clipboard) {
+            cordova.plugins.clipboard.paste(f);
+        }
     } catch (E) {
         console.log(E);
     }
