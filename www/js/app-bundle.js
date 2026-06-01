@@ -175,46 +175,7 @@ function afterCordovaLoad()  {
     } catch(e) {
         console.log("Screen orientation lock not supported: " + e);
     }
-    if (typeof(window.Keyboard) != "undefined" && typeof(window.Keyboard.shrinkView) != "undefined") {
-        Keyboard.shrinkView(true);
-        Keyboard.disableScrollingInShrinkView(true);
-    }
-    if (window.cordova && window.cordova.plugins && window.cordova.plugins.Keyboard != undefined) {
-        cordova.plugins.Keyboard.hideKeyboardAccessoryBar(false);
-        cordova.plugins.Keyboard.disableScroll(true);	
-        window.addEventListener('native.keyboardshow', 
-            function(e) {
-                nativekeyboardvisible = true;
-                if (debug) console.log("nativeKeyboardShow()");
-                try {$('select').select2('close')} catch(e) {}
-                $('.screentab').css('padding-bottom', 'calc(' + e.keyboardHeight + 'px + ' + screentabpaddingbottom + 'em + 100vh)');
-                $('#navfooter').hide();
-                $('#morecontentindicator').hide();
-                if (currenttab != "") {
-                    prekeyboardscrollpos=$(currenttab).scrollTop();
-                    var ele = $(document.activeElement);
-                    ele = find_label(ele);
-                    if (ele && ele.offset && ele.offset().top)
-                        $(currenttab).scrollTop(ele.offset().top - $(currenttab).offset().top + $(currenttab).scrollTop());
-                }
-            }
-        );
-        window.addEventListener('native.keyboardhide', 
-            function(e) {
-                nativekeyboardvisible = false;
-                if (debug) console.log("nativeKeyboardHide()");
-                if ($(currenttab).data('recovery') || $(currenttab).data('noright')) {
-                    $("#navfooter").hide();
-                } else {
-                    $('#navfooter').show();
-                }
-                $('.screentab').css('padding-bottom', screentabpaddingbottom + 'em');
-                if (currenttab != "") 
-                    $(currenttab).scrollTop(prekeyboardscrollpos);
-                renderMoreContentIndicator();
-            }
-        );
-    }
+
     $(".screentab").scroll(renderMoreContentIndicator);
     var morecontentfunc;
     $("#morecontentindicator").on("touchstart", morecontentfunc = function() {
@@ -491,57 +452,33 @@ timeatlastQR = 0;
 function scanQR(parseContentFunc, after, ...intoFields) {
 	if (debug) console.log("scanQR");
 	timeatlastQR = $.now();
-	if (device.platform == 'browser') {
-		showTab("#tabqrscan", true);
-		scanner = new Instascan.Scanner({ video: document.getElementById('qrpreview') });
-		scanner.addListener('scan', 
-			function (content) {
-				parseContentFunc(content, after, ...intoFields);
+	showTab("#tabqrscan", true);
+	scanner = new Instascan.Scanner({ video: document.getElementById('qrpreview') });
+	scanner.addListener('scan', 
+		function (content) {
+			parseContentFunc(content, after, ...intoFields);
+			showTab(-1, true);
+	});
+	var err = ()=> {
+		navigator.notification.alert("Could not find a camera on your device", 
+			function(){
 				showTab(-1, true);
-		});
-        var err = ()=> {
-					navigator.notification.alert("Could not find a camera on your device", 
-						function(){
-							showTab(-1, true);
-						},
-						"Error",
-						"OK"
-					);
-        }
-		Instascan.Camera.getCameras().then(
-			function (cameras) {
-				if (cameras.length > 0) {
-					scanner.start(cameras[0]);
-				} else {
-					err();
-				}
-				}).catch(function (e) {
-                    err();
-				}
-			);
-	} else {
-		if (window.cordova && window.cordova.plugins && window.cordova.plugins.barcodeScanner) {
-			cordova.plugins.barcodeScanner.scan(
-				function (result) {
-					if(!result.cancelled)
-					{
-						parseContentFunc(result.text, after, ...intoFields);
-					}
-				},
-				function (e) {
-					navigator.notification.alert("Could not find a camera on your device", 
-						function(){
-							handle_error(e);
-						},
-						"Error",
-						"OK"
-					);
-				}
-			);
-		} else {
-			console.error("Barcode scanner plugin not available");
-		}
+			},
+			"Error",
+			"OK"
+		);
 	}
+	Instascan.Camera.getCameras().then(
+		function (cameras) {
+			if (cameras.length > 0) {
+				scanner.start(cameras[0]);
+			} else {
+				err();
+			}
+			}).catch(function (e) {
+				err();
+			}
+		);
 }
 
 
@@ -920,24 +857,13 @@ function doDataCorruptionRecovery(c, passphrase, recoveryphrase, passphraseverif
 	
 }
 var app = {
-	// Application Constructor
-initialize: function() {
-		    this.bindEvents();
-	    },
-	    // Bind Event Listeners
-	    //
-	    // Bind any events that are required on startup. Common events are:
-	    // 'load', 'deviceready', 'offline', and 'online'.
-bindEvents: function() {
-		    document.addEventListener('deviceready', this.onDeviceReady, false);
-		    if (typeof window.cordova === 'undefined') {
-		        if (document.readyState === 'complete' || document.readyState === 'interactive') {
-		            setTimeout(() => this.onDeviceReady(), 1);
-		        } else {
-		            document.addEventListener('DOMContentLoaded', () => this.onDeviceReady(), false);
-		        }
-		    }
-	    },
+	initialize: function() {
+		if (document.readyState === 'complete' || document.readyState === 'interactive') {
+			setTimeout(() => this.onDeviceReady(), 1);
+		} else {
+			document.addEventListener('DOMContentLoaded', () => this.onDeviceReady(), false);
+		}
+	},
 	    // deviceready Event Handler
 	    //
 	    // The scope of 'this' is the event. In order to call the 'receivedEvent'
@@ -1180,11 +1106,7 @@ function clipboardCopy(data) {
     try {
         if (window.require && window.require('electron') && window.require('electron').clipboard) 
             return window.require('electron').clipboard.writeText(data);
-        if (device.platform == 'browser')
-            return navigator.clipboard.writeText(data);
-        if (window.cordova && window.cordova.plugins && window.cordova.plugins.clipboard) {
-            cordova.plugins.clipboard.copy(data);
-        }
+        return navigator.clipboard.writeText(data);
     } catch (E) {
         console.log(E);
     }
@@ -1193,11 +1115,7 @@ function clipboardPaste(f) {
     try {
         if (window.require && window.require('electron') && window.require('electron').clipboard) 
             return f(window.require('electron').clipboard.readText());
-        if (device.platform == 'browser')
-            return navigator.clipboard.readText().then(f);
-        if (window.cordova && window.cordova.plugins && window.cordova.plugins.clipboard) {
-            cordova.plugins.clipboard.paste(f);
-        }
+        return navigator.clipboard.readText().then(f);
     } catch (E) {
         console.log(E);
     }
@@ -2042,9 +1960,7 @@ function doOfflineMode(withboot) {
 function checkConnection(connectedfunc) {
 	if (debug) console.log("checkConnection()");
 	var isOffline = false;
-	if (typeof navigator.connection !== 'undefined' && typeof Connection !== 'undefined') {
-		isOffline = (navigator.connection.type == Connection.NONE);
-	} else if (typeof navigator.onLine !== 'undefined') {
+	if (typeof navigator.onLine !== 'undefined') {
 		isOffline = !navigator.onLine;
 	}
 	if (isOffline) {

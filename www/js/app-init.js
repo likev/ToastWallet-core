@@ -174,46 +174,7 @@ function afterCordovaLoad()  {
     } catch(e) {
         console.log("Screen orientation lock not supported: " + e);
     }
-    if (typeof(window.Keyboard) != "undefined" && typeof(window.Keyboard.shrinkView) != "undefined") {
-        Keyboard.shrinkView(true);
-        Keyboard.disableScrollingInShrinkView(true);
-    }
-    if (window.cordova && window.cordova.plugins && window.cordova.plugins.Keyboard != undefined) {
-        cordova.plugins.Keyboard.hideKeyboardAccessoryBar(false);
-        cordova.plugins.Keyboard.disableScroll(true);	
-        window.addEventListener('native.keyboardshow', 
-            function(e) {
-                nativekeyboardvisible = true;
-                if (debug) console.log("nativeKeyboardShow()");
-                try {$('select').select2('close')} catch(e) {}
-                $('.screentab').css('padding-bottom', 'calc(' + e.keyboardHeight + 'px + ' + screentabpaddingbottom + 'em + 100vh)');
-                $('#navfooter').hide();
-                $('#morecontentindicator').hide();
-                if (currenttab != "") {
-                    prekeyboardscrollpos=$(currenttab).scrollTop();
-                    var ele = $(document.activeElement);
-                    ele = find_label(ele);
-                    if (ele && ele.offset && ele.offset().top)
-                        $(currenttab).scrollTop(ele.offset().top - $(currenttab).offset().top + $(currenttab).scrollTop());
-                }
-            }
-        );
-        window.addEventListener('native.keyboardhide', 
-            function(e) {
-                nativekeyboardvisible = false;
-                if (debug) console.log("nativeKeyboardHide()");
-                if ($(currenttab).data('recovery') || $(currenttab).data('noright')) {
-                    $("#navfooter").hide();
-                } else {
-                    $('#navfooter').show();
-                }
-                $('.screentab').css('padding-bottom', screentabpaddingbottom + 'em');
-                if (currenttab != "") 
-                    $(currenttab).scrollTop(prekeyboardscrollpos);
-                renderMoreContentIndicator();
-            }
-        );
-    }
+
     $(".screentab").scroll(renderMoreContentIndicator);
     var morecontentfunc;
     $("#morecontentindicator").on("touchstart", morecontentfunc = function() {

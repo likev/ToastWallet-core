@@ -142,57 +142,33 @@ timeatlastQR = 0;
 function scanQR(parseContentFunc, after, ...intoFields) {
 	if (debug) console.log("scanQR");
 	timeatlastQR = $.now();
-	if (device.platform == 'browser') {
-		showTab("#tabqrscan", true);
-		scanner = new Instascan.Scanner({ video: document.getElementById('qrpreview') });
-		scanner.addListener('scan', 
-			function (content) {
-				parseContentFunc(content, after, ...intoFields);
+	showTab("#tabqrscan", true);
+	scanner = new Instascan.Scanner({ video: document.getElementById('qrpreview') });
+	scanner.addListener('scan', 
+		function (content) {
+			parseContentFunc(content, after, ...intoFields);
+			showTab(-1, true);
+	});
+	var err = ()=> {
+		navigator.notification.alert("Could not find a camera on your device", 
+			function(){
 				showTab(-1, true);
-		});
-        var err = ()=> {
-					navigator.notification.alert("Could not find a camera on your device", 
-						function(){
-							showTab(-1, true);
-						},
-						"Error",
-						"OK"
-					);
-        }
-		Instascan.Camera.getCameras().then(
-			function (cameras) {
-				if (cameras.length > 0) {
-					scanner.start(cameras[0]);
-				} else {
-					err();
-				}
-				}).catch(function (e) {
-                    err();
-				}
-			);
-	} else {
-		if (window.cordova && window.cordova.plugins && window.cordova.plugins.barcodeScanner) {
-			cordova.plugins.barcodeScanner.scan(
-				function (result) {
-					if(!result.cancelled)
-					{
-						parseContentFunc(result.text, after, ...intoFields);
-					}
-				},
-				function (e) {
-					navigator.notification.alert("Could not find a camera on your device", 
-						function(){
-							handle_error(e);
-						},
-						"Error",
-						"OK"
-					);
-				}
-			);
-		} else {
-			console.error("Barcode scanner plugin not available");
-		}
+			},
+			"Error",
+			"OK"
+		);
 	}
+	Instascan.Camera.getCameras().then(
+		function (cameras) {
+			if (cameras.length > 0) {
+				scanner.start(cameras[0]);
+			} else {
+				err();
+			}
+			}).catch(function (e) {
+				err();
+			}
+		);
 }
 
 
@@ -571,24 +547,13 @@ function doDataCorruptionRecovery(c, passphrase, recoveryphrase, passphraseverif
 	
 }
 var app = {
-	// Application Constructor
-initialize: function() {
-		    this.bindEvents();
-	    },
-	    // Bind Event Listeners
-	    //
-	    // Bind any events that are required on startup. Common events are:
-	    // 'load', 'deviceready', 'offline', and 'online'.
-bindEvents: function() {
-		    document.addEventListener('deviceready', this.onDeviceReady, false);
-		    if (typeof window.cordova === 'undefined') {
-		        if (document.readyState === 'complete' || document.readyState === 'interactive') {
-		            setTimeout(() => this.onDeviceReady(), 1);
-		        } else {
-		            document.addEventListener('DOMContentLoaded', () => this.onDeviceReady(), false);
-		        }
-		    }
-	    },
+	initialize: function() {
+		if (document.readyState === 'complete' || document.readyState === 'interactive') {
+			setTimeout(() => this.onDeviceReady(), 1);
+		} else {
+			document.addEventListener('DOMContentLoaded', () => this.onDeviceReady(), false);
+		}
+	},
 	    // deviceready Event Handler
 	    //
 	    // The scope of 'this' is the event. In order to call the 'receivedEvent'

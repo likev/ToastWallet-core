@@ -126,9 +126,7 @@ function doOfflineMode(withboot) {
 function checkConnection(connectedfunc) {
 	if (debug) console.log("checkConnection()");
 	var isOffline = false;
-	if (typeof navigator.connection !== 'undefined' && typeof Connection !== 'undefined') {
-		isOffline = (navigator.connection.type == Connection.NONE);
-	} else if (typeof navigator.onLine !== 'undefined') {
+	if (typeof navigator.onLine !== 'undefined') {
 		isOffline = !navigator.onLine;
 	}
 	if (isOffline) {
