@@ -60,9 +60,6 @@ function formatSelect2(state) {
 
 function showDonationTab(){
 	if (offlinemode || emergencybackup) return;
-	if (('' + device.platform).toLowerCase() == 'android') {
-        return showTab('#tabgoogle')
-    }
     showTab('#tabdonate');
 	
 	remote.getOrderbook(
@@ -281,7 +278,7 @@ function te(e, x) {
 /* Run this to add a click proxy to all elements so that a browser can use the wallet */
 function clickProxy() {
     rebindAllHandlers();
-	if ((device.platform + "").toLowerCase() == 'browser') {
+	{
         $('*:not(input):not(.select2):not([class^="select2-"]):not(.headerleft):not(.headerright):not(.toggleswitch):not(.morecontentindicator)').unbind('click');
 		$('*:not(input):not(.select2):not([class^="select2-"]):not(.headerleft):not(.headerright):not(.toggleswitch):not(.morecontentindicator)').on('click', function(e) {
             inClickProxy = true;
@@ -570,7 +567,7 @@ onDeviceReady: function() {
                 $('select').select2({templateResult:formatSelect2, templateSelection:formatSelect2})
             } catch(e) {}
             select2EventProxy()
-			if (device.platform == 'iOS' && parseFloat("0" + device.version ) < 11) {
+			if (false) {
 				navigator.notification.alert("Toast Wallet does not work with iOS versions below 11.0. Toast Wallet will now start in offline mode.", 
 					()=>{
 						hideSpinner();

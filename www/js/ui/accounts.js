@@ -153,7 +153,7 @@ function refreshAccounts(after) {
         var list = $('.accountitem');
         for (var i = 0; i < list.length; i++) 
             if (!( $(list[i]).data('account') in acc)) list[i].remove();
-		if ((device.platform + "").toLowerCase() == 'browser') clickProxy();	
+		clickProxy();	
         if (offlinemode) return after();
         fetchRateAndUpdateBalance(after);
 	});

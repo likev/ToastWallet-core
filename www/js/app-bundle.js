@@ -130,12 +130,7 @@ function openExternalUrl(url) {
         var electron = ( window.require ? window.require('electron') : false )
         if (electron && electron.shell && electron.shell.openExternal)
             return electron.shell.openExternal(url)
-        if (device.platform == 'browser')
-            return window.open(url, '_blank')
-        
-        OpenUrlExt.open(url, 
-            ()=>{console.log('link open success')},
-            ()=>{console.log('link open failed')})
+        return window.open(url, '_blank')
     } catch (E) {
         console.log(E);
     }
@@ -165,7 +160,7 @@ nativekeyboardvisible = false;
 prekeyboardscrollpos = 0;
 function afterCordovaLoad()  {
     if (debug) console.log("afterCordovaLoad");
-    $('.deviceversion').text(device.model + " - " + device.platform + " - " + device.version);
+    $('.deviceversion').text(navigator.userAgent);
     try {
         if (window.screen && window.screen.orientation && typeof window.screen.orientation.lock === 'function') {
             window.screen.orientation.lock('portrait').catch(function(e) {
@@ -189,12 +184,7 @@ function afterCordovaLoad()  {
     /* This is a visual patch for iOS devices where the phone uses a margin at the top
     ** for various status indicators. 
     */
-    console.log("device.platform = " + device.platform);
-    if ((device.platform + "").toLowerCase() != 'browser') {
-        $("#navheader").addClass("iosheader");
-        $("body").addClass("iosheader");
-        console.log('added iosheader class');
-    }
+    console.log("User agent: " + navigator.userAgent);
     if (debug) console.log("afterCordovaLoad:2");
     document.addEventListener("pause", function(){
         if (debug) console.log("onPause");
@@ -370,9 +360,6 @@ function formatSelect2(state) {
 
 function showDonationTab(){
 	if (offlinemode || emergencybackup) return;
-	if (('' + device.platform).toLowerCase() == 'android') {
-        return showTab('#tabgoogle')
-    }
     showTab('#tabdonate');
 	
 	remote.getOrderbook(
@@ -591,7 +578,7 @@ function te(e, x) {
 /* Run this to add a click proxy to all elements so that a browser can use the wallet */
 function clickProxy() {
     rebindAllHandlers();
-	if ((device.platform + "").toLowerCase() == 'browser') {
+	{
         $('*:not(input):not(.select2):not([class^="select2-"]):not(.headerleft):not(.headerright):not(.toggleswitch):not(.morecontentindicator)').unbind('click');
 		$('*:not(input):not(.select2):not([class^="select2-"]):not(.headerleft):not(.headerright):not(.toggleswitch):not(.morecontentindicator)').on('click', function(e) {
             inClickProxy = true;
@@ -880,7 +867,7 @@ onDeviceReady: function() {
                 $('select').select2({templateResult:formatSelect2, templateSelection:formatSelect2})
             } catch(e) {}
             select2EventProxy()
-			if (device.platform == 'iOS' && parseFloat("0" + device.version ) < 11) {
+			if (false) {
 				navigator.notification.alert("Toast Wallet does not work with iOS versions below 11.0. Toast Wallet will now start in offline mode.", 
 					()=>{
 						hideSpinner();
@@ -1536,8 +1523,8 @@ function showTab(tab, dontClearText) {
 		var donorreminder = function() {
 			getLastDonation(function(donation) {
                 if(setupcompletedthissession) return; // no point asking people who just set up the wallet to donate
-                if (('' + device.platform).toLowerCase() == 'android') return; // no point pestering people who can't donate because Google is evil
 				if ('lastdonation' in donation && Math.floor(new Date().getTime()/1000) - parseInt(donation['lastdonation']) < 15552000 /* 180 days */) {
+
 					// do nothing
 					return;
 				}
@@ -1644,9 +1631,7 @@ function showTab(tab, dontClearText) {
 	}
 	
 	
-	if ((device.platform + "").toLowerCase() == 'browser') {
-		clickProxy();
-	}
+	clickProxy();
 	setTimeout(unblockInput, 200);
 }
 
@@ -3320,7 +3305,7 @@ function refreshAccounts(after) {
         var list = $('.accountitem');
         for (var i = 0; i < list.length; i++) 
             if (!( $(list[i]).data('account') in acc)) list[i].remove();
-		if ((device.platform + "").toLowerCase() == 'browser') clickProxy();	
+		clickProxy();	
         if (offlinemode) return after();
         fetchRateAndUpdateBalance(after);
 	});
@@ -6763,7 +6748,7 @@ function doGetTransactions(address, marker) {
 		} else if (count > 0) {
 			root.append('<button  type="button" class="btn btn-primary" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doGetTransactions(\'' + address + '\', \'\')})">Back to Start</button>');			
 		}
-		if ((device.platform + "").toLowerCase() == 'browser') clickProxy();	
+		clickProxy();	
 		unblockInput();
 	});
 }
@@ -6825,7 +6810,7 @@ function refreshTrustlines(account, after) {
                         ordersele.append('<li><span class="offer">#'+seq+'</span> <span class="orderentry"><span class="orderdirection">'+direction.toUpperCase()+'</span> <span class="currency existingorder'+order.specification.direction+'">'+currency1+' ' + display_currency_amount(amount1) + '</span> @ <span class="currency">'+currency2+' '+display_currency_amount(rate)+'</span></span> <a class="orderkill" href="" ontouchend="te(event, (e)=>{doPlaceCancelOrder(sodium.randombytes_random(), confirmcancelorder={account:\''+account+'\', seq: '+seq+', currency1: \''+currency1+'\', amount1: '+amount1+', currency2: \''+currency2+'\', amount2: '+amount2+', sell: '+(direction == 'sell')+'} );})"><i class="fa fa-times-circle" style="color:red;"></i></a></li>');
                     }
                     
-		            if ((device.platform + "").toLowerCase() == 'browser') clickProxy();	
+		            clickProxy();	
                    ((currency, issuer, exchangerate, balance) => {
                     remote.getOrderbook(
                         issuer, 

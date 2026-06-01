@@ -72,7 +72,7 @@ function doGetTransactions(address, marker) {
 		} else if (count > 0) {
 			root.append('<button  type="button" class="btn btn-primary" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doGetTransactions(\'' + address + '\', \'\')})">Back to Start</button>');			
 		}
-		if ((device.platform + "").toLowerCase() == 'browser') clickProxy();	
+		clickProxy();	
 		unblockInput();
 	});
 }

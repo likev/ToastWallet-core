@@ -1,10 +1,3 @@
-if (typeof window.device === 'undefined') {
-    window.device = {
-        platform: 'browser',
-        model: 'Browser',
-        version: '1.0'
-    };
-}
 if (typeof navigator.notification === 'undefined') {
     navigator.notification = {
         alert: function(message, alertCallback, title, buttonName) {

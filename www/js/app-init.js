@@ -129,12 +129,7 @@ function openExternalUrl(url) {
         var electron = ( window.require ? window.require('electron') : false )
         if (electron && electron.shell && electron.shell.openExternal)
             return electron.shell.openExternal(url)
-        if (device.platform == 'browser')
-            return window.open(url, '_blank')
-        
-        OpenUrlExt.open(url, 
-            ()=>{console.log('link open success')},
-            ()=>{console.log('link open failed')})
+        return window.open(url, '_blank')
     } catch (E) {
         console.log(E);
     }
@@ -164,7 +159,7 @@ nativekeyboardvisible = false;
 prekeyboardscrollpos = 0;
 function afterCordovaLoad()  {
     if (debug) console.log("afterCordovaLoad");
-    $('.deviceversion').text(device.model + " - " + device.platform + " - " + device.version);
+    $('.deviceversion').text(navigator.userAgent);
     try {
         if (window.screen && window.screen.orientation && typeof window.screen.orientation.lock === 'function') {
             window.screen.orientation.lock('portrait').catch(function(e) {
@@ -188,12 +183,7 @@ function afterCordovaLoad()  {
     /* This is a visual patch for iOS devices where the phone uses a margin at the top
     ** for various status indicators. 
     */
-    console.log("device.platform = " + device.platform);
-    if ((device.platform + "").toLowerCase() != 'browser') {
-        $("#navheader").addClass("iosheader");
-        $("body").addClass("iosheader");
-        console.log('added iosheader class');
-    }
+    console.log("User agent: " + navigator.userAgent);
     if (debug) console.log("afterCordovaLoad:2");
     document.addEventListener("pause", function(){
         if (debug) console.log("onPause");

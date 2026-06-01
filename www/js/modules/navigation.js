@@ -154,8 +154,8 @@ function showTab(tab, dontClearText) {
 		var donorreminder = function() {
 			getLastDonation(function(donation) {
                 if(setupcompletedthissession) return; // no point asking people who just set up the wallet to donate
-                if (('' + device.platform).toLowerCase() == 'android') return; // no point pestering people who can't donate because Google is evil
 				if ('lastdonation' in donation && Math.floor(new Date().getTime()/1000) - parseInt(donation['lastdonation']) < 15552000 /* 180 days */) {
+
 					// do nothing
 					return;
 				}
@@ -262,9 +262,7 @@ function showTab(tab, dontClearText) {
 	}
 	
 	
-	if ((device.platform + "").toLowerCase() == 'browser') {
-		clickProxy();
-	}
+	clickProxy();
 	setTimeout(unblockInput, 200);
 }
 
