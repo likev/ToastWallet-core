@@ -125,7 +125,13 @@ function doOfflineMode(withboot) {
 
 function checkConnection(connectedfunc) {
 	if (debug) console.log("checkConnection()");
-	if (navigator.connection.type == Connection.NONE) {
+	var isOffline = false;
+	if (typeof navigator.connection !== 'undefined' && typeof Connection !== 'undefined') {
+		isOffline = (navigator.connection.type == Connection.NONE);
+	} else if (typeof navigator.onLine !== 'undefined') {
+		isOffline = !navigator.onLine;
+	}
+	if (isOffline) {
 		navigator.notification.alert('Internet Connection Lost.', 
 			function() {
 				hideSpinner();

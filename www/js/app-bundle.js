@@ -166,7 +166,15 @@ prekeyboardscrollpos = 0;
 function afterCordovaLoad()  {
     if (debug) console.log("afterCordovaLoad");
     $('.deviceversion').text(device.model + " - " + device.platform + " - " + device.version);
-        window.screen.orientation.lock('portrait');
+    try {
+        if (window.screen && window.screen.orientation && typeof window.screen.orientation.lock === 'function') {
+            window.screen.orientation.lock('portrait').catch(function(e) {
+                console.log("Screen orientation lock rejected: " + e);
+            });
+        }
+    } catch(e) {
+        console.log("Screen orientation lock not supported: " + e);
+    }
     if (typeof(window.Keyboard) != "undefined" && typeof(window.Keyboard.shrinkView) != "undefined") {
         Keyboard.shrinkView(true);
         Keyboard.disableScrollingInShrinkView(true);
@@ -2033,7 +2041,13 @@ function doOfflineMode(withboot) {
 
 function checkConnection(connectedfunc) {
 	if (debug) console.log("checkConnection()");
-	if (navigator.connection.type == Connection.NONE) {
+	var isOffline = false;
+	if (typeof navigator.connection !== 'undefined' && typeof Connection !== 'undefined') {
+		isOffline = (navigator.connection.type == Connection.NONE);
+	} else if (typeof navigator.onLine !== 'undefined') {
+		isOffline = !navigator.onLine;
+	}
+	if (isOffline) {
 		navigator.notification.alert('Internet Connection Lost.', 
 			function() {
 				hideSpinner();

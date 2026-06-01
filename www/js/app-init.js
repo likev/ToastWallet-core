@@ -165,7 +165,15 @@ prekeyboardscrollpos = 0;
 function afterCordovaLoad()  {
     if (debug) console.log("afterCordovaLoad");
     $('.deviceversion').text(device.model + " - " + device.platform + " - " + device.version);
-        window.screen.orientation.lock('portrait');
+    try {
+        if (window.screen && window.screen.orientation && typeof window.screen.orientation.lock === 'function') {
+            window.screen.orientation.lock('portrait').catch(function(e) {
+                console.log("Screen orientation lock rejected: " + e);
+            });
+        }
+    } catch(e) {
+        console.log("Screen orientation lock not supported: " + e);
+    }
     if (typeof(window.Keyboard) != "undefined" && typeof(window.Keyboard.shrinkView) != "undefined") {
         Keyboard.shrinkView(true);
         Keyboard.disableScrollingInShrinkView(true);
