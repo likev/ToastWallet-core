@@ -9,8 +9,8 @@ This repository contains the core HTML5, JavaScript, and CSS codebase of the **T
 ### 1. XRP Ledger Client (`xrpl.js` v4.6.0)
 The application has been completely migrated from the deprecated legacy `ripple-lib` library to modern `xrpl.js` (version `4.6.0`). A compatibility layer is injected via `www/js/modules/xrpl-client.js` to translate query and submission formats, keeping core components stable.
 
-### 2. Electron Removal & Hardened Security
-All Electron-specific files (`electron-start.js`, `electron_package.json`, etc.) and Electron IPC integrations have been fully removed. This eliminates the Electron XSS-to-RCE security risk surface, allowing the wallet to execute safely as a sandboxed HTML5/Cordova application.
+### 2. Electron & Cordova Removal
+All Electron-specific files (`electron-start.js`, `electron_package.json`, etc.) and Electron IPC integrations have been fully removed. Cordova-specific device checking code, conditionals, and legacy plugins have also been fully stripped. This allows the wallet to run securely as a standard, highly-compatible, sandboxed HTML5 web application.
 
 ### 3. Cleanup & Fixes (Review 02 Audit)
 - **Direct RPC Queries:** Defunct `data.ripple.com` API integrations were replaced with direct, active JSON-RPC requests via the connected Ripple Node WebSocket (`account_tx`, `tx`).
