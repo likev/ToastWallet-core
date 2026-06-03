@@ -570,7 +570,7 @@ onDeviceReady: function() {
 		       	db = new PouchDB('toastwallet');
 			if (debug) console.log("onDeviceReady:2");
 			rebindAllHandlers();
-			setTimeout(afterCordovaLoad, 0);
+			setTimeout(initAppUI, 0);
 			if (debug) console.log("onDeviceReady:3");
             // change all select boxes to the modern graphical format
             try {

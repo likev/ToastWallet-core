@@ -155,8 +155,8 @@ function find_label(ele) {
 }
 nativekeyboardvisible = false;
 prekeyboardscrollpos = 0;
-function afterCordovaLoad()  {
-    if (debug) console.log("afterCordovaLoad");
+function initAppUI()  {
+    if (debug) console.log("initAppUI");
     $('.deviceversion').text(navigator.userAgent);
     try {
         if (window.screen && window.screen.orientation && typeof window.screen.orientation.lock === 'function') {
@@ -182,7 +182,7 @@ function afterCordovaLoad()  {
     ** for various status indicators. 
     */
     console.log("User agent: " + navigator.userAgent);
-    if (debug) console.log("afterCordovaLoad:2");
+    if (debug) console.log("initAppUI:2");
     document.addEventListener("pause", function(){
         if (debug) console.log("onPause");
         document.activeElement.blur();
@@ -297,7 +297,7 @@ function afterCordovaLoad()  {
 window.handleOpenURL = handleOpenURL;
 window.openExternalUrl = openExternalUrl;
 window.stopClick = stopClick;
-window.afterCordovaLoad = afterCordovaLoad;
+window.initAppUI = initAppUI;
 
 },{}],2:[function(require,module,exports){
 
@@ -872,7 +872,7 @@ onDeviceReady: function() {
 		       	db = new PouchDB('toastwallet');
 			if (debug) console.log("onDeviceReady:2");
 			rebindAllHandlers();
-			setTimeout(afterCordovaLoad, 0);
+			setTimeout(initAppUI, 0);
 			if (debug) console.log("onDeviceReady:3");
             // change all select boxes to the modern graphical format
             try {

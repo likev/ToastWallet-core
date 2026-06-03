@@ -302,7 +302,7 @@ sequenceDiagram
 
     Window->>App: window load event
     App->>DB: db = new PouchDB("toastwallet")
-    App->>App: afterCordovaLoad()
+    App->>App: initAppUI()
     App->>App: loadSavedInterfaceSettings()
     App->>DB: getSavedGateways()
     App->>App: setRemoteGateway(serverStack[0])
