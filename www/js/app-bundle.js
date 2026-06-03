@@ -127,9 +127,6 @@ function handleOpenURL(link, e) {
 }
 function openExternalUrl(url) {
     try {
-        var electron = ( window.require ? window.require('electron') : false )
-        if (electron && electron.shell && electron.shell.openExternal)
-            return electron.shell.openExternal(url)
         return window.open(url, '_blank')
     } catch (E) {
         console.log(E);
@@ -275,10 +272,6 @@ function afterCordovaLoad()  {
         var link = s.replace(/^.*?:\/\//g, "");
         handleOpenURL(link, e);
     };
-    // in builds that support xrpl:// protocol handling we will receive those events here
-    if (typeof(window.require) == 'function' && typeof(window.require('electron')) == 'object' && typeof(window.require('electron').ipcRenderer) == 'object' && typeof(window.require('electron').ipcRenderer.on) == 'function') {
-        window.require('electron').ipcRenderer.on('pay-link', paylink_handler);
-    }
     // since we're booting, if the wallet was started with a pay link we need to process that now
     if (typeof(document.location) == 'object' && typeof(document.location.search) == 'string') {
         console.log("paylink passed on boot: " + document.location.search);
@@ -1093,8 +1086,6 @@ window.validateSecret = validateSecret;
 },{}],5:[function(require,module,exports){
 function clipboardCopy(data) {
     try {
-        if (window.require && window.require('electron') && window.require('electron').clipboard) 
-            return window.require('electron').clipboard.writeText(data);
         return navigator.clipboard.writeText(data);
     } catch (E) {
         console.log(E);
@@ -1102,8 +1093,6 @@ function clipboardCopy(data) {
 }
 function clipboardPaste(f) {
     try {
-        if (window.require && window.require('electron') && window.require('electron').clipboard) 
-            return f(window.require('electron').clipboard.readText());
         return navigator.clipboard.readText().then(f);
     } catch (E) {
         console.log(E);
