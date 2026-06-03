@@ -68,17 +68,25 @@ function showDonationTab(){
 		"counter": {"currency":"XRP"}},  { limit: 10 }
 	).then(orders => {
 		var exchangerate = 0;
-		for (var i = 0; i < 10; i++) 
-			exchangerate += parseFloat("" + orders.asks[i].properties.makerExchangeRate);
-		exchangerate = 10.0/exchangerate;
+		var count = 0;
+		if (orders && orders.asks) {
+			count = Math.min(10, orders.asks.length);
+			for (var i = 0; i < count; i++) {
+				if (orders.asks[i] && orders.asks[i].properties && orders.asks[i].properties.makerExchangeRate) {
+					exchangerate += parseFloat("" + orders.asks[i].properties.makerExchangeRate);
+				}
+			}
+		}
+		if (count > 0 && exchangerate > 0) {
+			exchangerate = count / exchangerate;
 			
-		$("#btndonate20").text("Donate $20 (" + (20.0/exchangerate).toFixed(4) + " XRP)");
-		$("#btndonate10").text("Donate $10 (" + (10.0/exchangerate).toFixed(4) + " XRP)");
-		$("#btndonate5").text("Donate $5 (" + (5.0/exchangerate).toFixed(4) + " XRP)");
-		$("#btndonate20").data('amount', (20.0/exchangerate).toFixed(4));
-		$("#btndonate10").data('amount', (10.0/exchangerate).toFixed(4));
-		$("#btndonate5").data('amount', (5.0/exchangerate).toFixed(4));
-		
+			$("#btndonate20").text("Donate $20 (" + (20.0/exchangerate).toFixed(4) + " XRP)");
+			$("#btndonate10").text("Donate $10 (" + (10.0/exchangerate).toFixed(4) + " XRP)");
+			$("#btndonate5").text("Donate $5 (" + (5.0/exchangerate).toFixed(4) + " XRP)");
+			$("#btndonate20").data('amount', (20.0/exchangerate).toFixed(4));
+			$("#btndonate10").data('amount', (10.0/exchangerate).toFixed(4));
+			$("#btndonate5").data('amount', (5.0/exchangerate).toFixed(4));
+		}
 	}).catch( function(e) {
 			
 	});
@@ -440,13 +448,13 @@ function doDataCorruptionRecovery(c, passphrase, recoveryphrase, passphraseverif
 	} else passphraseverified = false;
 	if (c.rpdata == 'ok' && recoveryphrase != undefined && recoveryphraseverified == undefined) {
 		// validate the recoveryphrase provided
-		validatePassphrase(passphrase, true, 
+		validatePassphrase(recoveryphrase, true, 
 			function() { unblockInput(); doDataCorruptionRecovery(c, passphrase, recoveryphrase, passphraseverified, true); },
 			function() { unblockInput(); doDataCorruptionRecovery(c, passphrase, recoveryphrase, passphraseverified, false); },
 			function() { unblockInput(); doDataCorruptionRecovery(c, passphrase, recoveryphrase, passphraseverified, false); }
 		);
 		return;
-	} else passphraseverified = false;
+	} else recoveryphraseverified = false;
 	
 	if (c.accounts == 'missing') {
 		freshinstall();

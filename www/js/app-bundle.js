@@ -251,7 +251,10 @@ function afterCordovaLoad()  {
         if (_this.data('after') != undefined) {
             var f = _this.data('after');
             if (typeof(f) == "string") {
-                eval(f);
+                var funcName = f.replace(/[\(\);\s]/g, "");
+                if (funcName && typeof window[funcName] === "function") {
+                    window[funcName]();
+                }
             } else if (typeof(f) == "function") {
                 f(_this);
             }
@@ -289,6 +292,12 @@ function afterCordovaLoad()  {
         }
     }
 }
+
+// Expose functions globally
+window.handleOpenURL = handleOpenURL;
+window.openExternalUrl = openExternalUrl;
+window.stopClick = stopClick;
+window.afterCordovaLoad = afterCordovaLoad;
 
 },{}],2:[function(require,module,exports){
 
@@ -361,17 +370,25 @@ function showDonationTab(){
 		"counter": {"currency":"XRP"}},  { limit: 10 }
 	).then(orders => {
 		var exchangerate = 0;
-		for (var i = 0; i < 10; i++) 
-			exchangerate += parseFloat("" + orders.asks[i].properties.makerExchangeRate);
-		exchangerate = 10.0/exchangerate;
+		var count = 0;
+		if (orders && orders.asks) {
+			count = Math.min(10, orders.asks.length);
+			for (var i = 0; i < count; i++) {
+				if (orders.asks[i] && orders.asks[i].properties && orders.asks[i].properties.makerExchangeRate) {
+					exchangerate += parseFloat("" + orders.asks[i].properties.makerExchangeRate);
+				}
+			}
+		}
+		if (count > 0 && exchangerate > 0) {
+			exchangerate = count / exchangerate;
 			
-		$("#btndonate20").text("Donate $20 (" + (20.0/exchangerate).toFixed(4) + " XRP)");
-		$("#btndonate10").text("Donate $10 (" + (10.0/exchangerate).toFixed(4) + " XRP)");
-		$("#btndonate5").text("Donate $5 (" + (5.0/exchangerate).toFixed(4) + " XRP)");
-		$("#btndonate20").data('amount', (20.0/exchangerate).toFixed(4));
-		$("#btndonate10").data('amount', (10.0/exchangerate).toFixed(4));
-		$("#btndonate5").data('amount', (5.0/exchangerate).toFixed(4));
-		
+			$("#btndonate20").text("Donate $20 (" + (20.0/exchangerate).toFixed(4) + " XRP)");
+			$("#btndonate10").text("Donate $10 (" + (10.0/exchangerate).toFixed(4) + " XRP)");
+			$("#btndonate5").text("Donate $5 (" + (5.0/exchangerate).toFixed(4) + " XRP)");
+			$("#btndonate20").data('amount', (20.0/exchangerate).toFixed(4));
+			$("#btndonate10").data('amount', (10.0/exchangerate).toFixed(4));
+			$("#btndonate5").data('amount', (5.0/exchangerate).toFixed(4));
+		}
 	}).catch( function(e) {
 			
 	});
@@ -733,13 +750,13 @@ function doDataCorruptionRecovery(c, passphrase, recoveryphrase, passphraseverif
 	} else passphraseverified = false;
 	if (c.rpdata == 'ok' && recoveryphrase != undefined && recoveryphraseverified == undefined) {
 		// validate the recoveryphrase provided
-		validatePassphrase(passphrase, true, 
+		validatePassphrase(recoveryphrase, true, 
 			function() { unblockInput(); doDataCorruptionRecovery(c, passphrase, recoveryphrase, passphraseverified, true); },
 			function() { unblockInput(); doDataCorruptionRecovery(c, passphrase, recoveryphrase, passphraseverified, false); },
 			function() { unblockInput(); doDataCorruptionRecovery(c, passphrase, recoveryphrase, passphraseverified, false); }
 		);
 		return;
-	} else passphraseverified = false;
+	} else recoveryphraseverified = false;
 	
 	if (c.accounts == 'missing') {
 		freshinstall();
@@ -2079,8 +2096,13 @@ function injectCompatibilityLayer(client) {
         });
         return Promise.all([asksPromise, bidsPromise]).then(([asksRes, bidsRes]) => {
             var mapOffer = (offer, isAsk) => {
-                var getsAmount = typeof offer.TakerGets === 'string' ? parseFloat(offer.TakerGets) / 1000000.0 : parseFloat(offer.TakerGets.value);
-                var paysAmount = typeof offer.TakerPays === 'string' ? parseFloat(offer.TakerPays) / 1000000.0 : parseFloat(offer.TakerPays.value);
+                var BigNumber = window.BigNumber;
+                var getsAmount = typeof offer.TakerGets === 'string'
+                    ? new BigNumber(offer.TakerGets).dividedBy(1000000)
+                    : new BigNumber(offer.TakerGets.value);
+                var paysAmount = typeof offer.TakerPays === 'string'
+                    ? new BigNumber(offer.TakerPays).dividedBy(1000000)
+                    : new BigNumber(offer.TakerPays.value);
                 
                 var price;
                 var quantity;
@@ -2088,11 +2110,11 @@ function injectCompatibilityLayer(client) {
                 if (isAsk) {
                     quantity = getsAmount;
                     totalPrice = paysAmount;
-                    price = totalPrice / quantity;
+                    price = totalPrice.dividedBy(quantity);
                 } else {
                     quantity = paysAmount;
                     totalPrice = getsAmount;
-                    price = totalPrice / quantity;
+                    price = totalPrice.dividedBy(quantity);
                 }
                 return {
                     specification: {
@@ -2912,7 +2934,7 @@ function sendAccountFlagsTx(passphrase, fromacc, defaultRipple, depositAuth, dis
             var flags = {
                 "defaultRipple": defaultRipple, "depositAuth": depositAuth, "disableMasterKey": disableMasterKey, "disallowIncomingXRP": disallowIncomingXRP, "globalFreeze": globalFreeze, "noFreeze": noFreeze, "requireAuthorization": requireAuthorization, "requireDestinationTag": requireDestinationTag
             }
-            var submit_flag_change = (flags, secret) => {
+            var submit_flag_change = (flags) => {
                 for (var f in flags) {
                     // drop any flags we're not changing
                     if (flags[f] == 'unchanged') {
@@ -2935,7 +2957,7 @@ function sendAccountFlagsTx(passphrase, fromacc, defaultRipple, depositAuth, dis
                             
                             console.log('Settings transaction signed...');
                             
-                            submitSignedTransaction(signedTransaction, ()=>{ submit_flag_change(flags, secret); }, failurefunc, ptries);
+                            submitSignedTransaction(signedTransaction, ()=>{ submit_flag_change(flags); }, failurefunc, ptries);
                             
                         }, (fail) => 	 {
                             console.log('Prepare settings failed: ' + fail);
@@ -2946,17 +2968,18 @@ function sendAccountFlagsTx(passphrase, fromacc, defaultRipple, depositAuth, dis
                                     }, ptries + 1, failurefunc);
                             }
                             unblockInput();
+                            secret = "";
                             failurefunc("" + fail);
                         });
                     }
                     return preparesettings(fromacc, settings, instructions, 0);
                 }
                 // if code execution reaches here then all submissions were successful!
+                secret = "";
                 successfunc();
             };
             
-            submit_flag_change(flags, secret);
-            secret = "";
+            submit_flag_change(flags);
 		
 		},
 		function() {
@@ -3245,16 +3268,18 @@ function refreshAccounts(after) {
                             accountbalances[account] = parseFloat(xrpBalance);
                             var balcount = Object.keys(accountbalances).length;
                             if (balcount > 0 && activeaccount == "") {
-                                var largest = 0; var largestindex = 0;
+                                var largest = -1; var largestindex = "";
                                 for (var x in accountbalances) {
                                     if (accountbalances[x] > largest) {
                                         largest = accountbalances[x];
-                                        largestindx = x;
+                                        largestindex = x;
                                     }
                                 }
-                                activeaccount = x;
-                                $("#opt" + x).prop('selected', true);
-                                $("#ra" + x).addClass('active');	
+                                if (largestindex !== "") {
+                                    activeaccount = largestindex;
+                                    $("#opt" + largestindex).prop('selected', true);
+                                    $("#ra" + largestindex).addClass('active');
+                                }
                             }
                             if (lastacc == account && after != undefined && typeof(after) == 'function') after();
                             
@@ -4126,7 +4151,7 @@ function doCheckBackup(raw) {
     var output = "";
     raw = raw.replace(/ |\r|\n/mg, "");
     raw = raw.replace(/;/mg, ":");
-    raw = raw.replace(/||||`||'/mg, '"');
+    raw = raw.replace(/[\u2018\u2019\u201C\u201D`\u2032\u2033']/mg, '"');
     
     $('#backupcode').val(raw);
     var json = raw; 
@@ -5563,8 +5588,12 @@ function checkPayToAddressForCommonErrors() {
         } else if (offlinemode) {
             $('#lblpaytodesttag').html('Destination Tag')
         } else {
-            remote.getSettings(payto).then(e=>{
-                $('#lblpaytodesttag').html('Destination Tag (<i color="red">Required!</i>)')
+            remote.getSettings(payto).then(settings => {
+                if (settings && settings.requireDestinationTag) {
+                    $('#lblpaytodesttag').html('Destination Tag (<i color="red">Required!</i>)')
+                } else {
+                    $('#lblpaytodesttag').html('Destination Tag')
+                }
             }).catch(e=>{
                 $('#lblpaytodesttag').html('Destination Tag')
             })
@@ -6339,7 +6368,6 @@ function validatePassphrase(passphrase, isrecoveryphrase, successfunc, failurefu
 				sodium.crypto_pwhash_scryptsalsa208sha256(16, passphrase, 
 				salt1, 4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/, 33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/),
 			salt2, 4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/, 33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
-			passphrase=""; 
 			pphash = tohex_chksum(pphash);
                         if (pphash == ppdata.hash) {
 				if (debug) console.log("validatePassphrase - correct");
@@ -6347,8 +6375,10 @@ function validatePassphrase(passphrase, isrecoveryphrase, successfunc, failurefu
 					validatePassphraseCache.salt = sodium.randombytes_buf(sodium.crypto_shorthash_KEYBYTES);
 					validatePassphraseCache.hash = sodium.crypto_shorthash(passphrase, validatePassphraseCache.salt, 'hex');
 				}
+				passphrase=""; 
                                 return successfunc();
 			}
+			passphrase=""; 
 			if (debug) console.log("validatePassphrase - incorrect");
                         return failurefunc();
                 } } catch(e) { handle_error(e); } };
@@ -6698,17 +6728,25 @@ function doViewTransaction(hash) {
     if (debug) console.log('doViewTransaction -- ' + hash);
     blockInput();	
     $('#vtxhash').val(hash);
-    $.ajax({
-		complete: function() { unblockInput(); },
-		url: 'https://data.ripple.com/v2/transactions/' + hash
-	}).done(function(x){
-        //todo: better server error handling here
-        if (x.result == 'error' || typeof(x.transaction) == "undefined" || typeof(x.transaction.tx) == "undefined" || typeof(x.transaction.meta) == "undefined") {
+    
+    remote.request({
+        command: "tx",
+        transaction: hash
+    }).then(res => {
+        var tx = res.result;
+        var x = {
+            result: 'success',
+            transaction: {
+                tx: tx,
+                meta: tx.meta
+            }
+        };
+        unblockInput();
+        // todo: better server error handling here
+        if (typeof(x.transaction) == "undefined" || typeof(x.transaction.tx) == "undefined" || typeof(x.transaction.meta) == "undefined") {
             $('#vtxstatus').val('Unknown / Not Found');
             $('#vtxdetails').hide();
-            
             showTab('#tabviewtransaction', true);
-            unblockInput();
             return;
         }
         // execution to here means the tx details were returned
@@ -6726,23 +6764,54 @@ function doViewTransaction(hash) {
         $('#vtxdeliveredamount').val( typeof(x.transaction.meta.delivered_amount) != undefined ?  x.transaction.meta.delivered_amount/1000000.0 : 'not specified') ;
         $('#vtxrawtx')[0].innerText = JSON.stringify(x, null, 4) + '';
         showTab('#tabviewtransaction', true);
+    }).catch(err => {
         unblockInput();
-        return;
+        $('#vtxstatus').val('Unknown / Not Found');
+        $('#vtxdetails').hide();
+        showTab('#tabviewtransaction', true);
     });
-    //
 }
 
 function doGetTransactions(address, marker) {
 	if (debug) console.log("doGetTransactions");
 	//blockInput();
-    address = forceraddr(address)
-	$.ajax({
-		complete: function() { unblockInput(); },
-		url: 'https://data.ripple.com/v2/accounts/' + 
-		address + '/payments?currency=XRP&limit=10&marker=' +
-		marker
-	}).done(function(x){
-		console.log(x);
+    address = forceraddr(address);
+    
+    var reqParam = {
+        command: "account_tx",
+        account: address,
+        limit: 20
+    };
+    if (marker) {
+        try {
+            reqParam.marker = JSON.parse(marker);
+        } catch (e) {
+            reqParam.marker = marker;
+        }
+    }
+    
+    remote.request(reqParam).then(res => {
+        var payments = [];
+        var txs = res.result.transactions || [];
+        for (var i = 0; i < txs.length; i++) {
+            var t = txs[i].tx;
+            if (t && t.TransactionType === 'Payment' && typeof t.Amount === 'string') {
+                payments.push({
+                    source: t.Account,
+                    destination: t.Destination,
+                    amount: parseFloat(t.Amount) / 1000000.0,
+                    tx_hash: t.hash || t.TxnSignature
+                });
+                if (payments.length >= 10) break;
+            }
+        }
+        
+        var nextMarker = res.result.marker ? JSON.stringify(res.result.marker) : undefined;
+        var x = {
+            payments: payments,
+            marker: nextMarker
+        };
+        
 		var root = $('#accdetailstransactiondetails');
 		root.empty();
 		var tx = "";
@@ -6764,13 +6833,19 @@ function doGetTransactions(address, marker) {
 		}
 		root.append('<ul class="transactionlist">'+tx+'</ul>');
 		if (x.marker != undefined && count > 0) {
-			root.append('<button  type="button" class="btn btn-primary" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doGetTransactions(\'' + address + '\', \'' + x.marker + '\')})">More</button>');
+			root.append('<button  type="button" class="btn btn-primary" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doGetTransactions(\'' + address + '\', ' + JSON.stringify(x.marker).replace(/"/g, '&quot;') + ')})">More</button>');
 		} else if (count > 0) {
 			root.append('<button  type="button" class="btn btn-primary" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doGetTransactions(\'' + address + '\', \'\')})">Back to Start</button>');			
 		}
 		clickProxy();	
 		unblockInput();
-	});
+    }).catch(err => {
+        if (debug) console.log("Get transactions error: " + err);
+        unblockInput();
+		var root = $('#accdetailstransactiondetails');
+		root.empty();
+		root.append('<ul class="transactionlist"><li style="color:black;"><center><i>Error loading transactions</i></center></li></ul>');
+    });
 }
 
 // Expose functions globally

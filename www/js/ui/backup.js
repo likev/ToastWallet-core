@@ -313,7 +313,7 @@ function doCheckBackup(raw) {
     var output = "";
     raw = raw.replace(/ |\r|\n/mg, "");
     raw = raw.replace(/;/mg, ":");
-    raw = raw.replace(/||||`||'/mg, '"');
+    raw = raw.replace(/[\u2018\u2019\u201C\u201D`\u2032\u2033']/mg, '"');
     
     $('#backupcode').val(raw);
     var json = raw; 

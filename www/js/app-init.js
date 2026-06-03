@@ -250,7 +250,10 @@ function afterCordovaLoad()  {
         if (_this.data('after') != undefined) {
             var f = _this.data('after');
             if (typeof(f) == "string") {
-                eval(f);
+                var funcName = f.replace(/[\(\);\s]/g, "");
+                if (funcName && typeof window[funcName] === "function") {
+                    window[funcName]();
+                }
             } else if (typeof(f) == "function") {
                 f(_this);
             }
@@ -288,3 +291,9 @@ function afterCordovaLoad()  {
         }
     }
 }
+
+// Expose functions globally
+window.handleOpenURL = handleOpenURL;
+window.openExternalUrl = openExternalUrl;
+window.stopClick = stopClick;
+window.afterCordovaLoad = afterCordovaLoad;

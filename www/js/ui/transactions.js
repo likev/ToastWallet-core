@@ -2,17 +2,25 @@ function doViewTransaction(hash) {
     if (debug) console.log('doViewTransaction -- ' + hash);
     blockInput();	
     $('#vtxhash').val(hash);
-    $.ajax({
-		complete: function() { unblockInput(); },
-		url: 'https://data.ripple.com/v2/transactions/' + hash
-	}).done(function(x){
-        //todo: better server error handling here
-        if (x.result == 'error' || typeof(x.transaction) == "undefined" || typeof(x.transaction.tx) == "undefined" || typeof(x.transaction.meta) == "undefined") {
+    
+    remote.request({
+        command: "tx",
+        transaction: hash
+    }).then(res => {
+        var tx = res.result;
+        var x = {
+            result: 'success',
+            transaction: {
+                tx: tx,
+                meta: tx.meta
+            }
+        };
+        unblockInput();
+        // todo: better server error handling here
+        if (typeof(x.transaction) == "undefined" || typeof(x.transaction.tx) == "undefined" || typeof(x.transaction.meta) == "undefined") {
             $('#vtxstatus').val('Unknown / Not Found');
             $('#vtxdetails').hide();
-            
             showTab('#tabviewtransaction', true);
-            unblockInput();
             return;
         }
         // execution to here means the tx details were returned
@@ -30,23 +38,54 @@ function doViewTransaction(hash) {
         $('#vtxdeliveredamount').val( typeof(x.transaction.meta.delivered_amount) != undefined ?  x.transaction.meta.delivered_amount/1000000.0 : 'not specified') ;
         $('#vtxrawtx')[0].innerText = JSON.stringify(x, null, 4) + '';
         showTab('#tabviewtransaction', true);
+    }).catch(err => {
         unblockInput();
-        return;
+        $('#vtxstatus').val('Unknown / Not Found');
+        $('#vtxdetails').hide();
+        showTab('#tabviewtransaction', true);
     });
-    //
 }
 
 function doGetTransactions(address, marker) {
 	if (debug) console.log("doGetTransactions");
 	//blockInput();
-    address = forceraddr(address)
-	$.ajax({
-		complete: function() { unblockInput(); },
-		url: 'https://data.ripple.com/v2/accounts/' + 
-		address + '/payments?currency=XRP&limit=10&marker=' +
-		marker
-	}).done(function(x){
-		console.log(x);
+    address = forceraddr(address);
+    
+    var reqParam = {
+        command: "account_tx",
+        account: address,
+        limit: 20
+    };
+    if (marker) {
+        try {
+            reqParam.marker = JSON.parse(marker);
+        } catch (e) {
+            reqParam.marker = marker;
+        }
+    }
+    
+    remote.request(reqParam).then(res => {
+        var payments = [];
+        var txs = res.result.transactions || [];
+        for (var i = 0; i < txs.length; i++) {
+            var t = txs[i].tx;
+            if (t && t.TransactionType === 'Payment' && typeof t.Amount === 'string') {
+                payments.push({
+                    source: t.Account,
+                    destination: t.Destination,
+                    amount: parseFloat(t.Amount) / 1000000.0,
+                    tx_hash: t.hash || t.TxnSignature
+                });
+                if (payments.length >= 10) break;
+            }
+        }
+        
+        var nextMarker = res.result.marker ? JSON.stringify(res.result.marker) : undefined;
+        var x = {
+            payments: payments,
+            marker: nextMarker
+        };
+        
 		var root = $('#accdetailstransactiondetails');
 		root.empty();
 		var tx = "";
@@ -68,13 +107,19 @@ function doGetTransactions(address, marker) {
 		}
 		root.append('<ul class="transactionlist">'+tx+'</ul>');
 		if (x.marker != undefined && count > 0) {
-			root.append('<button  type="button" class="btn btn-primary" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doGetTransactions(\'' + address + '\', \'' + x.marker + '\')})">More</button>');
+			root.append('<button  type="button" class="btn btn-primary" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doGetTransactions(\'' + address + '\', ' + JSON.stringify(x.marker).replace(/"/g, '&quot;') + ')})">More</button>');
 		} else if (count > 0) {
 			root.append('<button  type="button" class="btn btn-primary" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doGetTransactions(\'' + address + '\', \'\')})">Back to Start</button>');			
 		}
 		clickProxy();	
 		unblockInput();
-	});
+    }).catch(err => {
+        if (debug) console.log("Get transactions error: " + err);
+        unblockInput();
+		var root = $('#accdetailstransactiondetails');
+		root.empty();
+		root.append('<ul class="transactionlist"><li style="color:black;"><center><i>Error loading transactions</i></center></li></ul>');
+    });
 }
 
 // Expose functions globally

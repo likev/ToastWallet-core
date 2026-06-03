@@ -326,7 +326,6 @@ function validatePassphrase(passphrase, isrecoveryphrase, successfunc, failurefu
 				sodium.crypto_pwhash_scryptsalsa208sha256(16, passphrase, 
 				salt1, 4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/, 33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/),
 			salt2, 4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/, 33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
-			passphrase=""; 
 			pphash = tohex_chksum(pphash);
                         if (pphash == ppdata.hash) {
 				if (debug) console.log("validatePassphrase - correct");
@@ -334,8 +333,10 @@ function validatePassphrase(passphrase, isrecoveryphrase, successfunc, failurefu
 					validatePassphraseCache.salt = sodium.randombytes_buf(sodium.crypto_shorthash_KEYBYTES);
 					validatePassphraseCache.hash = sodium.crypto_shorthash(passphrase, validatePassphraseCache.salt, 'hex');
 				}
+				passphrase=""; 
                                 return successfunc();
 			}
+			passphrase=""; 
 			if (debug) console.log("validatePassphrase - incorrect");
                         return failurefunc();
                 } } catch(e) { handle_error(e); } };

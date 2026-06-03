@@ -425,8 +425,12 @@ function checkPayToAddressForCommonErrors() {
         } else if (offlinemode) {
             $('#lblpaytodesttag').html('Destination Tag')
         } else {
-            remote.getSettings(payto).then(e=>{
-                $('#lblpaytodesttag').html('Destination Tag (<i color="red">Required!</i>)')
+            remote.getSettings(payto).then(settings => {
+                if (settings && settings.requireDestinationTag) {
+                    $('#lblpaytodesttag').html('Destination Tag (<i color="red">Required!</i>)')
+                } else {
+                    $('#lblpaytodesttag').html('Destination Tag')
+                }
             }).catch(e=>{
                 $('#lblpaytodesttag').html('Destination Tag')
             })

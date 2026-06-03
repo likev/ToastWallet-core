@@ -29235,11 +29235,12 @@ if (typeof window !== 'undefined') {
 		}
 	}
 	window['BN'] = BN;
+	window['BigNumber'] = require('xrpl/node_modules/bignumber.js');
 	window['xrpl'] = require('xrpl');
 	window['utils'] = require('./utils.js');
 }
 
-},{"./utils.js":237,"xrpl":70}],237:[function(require,module,exports){
+},{"./utils.js":237,"xrpl":70,"xrpl/node_modules/bignumber.js":192}],237:[function(require,module,exports){
 'use strict';
 const { sha256 } = require('@noble/hashes/sha256');
 const { ripemd160 } = require('@noble/hashes/ripemd160');

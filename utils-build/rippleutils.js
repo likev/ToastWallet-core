@@ -23,6 +23,7 @@ if (typeof window !== 'undefined') {
 		}
 	}
 	window['BN'] = BN;
+	window['BigNumber'] = require('xrpl/node_modules/bignumber.js');
 	window['xrpl'] = require('xrpl');
 	window['utils'] = require('./utils.js');
 }

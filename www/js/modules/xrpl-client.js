@@ -255,8 +255,13 @@ function injectCompatibilityLayer(client) {
         });
         return Promise.all([asksPromise, bidsPromise]).then(([asksRes, bidsRes]) => {
             var mapOffer = (offer, isAsk) => {
-                var getsAmount = typeof offer.TakerGets === 'string' ? parseFloat(offer.TakerGets) / 1000000.0 : parseFloat(offer.TakerGets.value);
-                var paysAmount = typeof offer.TakerPays === 'string' ? parseFloat(offer.TakerPays) / 1000000.0 : parseFloat(offer.TakerPays.value);
+                var BigNumber = window.BigNumber;
+                var getsAmount = typeof offer.TakerGets === 'string'
+                    ? new BigNumber(offer.TakerGets).dividedBy(1000000)
+                    : new BigNumber(offer.TakerGets.value);
+                var paysAmount = typeof offer.TakerPays === 'string'
+                    ? new BigNumber(offer.TakerPays).dividedBy(1000000)
+                    : new BigNumber(offer.TakerPays.value);
                 
                 var price;
                 var quantity;
@@ -264,11 +269,11 @@ function injectCompatibilityLayer(client) {
                 if (isAsk) {
                     quantity = getsAmount;
                     totalPrice = paysAmount;
-                    price = totalPrice / quantity;
+                    price = totalPrice.dividedBy(quantity);
                 } else {
                     quantity = paysAmount;
                     totalPrice = getsAmount;
-                    price = totalPrice / quantity;
+                    price = totalPrice.dividedBy(quantity);
                 }
                 return {
                     specification: {

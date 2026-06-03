@@ -86,16 +86,18 @@ function refreshAccounts(after) {
                             accountbalances[account] = parseFloat(xrpBalance);
                             var balcount = Object.keys(accountbalances).length;
                             if (balcount > 0 && activeaccount == "") {
-                                var largest = 0; var largestindex = 0;
+                                var largest = -1; var largestindex = "";
                                 for (var x in accountbalances) {
                                     if (accountbalances[x] > largest) {
                                         largest = accountbalances[x];
-                                        largestindx = x;
+                                        largestindex = x;
                                     }
                                 }
-                                activeaccount = x;
-                                $("#opt" + x).prop('selected', true);
-                                $("#ra" + x).addClass('active');	
+                                if (largestindex !== "") {
+                                    activeaccount = largestindex;
+                                    $("#opt" + largestindex).prop('selected', true);
+                                    $("#ra" + largestindex).addClass('active');
+                                }
                             }
                             if (lastacc == account && after != undefined && typeof(after) == 'function') after();
                             

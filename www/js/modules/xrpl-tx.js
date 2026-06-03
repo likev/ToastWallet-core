@@ -516,7 +516,7 @@ function sendAccountFlagsTx(passphrase, fromacc, defaultRipple, depositAuth, dis
             var flags = {
                 "defaultRipple": defaultRipple, "depositAuth": depositAuth, "disableMasterKey": disableMasterKey, "disallowIncomingXRP": disallowIncomingXRP, "globalFreeze": globalFreeze, "noFreeze": noFreeze, "requireAuthorization": requireAuthorization, "requireDestinationTag": requireDestinationTag
             }
-            var submit_flag_change = (flags, secret) => {
+            var submit_flag_change = (flags) => {
                 for (var f in flags) {
                     // drop any flags we're not changing
                     if (flags[f] == 'unchanged') {
@@ -539,7 +539,7 @@ function sendAccountFlagsTx(passphrase, fromacc, defaultRipple, depositAuth, dis
                             
                             console.log('Settings transaction signed...');
                             
-                            submitSignedTransaction(signedTransaction, ()=>{ submit_flag_change(flags, secret); }, failurefunc, ptries);
+                            submitSignedTransaction(signedTransaction, ()=>{ submit_flag_change(flags); }, failurefunc, ptries);
                             
                         }, (fail) => 	 {
                             console.log('Prepare settings failed: ' + fail);
@@ -550,17 +550,18 @@ function sendAccountFlagsTx(passphrase, fromacc, defaultRipple, depositAuth, dis
                                     }, ptries + 1, failurefunc);
                             }
                             unblockInput();
+                            secret = "";
                             failurefunc("" + fail);
                         });
                     }
                     return preparesettings(fromacc, settings, instructions, 0);
                 }
                 // if code execution reaches here then all submissions were successful!
+                secret = "";
                 successfunc();
             };
             
-            submit_flag_change(flags, secret);
-            secret = "";
+            submit_flag_change(flags);
 		
 		},
 		function() {
