@@ -27,4 +27,8 @@ if (typeof window !== 'undefined') {
 	window['xrpl'] = require('xrpl');
 	window['utils'] = require('./utils.js');
 	window['sodium'] = require('./sodium-compat.js');
+	const qrCompat = require('./qr-compat.js');
+	window['qr'] = qrCompat;
+	window['kjua'] = qrCompat.kjua;
+	window['Instascan'] = qrCompat.Instascan;
 }

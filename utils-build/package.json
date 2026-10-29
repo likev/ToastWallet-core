@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "build": "node rippleutils.js",
+    "build": "node build_qr.js && node rippleutils.js",
     "test": "node --test test/*.test.js",
     "bench": "node test/bench.js"
   },
@@ -11,10 +11,12 @@
     "node-pre-gyp": "^0.6.36",
     "pouchdb": "^9.0.0",
     "pouchdb-upsert": "^2.2.0",
+    "qr": "^0.7.2",
     "random-bytes": "^1.0.0",
     "xrpl": "4.6.0"
   },
   "devDependencies": {
-    "browserify": "^17.0.1"
+    "browserify": "^17.0.1",
+    "esbuild": "^0.28.2"
   }
 }
