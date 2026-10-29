@@ -1148,7 +1148,29 @@ function validatePin(pin, successfunc, failfunc, nopinsetfunc) {
                     var salt = fromhex_chksum(pindata.salt);
                     var hash;
                     if (salt.length === 16) {
+                        // Legacy 16-byte-salt SipHash PIN. Verify first, then transparently re-store as 32-byte-salt scrypt.
                         hash = tohex_chksum(sodium.crypto_shorthash(pin, salt));
+                        if (hash == pindata.hash) {
+                            // Guard against normalboot()'s validatePin("", ...) startup probe.
+                            if (pin !== "") {
+                                try {
+                                    return setPin(pin,
+                                        function() {
+                                            if (debug) console.log("validatePin: upgraded legacy PIN to scrypt");
+                                            successfunc();
+                                        },
+                                        function() {
+                                            console.warn("validatePin: legacy PIN upgrade write failed; will retry next unlock");
+                                            successfunc();
+                                        });
+                                } catch (upgradeErr) {
+                                    console.warn("validatePin: legacy PIN upgrade threw; will retry next unlock");
+                                    return successfunc();
+                                }
+                            }
+                            return successfunc();
+                        }
+                        return failfunc();
                     } else {
                         var scryptHash = sodium.crypto_pwhash_scryptsalsa208sha256(32, pin, salt, 4, 33554432);
                         hash = tohex_chksum(scryptHash);

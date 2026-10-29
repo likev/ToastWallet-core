@@ -72,26 +72,87 @@ test('crypto.js: validatePin with 32-byte scrypt pindata', async () => {
   assert.equal(fail, true);
 });
 
-test('crypto.js: validatePin with 16-byte legacy SipHash pindata', async () => {
+test('crypto.js: validatePin legacy 16-byte-salt auto-upgrades to scrypt on unlock', async () => {
   const db = createMockDb({ pindata: walletFixture.pouchdb.pindata_legacy });
   const ctx = loadRealCryptoModule(db);
 
   let success = false;
-  let fail = false;
   await new Promise((resolve) => {
-    ctx.validatePin(walletFixture.credentials.pin, () => { success = true; resolve(); }, () => { fail = true; resolve(); }, () => resolve());
+    ctx.validatePin(walletFixture.credentials.pin, () => { success = true; resolve(); }, () => resolve(), () => resolve());
   });
   assert.equal(success, true);
-  assert.equal(fail, false);
 
-  // Wrong PIN
-  success = false;
-  fail = false;
+  // Assert pindata was upgraded to 32-byte salt (72 hex chars)
+  const stored = db._store.get('pindata');
+  const upgradedData = JSON.parse(stored.data);
+  assert.equal(upgradedData.salt.length, 72);
+  assert.equal(upgradedData.hash.length, 72);
+
+  // Second validation uses scrypt
+  let secondSuccess = false;
   await new Promise((resolve) => {
-    ctx.validatePin('wrongpin', () => { success = true; resolve(); }, () => { fail = true; resolve(); }, () => resolve());
+    ctx.validatePin(walletFixture.credentials.pin, () => { secondSuccess = true; resolve(); }, () => resolve(), () => resolve());
   });
-  assert.equal(success, false);
+  assert.equal(secondSuccess, true);
+
+  // Wrong PIN rejected under scrypt
+  let wrongRejected = false;
+  await new Promise((resolve) => {
+    ctx.validatePin('wrongpin', () => resolve(), () => { wrongRejected = true; resolve(); }, () => resolve());
+  });
+  assert.equal(wrongRejected, true);
+});
+
+test('crypto.js: legacy pindata with wrong PIN leaves pindata untouched', async () => {
+  const db = createMockDb({ pindata: walletFixture.pouchdb.pindata_legacy });
+  const ctx = loadRealCryptoModule(db);
+
+  let fail = false;
+  await new Promise((resolve) => {
+    ctx.validatePin('wrongpin', () => resolve(), () => { fail = true; resolve(); }, () => resolve());
+  });
   assert.equal(fail, true);
+
+  // pindata is untouched (16-byte salt, length 40)
+  const stored = db._store.get('pindata');
+  const data = JSON.parse(stored.data);
+  assert.equal(data.salt.length, 40);
+});
+
+test('crypto.js: legacy pindata with empty string boot probe leaves pindata untouched', async () => {
+  const db = createMockDb({ pindata: walletFixture.pouchdb.pindata_legacy });
+  const ctx = loadRealCryptoModule(db);
+
+  let fail = false;
+  await new Promise((resolve) => {
+    ctx.validatePin('', () => resolve(), () => { fail = true; resolve(); }, () => resolve());
+  });
+  assert.equal(fail, true);
+
+  // pindata is untouched
+  const stored = db._store.get('pindata');
+  const data = JSON.parse(stored.data);
+  assert.equal(data.salt.length, 40);
+});
+
+test('crypto.js: legacy pindata upgrade write failure still unlocks and leaves legacy PIN for retry', async () => {
+  const db = createMockDb({ pindata: walletFixture.pouchdb.pindata_legacy });
+  // Simulate db.upsert rejection during upgrade
+  db.upsert = () => Promise.reject(new Error('simulated disk error'));
+
+  const ctx = loadRealCryptoModule(db);
+
+  let success = false;
+  await new Promise((resolve) => {
+    ctx.validatePin(walletFixture.credentials.pin, () => { success = true; resolve(); }, () => resolve(), () => resolve());
+  });
+  // Must still unlock successfully
+  assert.equal(success, true);
+
+  // pindata remains legacy
+  const stored = db._store.get('pindata');
+  const data = JSON.parse(stored.data);
+  assert.equal(data.salt.length, 40);
 });
 
 test('crypto.js: validatePin with empty database calls nopinsetfunc', async () => {
