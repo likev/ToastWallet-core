@@ -26,4 +26,11 @@ if (typeof window !== 'undefined') {
 	window['BigNumber'] = require('xrpl/node_modules/bignumber.js');
 	window['xrpl'] = require('xrpl');
 	window['utils'] = require('./utils.js');
+	const compat = require('./sodium-compat.js');
+	const legacy = window.sodium;
+	if (legacy && typeof legacy.sodium_version_string === 'function') {
+		window.sodium = require('./sodium-shadow.js')(legacy, compat);
+	} else {
+		window.sodium = compat;
+	}
 }

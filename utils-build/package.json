@@ -13,5 +13,8 @@
     "pouchdb-upsert": "^2.2.0",
     "random-bytes": "^1.0.0",
     "xrpl": "4.6.0"
+  },
+  "devDependencies": {
+    "browserify": "^17.0.1"
   }
 }
