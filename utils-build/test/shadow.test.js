@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const createShadow = require('../sodium-shadow.js');
+const createShadow = require('./sodium-shadow.js');
 const compat = require('../sodium-compat.js');
 
 test('Shadow mode detects return value mismatch', () => {

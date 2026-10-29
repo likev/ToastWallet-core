@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const loadLegacySodium = require('./load-legacy-sodium.js');
 const compat = require('../sodium-compat.js');
-const createShadow = require('../sodium-shadow.js');
+const createShadow = require('./sodium-shadow.js');
 
 const walletFixture = JSON.parse(
   fs.readFileSync(path.resolve(__dirname, 'fixtures/wallet-v3.0.1.json'), 'utf8')
