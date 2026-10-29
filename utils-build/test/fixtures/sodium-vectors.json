@@ -1,0 +1,2092 @@
+{
+  "constants": {
+    "crypto_box_NONCEBYTES": 24,
+    "crypto_secretbox_NONCEBYTES": 24,
+    "crypto_secretbox_KEYBYTES": 32,
+    "crypto_secretbox_MACBYTES": 16,
+    "crypto_box_SECRETKEYBYTES": 32,
+    "crypto_pwhash_scryptsalsa208sha256_SALTBYTES": 32,
+    "crypto_shorthash_KEYBYTES": 16,
+    "crypto_shorthash_BYTES": 8,
+    "crypto_pwhash_OPSLIMIT_INTERACTIVE": 4,
+    "crypto_pwhash_MEMLIMIT_INTERACTIVE": 33554432
+  },
+  "scrypt": [
+    {
+      "dkLen": 16,
+      "password": "123456",
+      "pwType": "string",
+      "saltHex": "79a29745820b801ff9f748313a7af86b511f4757d93033759484c2f28af9de6a",
+      "ops": 4,
+      "mem": 33554432,
+      "outHex": "5b4a1500e31af0c2e762049bfa002974"
+    },
+    {
+      "dkLen": 32,
+      "password": "123456",
+      "pwType": "string",
+      "saltHex": "8aee45bf567fef50da44800d34d28f25765ae0675cfedf8663d6f3c7fbb57fee",
+      "ops": 4,
+      "mem": 33554432,
+      "outHex": "cb2faa643f1cbded22537bb5e747a6fc9a70fc2cc0b674eac9e7ee16762158ab"
+    },
+    {
+      "dkLen": 16,
+      "password": "correct horse battery",
+      "pwType": "string",
+      "saltHex": "c81d9e562406f486525527c8212ad17ce573063a0a55b7f3a26092abb3a7277d",
+      "ops": 4,
+      "mem": 33554432,
+      "outHex": "699cf06f7d6ea90f003683cb8e8ded9a"
+    },
+    {
+      "dkLen": 32,
+      "password": "correct horse battery",
+      "pwType": "string",
+      "saltHex": "342772fde21d192b7733e78cdd9f72256aa5e153441540da70afe59b3890c5bc",
+      "ops": 4,
+      "mem": 33554432,
+      "outHex": "b234d76d1fcf42cbd2a425dd2455873057f6b164e53379fca81405c648f5d3f4"
+    },
+    {
+      "dkLen": 16,
+      "password": "test-password-123",
+      "pwType": "string",
+      "saltHex": "e109c449dc865a8cf26d22a919141e35e32ecfd8be5f6f3a80d1e5b9e4f33eb5",
+      "ops": 4,
+      "mem": 33554432,
+      "outHex": "9e442d14484fd89371663626cb65cdc9"
+    },
+    {
+      "dkLen": 32,
+      "password": "test-password-123",
+      "pwType": "string",
+      "saltHex": "fac2c974b1442adc0214ec905930732842515f97829bb1f81b5a4148e6196ad3",
+      "ops": 4,
+      "mem": 33554432,
+      "outHex": "adca912d8841ff08e2f7459eb87e742f742aded84bf63d52472c647a97f1cb78"
+    },
+    {
+      "dkLen": 16,
+      "password": "パスワード🔑",
+      "pwType": "string",
+      "saltHex": "b959ee5b53a16e3277be0bdaf55b02de8e555800ed74e5dc1c625bb23f0d17ea",
+      "ops": 4,
+      "mem": 33554432,
+      "outHex": "01e1367ce2a3d83b936c96e78cbbaf54"
+    },
+    {
+      "dkLen": 32,
+      "password": "パスワード🔑",
+      "pwType": "string",
+      "saltHex": "71d4d1810b2a7f88b883fc3f19c4549ae384b225b0da5e93f3854883c59f042d",
+      "ops": 4,
+      "mem": 33554432,
+      "outHex": "54f50d4bb0ea842b50c97c427f83c09e045332923b6608e62c8eccaa0aec8ff0"
+    },
+    {
+      "dkLen": 16,
+      "password": "p@sswörd_éèç",
+      "pwType": "string",
+      "saltHex": "8642450b73b02abbbd02efa0c45ce1046e2c9abed1fee4aca3e1d26d2364e537",
+      "ops": 4,
+      "mem": 33554432,
+      "outHex": "8f8fe28cd0ebd4a42825b9343cdc8d56"
+    },
+    {
+      "dkLen": 32,
+      "password": "p@sswörd_éèç",
+      "pwType": "string",
+      "saltHex": "70b151c37a49b18f165cc8ffcddb192572a07128a759b29cc41a7743d8b46404",
+      "ops": 4,
+      "mem": 33554432,
+      "outHex": "5dfab8454b681987e4583f43c6f4e018bdec0c16faf4bbb6b23ea9224d8e32f7"
+    },
+    {
+      "dkLen": 16,
+      "password": "",
+      "pwType": "string",
+      "saltHex": "bc383017644ccaa9e3371f83d9ba5e6f4637cb62e2a577bb82586aff34aa1cf6",
+      "ops": 4,
+      "mem": 33554432,
+      "outHex": "2e8a00d374d4844784ca23a9848beb1e"
+    },
+    {
+      "dkLen": 32,
+      "password": "",
+      "pwType": "string",
+      "saltHex": "0bed5118c8589e94d9bb3f77673706b3554b731182e158469c4790be5e269fd3",
+      "ops": 4,
+      "mem": 33554432,
+      "outHex": "778d43e4b94ef282c0a2b1f3396d5abe8cf3af4e6b14e8e9d6e484f0f5706c89"
+    },
+    {
+      "dkLen": 16,
+      "password": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "pwType": "string",
+      "saltHex": "11ef567d904dc9bf44982949c5555b2a1d3a647adb50eb5c661582c051cd6fc2",
+      "ops": 4,
+      "mem": 33554432,
+      "outHex": "7bdf157642852f9864bd45ea1fd0862b"
+    },
+    {
+      "dkLen": 32,
+      "password": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "pwType": "string",
+      "saltHex": "985d179ffd505e7a00fd908c18d89d6e3168cf8c97793c03c877906ada070753",
+      "ops": 4,
+      "mem": 33554432,
+      "outHex": "b6cad7359403ab3c26039c58f55e4a5f11248fbc5c40f78a49312953222487df"
+    },
+    {
+      "dkLen": 16,
+      "password": "c18c4628734fa389a8636d54ad7747af",
+      "pwType": "hex",
+      "saltHex": "7b5c9e7ca1cbe3fd7ea1dcf7584bfd7f373a1ad5b428ca213da4ba459c00d176",
+      "ops": 4,
+      "mem": 33554432,
+      "outHex": "ec57ee8d1c10f15865e7a966b85dd4ac"
+    },
+    {
+      "dkLen": 32,
+      "password": "c18c4628734fa389a8636d54ad7747af",
+      "pwType": "hex",
+      "saltHex": "ab142bb5636a4f63c6bd2a6551fda2c0eb1cdd88826b8884d557b7fd0da72f7f",
+      "ops": 4,
+      "mem": 33554432,
+      "outHex": "f8caec6a3930c21ed400b276c4cd31d9e788241ae0aafe7287b0c4a9080d70bb"
+    },
+    {
+      "nested": true,
+      "phrase": "correct horse battery",
+      "salt1Hex": "2db330917e1e11a86f1049d5a4ffa6f91a7be57fa796dfdd34d0f16477b1752a",
+      "salt2Hex": "1a6854fa821c0bb0a9d9bd68c4271854a8cb34341b3fa9be91d3856ff896eb92",
+      "k1Hex": "16a5e5b85c468bbe33588b811646601e",
+      "k2Hex": "fd53dadbd714a2e4362e51006672992a8eb6da4ea0e28cf1fbcf3d879041a695"
+    },
+    {
+      "throws": true,
+      "dkLen": 32,
+      "password": "pin",
+      "saltHex": "9f67727c52de914134dfbd67fa0ffa62",
+      "ops": 4,
+      "mem": 33554432,
+      "reason": "salt length 16"
+    },
+    {
+      "throws": true,
+      "dkLen": 32,
+      "password": "pin",
+      "saltHex": "8b81fec82d4135a1b8a745358291cf39fbeb994a25206d04676c373c621643",
+      "ops": 4,
+      "mem": 33554432,
+      "reason": "salt length 31"
+    },
+    {
+      "throws": true,
+      "dkLen": 32,
+      "password": "pin",
+      "saltHex": "14ce19abfe7cbc48e10817b8f4dca44f05842f0c3a86e4dd892a4cc976ec5ddcc3",
+      "ops": 4,
+      "mem": 33554432,
+      "reason": "salt length 33"
+    },
+    {
+      "throws": true,
+      "dkLen": 15,
+      "password": "pin",
+      "saltHex": "8f11d93eff1219bf7674170d9f91913ea27342c5556f9142fcd2c8c65ccba52a",
+      "ops": 4,
+      "mem": 33554432,
+      "reason": "dkLen < 16"
+    },
+    {
+      "throws": true,
+      "dkLen": 32,
+      "password": "pin",
+      "saltHex": "02eb5a93feea5360889050033ae1ad93d2fde609c448b085efd23c064b086f69",
+      "ops": 4,
+      "mem": 33554432,
+      "fmt": "invalid_fmt",
+      "reason": "bad fmt"
+    }
+  ],
+  "generichash": [
+    {
+      "len": 1,
+      "keyType": "none",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "2e"
+    },
+    {
+      "len": 1,
+      "keyType": "none",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "93"
+    },
+    {
+      "len": 1,
+      "keyType": "none",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "ed"
+    },
+    {
+      "len": 1,
+      "keyType": "none",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "d7"
+    },
+    {
+      "len": 1,
+      "key": null,
+      "keyType": "null",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "2e"
+    },
+    {
+      "len": 1,
+      "key": null,
+      "keyType": "null",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "93"
+    },
+    {
+      "len": 1,
+      "key": null,
+      "keyType": "null",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "ed"
+    },
+    {
+      "len": 1,
+      "key": null,
+      "keyType": "null",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "d7"
+    },
+    {
+      "len": 1,
+      "key": "",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "2e"
+    },
+    {
+      "len": 1,
+      "key": "",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "93"
+    },
+    {
+      "len": 1,
+      "key": "",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "ed"
+    },
+    {
+      "len": 1,
+      "key": "",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "d7"
+    },
+    {
+      "len": 1,
+      "key": "0",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "bb"
+    },
+    {
+      "len": 1,
+      "key": "0",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "df"
+    },
+    {
+      "len": 1,
+      "key": "0",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "e4"
+    },
+    {
+      "len": 1,
+      "key": "0",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "91"
+    },
+    {
+      "len": 1,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "a7"
+    },
+    {
+      "len": 1,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "a0"
+    },
+    {
+      "len": 1,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "c7"
+    },
+    {
+      "len": 1,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "7d"
+    },
+    {
+      "len": 1,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "2d"
+    },
+    {
+      "len": 1,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "01"
+    },
+    {
+      "len": 1,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "6c"
+    },
+    {
+      "len": 1,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "d8"
+    },
+    {
+      "len": 1,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "af"
+    },
+    {
+      "len": 1,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "d7"
+    },
+    {
+      "len": 1,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "8f"
+    },
+    {
+      "len": 1,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "05"
+    },
+    {
+      "len": 1,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "e3"
+    },
+    {
+      "len": 1,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "a7"
+    },
+    {
+      "len": 1,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "c0"
+    },
+    {
+      "len": 1,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "d0"
+    },
+    {
+      "len": 4,
+      "keyType": "none",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "1271cf25"
+    },
+    {
+      "len": 4,
+      "keyType": "none",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "279e2877"
+    },
+    {
+      "len": 4,
+      "keyType": "none",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "5fadc999"
+    },
+    {
+      "len": 4,
+      "keyType": "none",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "fa392ec3"
+    },
+    {
+      "len": 4,
+      "key": null,
+      "keyType": "null",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "1271cf25"
+    },
+    {
+      "len": 4,
+      "key": null,
+      "keyType": "null",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "279e2877"
+    },
+    {
+      "len": 4,
+      "key": null,
+      "keyType": "null",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "5fadc999"
+    },
+    {
+      "len": 4,
+      "key": null,
+      "keyType": "null",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "fa392ec3"
+    },
+    {
+      "len": 4,
+      "key": "",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "1271cf25"
+    },
+    {
+      "len": 4,
+      "key": "",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "279e2877"
+    },
+    {
+      "len": 4,
+      "key": "",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "5fadc999"
+    },
+    {
+      "len": 4,
+      "key": "",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "fa392ec3"
+    },
+    {
+      "len": 4,
+      "key": "0",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "7136359e"
+    },
+    {
+      "len": 4,
+      "key": "0",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "ff5e2ced"
+    },
+    {
+      "len": 4,
+      "key": "0",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "cacb801b"
+    },
+    {
+      "len": 4,
+      "key": "0",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "4f8d90e3"
+    },
+    {
+      "len": 4,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "ca8a8580"
+    },
+    {
+      "len": 4,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "15178ad9"
+    },
+    {
+      "len": 4,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "4122d76d"
+    },
+    {
+      "len": 4,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "e226e867"
+    },
+    {
+      "len": 4,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "b5441f03"
+    },
+    {
+      "len": 4,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "59776a39"
+    },
+    {
+      "len": 4,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "cace9f3e"
+    },
+    {
+      "len": 4,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "7ec5c6c1"
+    },
+    {
+      "len": 4,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "0c6b58b2"
+    },
+    {
+      "len": 4,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "3525f1ad"
+    },
+    {
+      "len": 4,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "f38d85f0"
+    },
+    {
+      "len": 4,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "f78ff5cb"
+    },
+    {
+      "len": 4,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "c75b6441"
+    },
+    {
+      "len": 4,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "2c1610ee"
+    },
+    {
+      "len": 4,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "857efe09"
+    },
+    {
+      "len": 4,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "e510a733"
+    },
+    {
+      "len": 16,
+      "keyType": "none",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "cae66941d9efbd404e4d88758ea67670"
+    },
+    {
+      "len": 16,
+      "keyType": "none",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "e9a804b2e527fd3601d2ffc0bb023cd6"
+    },
+    {
+      "len": 16,
+      "keyType": "none",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "7269faac230a0d08163322229ad2e5a9"
+    },
+    {
+      "len": 16,
+      "keyType": "none",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "eb73e385787d1f174af0212ff2cfbeff"
+    },
+    {
+      "len": 16,
+      "key": null,
+      "keyType": "null",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "cae66941d9efbd404e4d88758ea67670"
+    },
+    {
+      "len": 16,
+      "key": null,
+      "keyType": "null",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "e9a804b2e527fd3601d2ffc0bb023cd6"
+    },
+    {
+      "len": 16,
+      "key": null,
+      "keyType": "null",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "7269faac230a0d08163322229ad2e5a9"
+    },
+    {
+      "len": 16,
+      "key": null,
+      "keyType": "null",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "eb73e385787d1f174af0212ff2cfbeff"
+    },
+    {
+      "len": 16,
+      "key": "",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "cae66941d9efbd404e4d88758ea67670"
+    },
+    {
+      "len": 16,
+      "key": "",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "e9a804b2e527fd3601d2ffc0bb023cd6"
+    },
+    {
+      "len": 16,
+      "key": "",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "7269faac230a0d08163322229ad2e5a9"
+    },
+    {
+      "len": 16,
+      "key": "",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "eb73e385787d1f174af0212ff2cfbeff"
+    },
+    {
+      "len": 16,
+      "key": "0",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "a2434a72a935c60f66638fd5f581b163"
+    },
+    {
+      "len": 16,
+      "key": "0",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "a7356b0ff9d38ba6b6411a6f1008b1e1"
+    },
+    {
+      "len": 16,
+      "key": "0",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "6d6c5aadc9b2dae752a0c9f22105c8ab"
+    },
+    {
+      "len": 16,
+      "key": "0",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "6aa426b8c4602ba8c12616ff33697677"
+    },
+    {
+      "len": 16,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "08f2628f95387a5b5035aaa16bb813ed"
+    },
+    {
+      "len": 16,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "5954f81a9334e3d8aa1685fd520cab5a"
+    },
+    {
+      "len": 16,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "9945c914fee4fbdad2d4e5ccf35b6626"
+    },
+    {
+      "len": 16,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "20154614e9f848c313dbe67fdf0eab71"
+    },
+    {
+      "len": 16,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "36a4908badc6aa4caf207b327cdbcfc8"
+    },
+    {
+      "len": 16,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "46bab1ac42451f8065b92f2a01499256"
+    },
+    {
+      "len": 16,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "5311728e6a67821cdc41e7334ea57588"
+    },
+    {
+      "len": 16,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "e7d64c67157d9ccc8ad8ace0c1565e33"
+    },
+    {
+      "len": 16,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "ee6dd7038c77594235ecdf2514e45200"
+    },
+    {
+      "len": 16,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "f4e57c0ec0333e94fe0c47592b0a57f5"
+    },
+    {
+      "len": 16,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "72b966abc04bb0d01c3f7633865bddff"
+    },
+    {
+      "len": 16,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "622c9420dcd50055b1d31c0ac5a9c2e2"
+    },
+    {
+      "len": 16,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "ec4c4e07ca5d34a70636596a1768155b"
+    },
+    {
+      "len": 16,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "e9c65f15eb7a88db0d5cb23989231c39"
+    },
+    {
+      "len": 16,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "4e1198bc6718e2909333880c421fe3a8"
+    },
+    {
+      "len": 16,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "438e42aff9d076e283369ba638591e20"
+    },
+    {
+      "len": 32,
+      "keyType": "none",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "0e5751c026e543b2e8ab2eb06099daa1d1e5df47778f7787faab45cdf12fe3a8"
+    },
+    {
+      "len": 32,
+      "keyType": "none",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "256c83b297114d201b30179f3f0ef0cace9783622da5974326b436178aeef610"
+    },
+    {
+      "len": 32,
+      "keyType": "none",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "76faa05beb62b0532d91354845e6ebe206ae38876f749d5d39af436cc543710b"
+    },
+    {
+      "len": 32,
+      "keyType": "none",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "5b3a3367f6f32d64a63e254fcf822f1d9bfe5d1460887222060873424145eb34"
+    },
+    {
+      "len": 32,
+      "key": null,
+      "keyType": "null",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "0e5751c026e543b2e8ab2eb06099daa1d1e5df47778f7787faab45cdf12fe3a8"
+    },
+    {
+      "len": 32,
+      "key": null,
+      "keyType": "null",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "256c83b297114d201b30179f3f0ef0cace9783622da5974326b436178aeef610"
+    },
+    {
+      "len": 32,
+      "key": null,
+      "keyType": "null",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "76faa05beb62b0532d91354845e6ebe206ae38876f749d5d39af436cc543710b"
+    },
+    {
+      "len": 32,
+      "key": null,
+      "keyType": "null",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "5b3a3367f6f32d64a63e254fcf822f1d9bfe5d1460887222060873424145eb34"
+    },
+    {
+      "len": 32,
+      "key": "",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "0e5751c026e543b2e8ab2eb06099daa1d1e5df47778f7787faab45cdf12fe3a8"
+    },
+    {
+      "len": 32,
+      "key": "",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "256c83b297114d201b30179f3f0ef0cace9783622da5974326b436178aeef610"
+    },
+    {
+      "len": 32,
+      "key": "",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "76faa05beb62b0532d91354845e6ebe206ae38876f749d5d39af436cc543710b"
+    },
+    {
+      "len": 32,
+      "key": "",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "5b3a3367f6f32d64a63e254fcf822f1d9bfe5d1460887222060873424145eb34"
+    },
+    {
+      "len": 32,
+      "key": "0",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "3a0d21204e1695f77f1e1748cbc391330426e193ade4de90ee7bd8b1b9665823"
+    },
+    {
+      "len": 32,
+      "key": "0",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "b0fe2d65bc42f9e645db6b82e864164fcf4715cb5cb4eae998c11c3a9a7f6043"
+    },
+    {
+      "len": 32,
+      "key": "0",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "b7909603598351901cc4ee6f63611497fa58a1fbc99132677d7f5542b83a7776"
+    },
+    {
+      "len": 32,
+      "key": "0",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "8484aeda33d37e16a531f2f5d0180917dfa1d4d0cd7c9f6384136564e496183c"
+    },
+    {
+      "len": 32,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "faff39bef7cdf3edd655f47f7198da522b6664a2e96bd9f04c1f1ea992b065d9"
+    },
+    {
+      "len": 32,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "27cf1c575c6d3229756e87fbc7c302980ab5e1c44de479bbe02f12c887984135"
+    },
+    {
+      "len": 32,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "b774ccc2d9378a475235563507ab300d8209cd7f046d7ff30080997ef034cbb6"
+    },
+    {
+      "len": 32,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "eeb4cf88c02af1457c44df7b00cf8ff45112f4bc1ff1ebc96dd59212963aa487"
+    },
+    {
+      "len": 32,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "4e983081462fad4ef82c7b673a023b045d62567aaa82bd7b8aa5366c358ab019"
+    },
+    {
+      "len": 32,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "bd74be2fcc8150ef898c0d9cab5ded40b9cf1c4ec48bfb3d26b5d9187fbf3bd7"
+    },
+    {
+      "len": 32,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "aa3a7aa0fb3ab58f338c915dea14ebd38e4cf577dd4dc7346dc1794609bb5b10"
+    },
+    {
+      "len": 32,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "5db244504e5db4d5834276e7664acd0b4b119d21912684b4c0ac93068c22dd00"
+    },
+    {
+      "len": 32,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "424dcd4f6e113fc71f5b8bda33534d10e8d8d718d9d5de337d454cc733e6c54d"
+    },
+    {
+      "len": 32,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "486187c102892e2d0093d37142c30716c7ff30ea673cb7412b7cab0968ef363a"
+    },
+    {
+      "len": 32,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "2f1da9d3347d24bcf2963b6190e084b11d02fdc9cde5143fa64c5ec4fa5ff903"
+    },
+    {
+      "len": 32,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "eded05580aa2f7036ed5a47920dbf02bc0560999df6ede5c119a317433b2cf79"
+    },
+    {
+      "len": 32,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "d51788d69dd7948ea1c7b9d28f1a8e5d7cf270ee4a1ed47e50018d76a329d42d"
+    },
+    {
+      "len": 32,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "8e1e398a58b1e4664372163d89e1a0d5f27cb0218e4ae7bb5ffd4e0d99ae2465"
+    },
+    {
+      "len": 32,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "5f6125cf3fc4234f1160774c34004a921cd9a61bcb18eed4fd98480b1baf4caa"
+    },
+    {
+      "len": 32,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "e7b50a834e785e0e51944399d3aa8a085a4fc38f15a30b22b273cc628ca4764b"
+    },
+    {
+      "len": 64,
+      "keyType": "none",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "786a02f742015903c6c6fd852552d272912f4740e15847618a86e217f71f5419d25e1031afee585313896444934eb04b903a685b1448b755d56f701afe9be2ce"
+    },
+    {
+      "len": 64,
+      "keyType": "none",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "021ced8799296ceca557832ab941a50b4a11f83478cf141f51f933f653ab9fbcc05a037cddbed06e309bf334942c4e58cdf1a46e237911ccd7fcf9787cbc7fd0"
+    },
+    {
+      "len": 64,
+      "keyType": "none",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "683fa765d38aec27c460c74e6a46efc6c2242b4081135d0017cf775c375aaa1fc149a8a5b496afd998a92fd66cddca4d3fff62db682571d3eb80a136e49953cd"
+    },
+    {
+      "len": 64,
+      "keyType": "none",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "a7c1658fe2eb68d18bc0bfcd850f7a9781d47601d18fcbc8bf565b1f10a9e48cbfe67d3ebcaf5fb153d329ea2bd18a1317ea00777ce08c2bfe88472e8e69b913"
+    },
+    {
+      "len": 64,
+      "key": null,
+      "keyType": "null",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "786a02f742015903c6c6fd852552d272912f4740e15847618a86e217f71f5419d25e1031afee585313896444934eb04b903a685b1448b755d56f701afe9be2ce"
+    },
+    {
+      "len": 64,
+      "key": null,
+      "keyType": "null",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "021ced8799296ceca557832ab941a50b4a11f83478cf141f51f933f653ab9fbcc05a037cddbed06e309bf334942c4e58cdf1a46e237911ccd7fcf9787cbc7fd0"
+    },
+    {
+      "len": 64,
+      "key": null,
+      "keyType": "null",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "683fa765d38aec27c460c74e6a46efc6c2242b4081135d0017cf775c375aaa1fc149a8a5b496afd998a92fd66cddca4d3fff62db682571d3eb80a136e49953cd"
+    },
+    {
+      "len": 64,
+      "key": null,
+      "keyType": "null",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "a7c1658fe2eb68d18bc0bfcd850f7a9781d47601d18fcbc8bf565b1f10a9e48cbfe67d3ebcaf5fb153d329ea2bd18a1317ea00777ce08c2bfe88472e8e69b913"
+    },
+    {
+      "len": 64,
+      "key": "",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "786a02f742015903c6c6fd852552d272912f4740e15847618a86e217f71f5419d25e1031afee585313896444934eb04b903a685b1448b755d56f701afe9be2ce"
+    },
+    {
+      "len": 64,
+      "key": "",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "021ced8799296ceca557832ab941a50b4a11f83478cf141f51f933f653ab9fbcc05a037cddbed06e309bf334942c4e58cdf1a46e237911ccd7fcf9787cbc7fd0"
+    },
+    {
+      "len": 64,
+      "key": "",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "683fa765d38aec27c460c74e6a46efc6c2242b4081135d0017cf775c375aaa1fc149a8a5b496afd998a92fd66cddca4d3fff62db682571d3eb80a136e49953cd"
+    },
+    {
+      "len": 64,
+      "key": "",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "a7c1658fe2eb68d18bc0bfcd850f7a9781d47601d18fcbc8bf565b1f10a9e48cbfe67d3ebcaf5fb153d329ea2bd18a1317ea00777ce08c2bfe88472e8e69b913"
+    },
+    {
+      "len": 64,
+      "key": "0",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "e4608a149ad2c1ebcfd680e3ec1529e801a3197ee0e1bf13d00d1384f782c54e4bd1e4d5de9828a871d21cbd8a1b80b51f5ace11cc9f630a943d0f65981d0973"
+    },
+    {
+      "len": 64,
+      "key": "0",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "30c707325bbf6e4796476de2cc1435056aee80ce8484f5b96c64fd52864d7db994438347ddd231eea892c6130fe11549d7eecb26416bf5a726d53e526380c849"
+    },
+    {
+      "len": 64,
+      "key": "0",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "8a60d515e66104ebb5c815aa7e053e5dcf76c12ec4dfed9a1a5009d7aa1750f8c00759863abe1678b7cfe47fd74c5e4b5fbb3cefba9a5bced66c0c7b723750d4"
+    },
+    {
+      "len": 64,
+      "key": "0",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "f56a9138741bdd2becd06c59db546b42ed2a2f9fc7f4c9b03f192aa7a61f20a41f032b4e728dded84e5a31b79def6cc5bd4bb2b9926f416dbc72112ce813025e"
+    },
+    {
+      "len": 64,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "0dea0e221b1a5e7f078da6f0aef62dd5bdf0bfcc9eebb5cf9e09ae34bc12cc15de7f39b6b86ab94e572d3006073c8b9984097948b2d76f233c5c986b34c697b1"
+    },
+    {
+      "len": 64,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "e35b3d6626549f7a4a94f906278d6efb5c66f9ccae5832c1096c3595cb4f4a49ea80ff597691e2ae8f97d76fb74c9d50bf4efaba4fec8128f8cdc4ec3bbd3daf"
+    },
+    {
+      "len": 64,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "e4bb3af17aaac8bb3310116182e546d85cf5198cdc6ab8a73e54b65035a834bf11ffc6d149e1081fd951b7564e7f6ee35675f882c2f472c98ec0bdc5b165db6d"
+    },
+    {
+      "len": 64,
+      "key": "4294967295",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "32aced26f9d42ff06ab8cf8c6d65ed1c1114926dd63f2b9a83c2c4c5ca7adf58f1f0562f3e1803981828bf4b082a0fd73b6b78cd22e7a95fb758174aba0d7b7c"
+    },
+    {
+      "len": 64,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "4e136e2a121de0476ac3155b684c06252e9d2dd482f17548121c7449b9016ebb9be7d789966dcada1e6cafa3c79ef1b83c70b947f20377c675cb5d6dc6b8aa54"
+    },
+    {
+      "len": 64,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "93ea6d3a3c46aa268b2707bc1d68a91f97b88c471fc90429f8349c405962c7c235e2b27720359e7b63c75c8d1b1071d69d4c3ac86d84883a393bd3e568c67fb4"
+    },
+    {
+      "len": 64,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "68fc51591db4c1338ea70060069b83ef6f1b62ce89129c38441fea98a64ad92a3feca5caa8b73bb9e7fb0e808887d21a40d49317f7c218e1a76232d9b1ee8970"
+    },
+    {
+      "len": 64,
+      "key": "offlinecode",
+      "keyType": "string",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "b04f4e0d67a811ae1f5865d174270f165b66cc8e1b8de16d7ff9c0b9769111902a3c12e289435736239646692591d397183c97654f43d8716eee0deb66ad40c0"
+    },
+    {
+      "len": 64,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "5ea36cb5be79f8285240072363664dff6e46ed184782fa932f9a7250d6787721bcbd467299524c8262044f3f70676fe24c3d64d5bf332296d0eb0ff6559babfa"
+    },
+    {
+      "len": 64,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "552769b72cf5caa9aba2a9e0d508da382e55e04c347fe5df51d2801ddf69946e43a710ac19ef7859e00ba8db5b4e87076556d85395f5f612d8c4f98f56eb8961"
+    },
+    {
+      "len": 64,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "cf30237e5976e98a2e68957c04ccf27fda9e96d6c676448b2bb702ec63efa7128bfc589181684aa85542007a8fb18b2eb00e56bca9972295c1a6c659f87ce6c4"
+    },
+    {
+      "len": 64,
+      "key": "6c2e30af163115cb5cc40581efe0af13",
+      "keyType": "bytes",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "c82802bdd0b69d6fe549d890719582136356a8973d129f5a70b1db1d06aff6a8b0a878ebf1497902b75ef9280819eb09f28f3544a56e01b6a113452cc21437ca"
+    },
+    {
+      "len": 64,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "c10c97643d83d3de7219fcf46929e1b5af62e1c971671d65450a2adb40699701dc56558f5312bfaaf548cd61b886162e5ed6702002870848d2930ae5be94413d"
+    },
+    {
+      "len": 64,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "hello world",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "b7666aafa1620202744f58c4abfbab255cdfd3430c60a802e0f3f4b5eb885f3cabebe598dfbf0d0cd86bdca4b97fc22423d8128a0f5fff39befcdae5c87026de"
+    },
+    {
+      "len": 64,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "{\"account\":\"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\",\"destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"amount\":\"100.5\",\"nonce\":123456789}",
+      "msgType": "string",
+      "fmt": "hex",
+      "outHex": "11a6b45941ee66a66edcd6eb4ec952c9fd2615b37095aed9d699c0725c4648b9c41de07e0317d88f9d7c84f4e3539c28a8c00efc4c76d2e8f9210bd4adb8dd60"
+    },
+    {
+      "len": 64,
+      "key": "a514d6c85a3fd28ca7a8e02e24850201286497e33913f3ed9fea8c53d49e9936bf052668f36306755e2f245e277217dba61dfa29ac06f4979763ef6ad3ef5dd2",
+      "keyType": "bytes",
+      "msg": "d9211cf2be09cb43e3ca2dd86ac55d4267eafa1b08bf937b1911ebdaab6be528c0bd33153e",
+      "msgType": "bytes",
+      "fmt": "hex",
+      "outHex": "66934b2d801bae4a0785bad553a79ab75a679ff88544623f89c3bb4c586a703a0e61a46e42b0ea7f844e4eb837e2f737cc8399917ae30a40f56cb09683bd15e4"
+    },
+    {
+      "throws": true,
+      "len": 0,
+      "msg": "a",
+      "key": "",
+      "reason": "len = 0"
+    },
+    {
+      "throws": true,
+      "len": 65,
+      "msg": "a",
+      "key": "",
+      "reason": "len = 65"
+    },
+    {
+      "throws": true,
+      "len": 16,
+      "msg": "a",
+      "keyHex": "cc19dc975dd204d33976e603626cfb3a3ac133935cf4dced6e0dd654301b224b87580b6f549f6c204bf9d824205aaa84b5e13c04312dce0019a6e389d8b60e0e5b",
+      "keyType": "bytes",
+      "reason": "key = 65 B"
+    },
+    {
+      "throws": true,
+      "len": 16,
+      "msg": "a",
+      "key": "",
+      "fmt": "bogus",
+      "reason": "bad fmt"
+    }
+  ],
+  "secretbox": [
+    {
+      "msg": "",
+      "msgType": "string",
+      "nonceHex": "c9f400fe732f1e4e73b86a151b7409af93c548a265cf7718",
+      "keyHex": "5aee04eacf3e05fec5a1adb751a555b62e22114b95920d2aa6591862fa951ea2",
+      "ctHex": "540664def5a630b5795454fc38bb0c5f",
+      "openedText": ""
+    },
+    {
+      "msg": "",
+      "msgType": "string",
+      "nonceHex": "292b7c406c1e639e966bc9d30bf887be8253b0e3a34941ba",
+      "keyHex": "d993ab52ee29e16b43edeb6dafc525e26d5ea24e96156a9511e08c49f71f2290",
+      "fmt": "hex",
+      "ctHex": "e8948338ba57571c09824cf0c87106e5",
+      "openedText": ""
+    },
+    {
+      "msg": "x",
+      "msgType": "string",
+      "nonceHex": "d7b3da7052cb9fc4033a6121a64c305ff36a1ca89c0d892f",
+      "keyHex": "6ec1fdef7a3d7e20c3d9153eeade0ec5b77f000e926ebeea4264aee47b154244",
+      "ctHex": "26ebbec54effe17f0733402583475ca00b",
+      "openedText": "x"
+    },
+    {
+      "msg": "x",
+      "msgType": "string",
+      "nonceHex": "2255704845727825320c5bc22de9b546a18affe9e88a5b9f",
+      "keyHex": "eb0466894586c651a95d65cda730889b2e3843844796f0e6f990a86f50a6e8dd",
+      "fmt": "hex",
+      "ctHex": "efa15bdbbfb237f4614fb49b8a959dc3e9",
+      "openedText": "x"
+    },
+    {
+      "msg": "sp5fV4UGhZhfCvcDRuY3dyyh5PjHf",
+      "msgType": "string",
+      "nonceHex": "f1e6e1a4c0db1c9573fd71fb248b78c23329f69319b5f007",
+      "keyHex": "e8265a5da7689b48cb8a54c366b71f14e6c03d52723e68213492337f3637b9cf",
+      "ctHex": "9ceed20b19746086396c8c72d5783648c29d26b3dc920972da2c85fbf8213718461101ac0be3f1a764d405468c",
+      "openedText": "sp5fV4UGhZhfCvcDRuY3dyyh5PjHf"
+    },
+    {
+      "msg": "sp5fV4UGhZhfCvcDRuY3dyyh5PjHf",
+      "msgType": "string",
+      "nonceHex": "8d488776ff1cfdc5645586fa64dd7b975a9286577ca7cb7f",
+      "keyHex": "96094a5fe6342227fa56b7819bb2eb801c90d4e19c38b4a91ac51c9161c868eb",
+      "fmt": "hex",
+      "ctHex": "0b2a9ca3130558285857edbe647fee6c0014855e20300e0769ba302e6f9752b3e0bf18a87cd05b60398a19b35e",
+      "openedText": "sp5fV4UGhZhfCvcDRuY3dyyh5PjHf"
+    },
+    {
+      "msg": "sEdSKuYwxeL4JM1LBJcGmpLw9fbF8JN",
+      "msgType": "string",
+      "nonceHex": "320922cc24e7d8bf35138447f6be96e8c7652c93a5d2209a",
+      "keyHex": "670ee38f75455bb455f134e3a2ae5c083aa69c98bc7883b0abe713b0c9dee87f",
+      "ctHex": "0669bfbf9566de1f833ba3243fe5a3cc79b6be5800a6d6c64683fd56e5fa21c6c11150ecc4f72eb2889aad503768f8",
+      "openedText": "sEdSKuYwxeL4JM1LBJcGmpLw9fbF8JN"
+    },
+    {
+      "msg": "sEdSKuYwxeL4JM1LBJcGmpLw9fbF8JN",
+      "msgType": "string",
+      "nonceHex": "7786d5e03d6a1271c1018d47c30b0137f69bc346cebb8cd0",
+      "keyHex": "85089f5c04b00c3070abfe19752450faac61d01c9ea7ef484ce0ce274007de82",
+      "fmt": "hex",
+      "ctHex": "d425e8dcaf2ca75ec4b7def82cf5048bb0e5d4b6de56d88e11824746f4663864d3d1ac8d0eba3b9cc4cb2ebf78c400",
+      "openedText": "sEdSKuYwxeL4JM1LBJcGmpLw9fbF8JN"
+    },
+    {
+      "msg": "667df69ad4bfe03e709289c200b27ab4",
+      "msgType": "bytes",
+      "nonceHex": "83a17e3d0ac05c48705d7fd20c042d6cbe1b320c004c23f7",
+      "keyHex": "12c9a9175c80f945496fed7f40ac802887e38ca725401429161d7c4568e76dc8",
+      "ctHex": "f542f537953c601f8a34ac5807cec8150cadba0fcc33a822f0a8156292a27a5c",
+      "openedHex": "667df69ad4bfe03e709289c200b27ab4"
+    },
+    {
+      "msg": "667df69ad4bfe03e709289c200b27ab4",
+      "msgType": "bytes",
+      "nonceHex": "130e53f39feeb3dcef11c2d3c035f1f3b9e56e3b16b2c4d4",
+      "keyHex": "44390d780b8d70000dc9dd9fb9bd364eff0d636b573efd92ff7182306bd95058",
+      "fmt": "hex",
+      "ctHex": "ca8156802e29c7b1ee2c0986430a70d9eaf8e917853c5e8b836f7ee3cc39bd56",
+      "openedHex": "667df69ad4bfe03e709289c200b27ab4"
+    },
+    {
+      "msg": "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+      "msgType": "string",
+      "nonceHex": "4e26d6dad074a6a9b27a6e0090fcfee779cacdfe89d1c7b1",
+      "keyHex": "46f83830e2d51fe1ae7e5c2653f75a92a90542013c5edc35d1948fca8a1b45bf",
+      "ctHex": "e5a7db33ccb33197b633aa36e9ce4878adeea2a746a6d7c5a24ce585914abfa1d6ccb890b3bdddba217140a1019b8b484c3d97214203d7fb361b1118f4154a5d2bdd5c181de1ee6f8bd9379d0433c077d607fcdd7a2f61d9eaa47f538f17d56f55b3e25243218e327f4ea2ce050cfa3b968a7bda58d1fbb77f89d15ffd2b0db94851555df987f0220b47868d2efd6131a2e7d8e99a07ba0c7899ea760ae72bfe741ddb95e569cf424ad91c0a0f83556d78265260b606fc08388169b48ee1bff9553f792cc5fd7f28c6ed8ec79891785002759b07cdfce78e6637931d305f6e2a3b41275593c082b37eb02698f05b329495feb6740671860a9b13b12bdcfc4a642e84d27e08bc942bcf7388f71795551e4af76d26a321292fa9b299340a89e918db451a35d5a66a93e2f406af0804906a75c2fde692558fc8ccc6a29ddd5ba992c7694ff460913eb83bc5204124737083e44a6eb644a8cc293534054269a729fb413d45c5892cf6013faecd0bfe84c9ee0cfa93ffdbd043a5309a5980ad069817a1a932497d066e03f3aaacaa34924db5deb1858449065dd135ea5edd0ffc1633ed81525eca0acee87211c890612d56f27e01be0ca3ae6e05c07b89be2310dc05517826ac963065f57c43ef6146b95586fd0fbb1213f1c1ba966600a10d119be3e97003751a379c5f9a89984ab3b4ac53db8d368d3c2b8a8eeb385ad95452c726048fab592859f066ccca7558e295954212427985b4cf490a5de9cf9e5a5c147f9a9dc0c3fe87844ea505387df14f0babd2998abad4f77eb2c9c7f204d43673470e0983297e9c857472014277cadd06add984b2a07467e2e4776750bca071a19955ad4d8db7db282e98f22f20d7433a6529f833488fd36d76a26a11438c444a65bc25d989bcbfcf5bf81aa47f20057fa9f10b809670c6f015352919ead67435ebfaefb5c10a249b394702ba597f76cd81a112baab1ab3dc80b5d1f9eaedbce71dfcf1fb93de258b56a68380a54eafa67ab419bcc1a3cf0d7fa0a5bdcbf3d8927291951dfde183fe3a12c6a671d3d0fbdb490227e4dfb3554cb1988fda432e73e6d20e28826ac3efb7204837a6780afff6a9032f1b2c6012aa41be5001f800378bbbe9790b23d066576e7dc720f8b0dabc29efb489f2570868ffd28c76c7ac1a32eeaf5496593dabe00c2d6233f8274ebb02b90e001c229582b9062a96ff76b3d79bcbe31897db284093be3194803ada619ce18512066f36f42b0b51985011015935ac0b83ebbcd7ec849bb2e9eb01010e591536d818e5d21e3e4fbe714fc875b6c0ba775f44733fcebcbe7d43c1d3deebd05f3d41bf444b770e6f43693c41e14819f53e8870e6efac9a7bd66fe7425483fc6b33a95d694da6b41dc61ae625a0769b03d99120f4bc44514eef52b3eda796e39b4bda81b35ea852608b5ea789fd2ef602f11972723d2a4b5062a84847f194",
+      "openedText": "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    },
+    {
+      "msg": "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+      "msgType": "string",
+      "nonceHex": "6c4f15e66e6cede150bfba99e494ac4b8dafa7910a3df50b",
+      "keyHex": "ee9dcc8c456d41f148b0b2043609c90c974b9df488ef912ceb25ffa37c94c481",
+      "fmt": "hex",
+      "ctHex": "e86ea0d650f9c3c401b04a5dd01366b2fb2b3638e92dc3a898710fabe06702e332057df8ecf3dc58baad53df7f5788d2bbd797edb8018deb9efd145da6793df7e6f0cc2958b80d42e71bf6602afd1e366eacb1d8ffa9bdd5a8dd3e0f0cf57f452024ec3b5b72d9c88ef4a013e85571b4d9231986da7a3727df8bb4ec444bdc1ec0a93df764c5b6667a5d6a5439a12631aa2ce711abed7dde7992fbbc31cafec621531464e804487bc6900caf810f12e599e65c87992c135c69a60f330a89a92c132eb3b8d6448f9efd3ef0d127115908585763d55ce63a811912ab39138cb52a420fe6199db97a977deb1e3d93517f85658c929a2102c9f48e51571fc423ddb1a730320519b590193c634afa4c9e39e8da8edce176fd2a90bc4ecd1af77f6904cf2d3875c84f64693ebacc888b66979b4130ae876fcdabbdab6daee5b5f057946b4babfe613339952102fd3218562c10d8ac8a2a0e6702a8b55d86374dd9b73abf004c70069f610071f964350d37e4d6f2b4b5c4847aee06c1c2d1b30e7563e4868995670a7e42d7f43e2f46930a793060846d60581038d9f9838ce08c86278ba499ce36e693a69facec916dabeeeb90f5880e5f347eccec4808ef96189311ce7e54b0b351a520f37eaff848e3245010043da4a7ea5888c19cd6d8b4a7a25aff39b23ac3ab2fb4977337707a1122dc3e949a994a6db22f068254f790243c8922200b9b107ba1226390db43c96b294d38f6a543058bd056cd84e545095a777cf4a1e2437a84a646ee5d06d73c6995887d41f670b5e0efa44782dd53817ad9f460370c5f771867e401b100353179b37e6b0ab0c5103cde96731dbbaa40f6a02076f1a5491a501e28e955d49e909431febab64c23d8d020fd576c8e25b72a1b2cf3cfbcb28eaae53ab33bd9e8dd3594532565cdbf3384163cfd5f00aa8294133c96299129b4b891200e326cc6c4056e717b6920603c781314842db13bc39092916c4ba5d0e6b66530f8164dfc5dac441b34ada25aaf97686fbaaa6b2c9074c8115e48441484f83105dc1820491031e1328e33690c7b648381108449c88f64f2ab42d1d5b857d58fce9204d32cddacde5e80952795b7bb43335b32e527b77f1129a4746e59392cd54917bad09ece79915a8b102437fbb7e2ef0fa0ab94583dab6a63b8bd26efe7ef0469bc2bc0a805476084a4be5bf5c5421ece02a90cbbae694dc821de0f58d9aae633049d58763e32c1d4e5a9a4aca4da79b6fecd2c6eb25f5233eb6c4967cee193f2bf25a4e718e59c7f51d65c97223316a8aa816f483211ef150e66582c124d7a307eafd787c2154534c0ea885b0a21195da179b77bd1ac1b280519ff6e289bcd741f5ec8cb101da266906c6040cd6fe872a451d6bba23a79cd031711a86cc481dc9b669b54471c48efb8dc189dde19bbfac4d094a1030f2ad7f5179d19fa8d8ce1156b1da6dce81561",
+      "openedText": "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    },
+    {
+      "throws": true,
+      "ctHex": "ccd664b25204b3b1a7d81ba3601dc612b5c5de1c1887ef3863378c6af8f5",
+      "nonceHex": "2cf73c89573a593fa1b8bb3f96b9155b576a467cf5ced14e",
+      "keyHex": "4677c12c450114f1599c2c88121dff653468f14d1c2e8a0cda448bfc981b088f",
+      "reason": "flipped tag bit"
+    },
+    {
+      "throws": true,
+      "ctHex": "cdd664b25204b3b1a7d81ba3601dc612b5c5de1c1887ef3863378c6af8f4",
+      "nonceHex": "2cf73c89573a593fa1b8bb3f96b9155b576a467cf5ced14e",
+      "keyHex": "4677c12c450114f1599c2c88121dff653468f14d1c2e8a0cda448bfc981b088f",
+      "reason": "flipped ct bit"
+    },
+    {
+      "throws": true,
+      "ctHex": "cdd664b25204b3b1a7d81ba3601dc612b5c5de1c1887ef3863378c6af8f5",
+      "nonceHex": "2cf73c89573a593fa1b8bb3f96b9155b576a467cf5ced14e",
+      "keyHex": "151678274fca07fab9687ad47dd17ae3b12529ed8abd319fdde9d7c191e7a592",
+      "reason": "wrong key"
+    },
+    {
+      "throws": true,
+      "ctHex": "cdd664b25204b3b1a7d81ba3601dc612b5c5de1c1887ef3863378c6af8f5",
+      "nonceHex": "c2dbc394b8d61380041a9a3e5138e4fcbdb94bdfd8616bda",
+      "keyHex": "4677c12c450114f1599c2c88121dff653468f14d1c2e8a0cda448bfc981b088f",
+      "reason": "wrong nonce"
+    },
+    {
+      "throws": true,
+      "ctHex": "",
+      "nonceHex": "2cf73c89573a593fa1b8bb3f96b9155b576a467cf5ced14e",
+      "keyHex": "4677c12c450114f1599c2c88121dff653468f14d1c2e8a0cda448bfc981b088f",
+      "reason": "0-byte ct"
+    },
+    {
+      "throws": true,
+      "ctHex": "934b269db462eebcab015474cfb100",
+      "nonceHex": "2cf73c89573a593fa1b8bb3f96b9155b576a467cf5ced14e",
+      "keyHex": "4677c12c450114f1599c2c88121dff653468f14d1c2e8a0cda448bfc981b088f",
+      "reason": "15-byte ct"
+    },
+    {
+      "throws": true,
+      "ctHex": "cdd664b25204b3b1a7d81ba3601dc612b5c5de1c1887ef3863378c6af8f5",
+      "nonceHex": "aa65589518fc562ab9f05054e731b6eac5a03f0ae488e5",
+      "keyHex": "4677c12c450114f1599c2c88121dff653468f14d1c2e8a0cda448bfc981b088f",
+      "reason": "23-byte nonce"
+    },
+    {
+      "throws": true,
+      "ctHex": "cdd664b25204b3b1a7d81ba3601dc612b5c5de1c1887ef3863378c6af8f5",
+      "nonceHex": "2cf73c89573a593fa1b8bb3f96b9155b576a467cf5ced14e",
+      "keyHex": "fa372227f1cd198aebe27caa043ba1540fe6d67e54cdf400b6ae1d80a9704a",
+      "reason": "31-byte key"
+    }
+  ],
+  "shorthash": [
+    {
+      "msg": "0000",
+      "keyHex": "eab6f26f5176ac513646d85b7b190114",
+      "outHex": "78a33e794bb55a6e"
+    },
+    {
+      "msg": "0000",
+      "keyHex": "eab6f26f5176ac513646d85b7b190114",
+      "fmt": "hex",
+      "outHex": "78a33e794bb55a6e"
+    },
+    {
+      "msg": "123456",
+      "keyHex": "802914f035715fb3242a2598aebda0e9",
+      "outHex": "7980e579bd05cb8c"
+    },
+    {
+      "msg": "123456",
+      "keyHex": "802914f035715fb3242a2598aebda0e9",
+      "fmt": "hex",
+      "outHex": "7980e579bd05cb8c"
+    },
+    {
+      "msg": "999999",
+      "keyHex": "10e19fcbe5d11d612cd67e8b1c974ae0",
+      "outHex": "9beb0f91b0e1da3a"
+    },
+    {
+      "msg": "999999",
+      "keyHex": "10e19fcbe5d11d612cd67e8b1c974ae0",
+      "fmt": "hex",
+      "outHex": "9beb0f91b0e1da3a"
+    },
+    {
+      "msg": "0123",
+      "keyHex": "49e395b2d1e36c35aaf4001348935409",
+      "outHex": "e3deddd09da1d742"
+    },
+    {
+      "msg": "0123",
+      "keyHex": "49e395b2d1e36c35aaf4001348935409",
+      "fmt": "hex",
+      "outHex": "e3deddd09da1d742"
+    },
+    {
+      "msg": "correct horse battery",
+      "keyHex": "1910b365af05346c87b40c06c2d67b42",
+      "outHex": "33ee0743b3f96dfa"
+    },
+    {
+      "msg": "correct horse battery",
+      "keyHex": "1910b365af05346c87b40c06c2d67b42",
+      "fmt": "hex",
+      "outHex": "33ee0743b3f96dfa"
+    },
+    {
+      "msg": "",
+      "keyHex": "447a82850df6ca76c3195803b70df303",
+      "outHex": "70dc6fd3befebbbc"
+    },
+    {
+      "msg": "",
+      "keyHex": "447a82850df6ca76c3195803b70df303",
+      "fmt": "hex",
+      "outHex": "70dc6fd3befebbbc"
+    },
+    {
+      "throws": true,
+      "msg": "1234",
+      "keyHex": "edac6860de2807c7084dfd3d84c079",
+      "reason": "key length 15"
+    },
+    {
+      "throws": true,
+      "msg": "1234",
+      "keyHex": "2e2b00b7c50c0c51a43eee895044a065e196efbdd10665b0f913620f1160d7b2",
+      "reason": "key length 32"
+    },
+    {
+      "throws": true,
+      "msg": "1234",
+      "keyHex": "47d95cd4c25298dd239221355a1e5718",
+      "fmt": "unsupported",
+      "reason": "bad fmt"
+    }
+  ],
+  "encoding": {
+    "to_hex": [
+      {
+        "inputHex": "00",
+        "out": "00"
+      },
+      {
+        "inputHex": "deadbeef",
+        "out": "deadbeef"
+      },
+      {
+        "inputHex": "0123456789abcdef",
+        "out": "0123456789abcdef"
+      },
+      {
+        "inputHex": "",
+        "out": ""
+      }
+    ],
+    "from_hex": [
+      {
+        "input": "00",
+        "outHex": "00"
+      },
+      {
+        "input": "00",
+        "outHex": "00"
+      },
+      {
+        "input": "deadbeef",
+        "outHex": "deadbeef"
+      },
+      {
+        "input": "DEADBEEF",
+        "outHex": "deadbeef"
+      },
+      {
+        "input": "0123456789abcdef",
+        "outHex": "0123456789abcdef"
+      },
+      {
+        "input": "0123456789ABCDEF",
+        "outHex": "0123456789abcdef"
+      },
+      {
+        "throws": true,
+        "input": "",
+        "reason": "empty string"
+      },
+      {
+        "throws": true,
+        "input": "abc",
+        "reason": "odd length"
+      },
+      {
+        "throws": true,
+        "input": "aa bb",
+        "reason": "whitespace"
+      },
+      {
+        "throws": true,
+        "input": "zz",
+        "reason": "non-hex"
+      },
+      {
+        "throws": true,
+        "input": 12345,
+        "reason": "non-string"
+      }
+    ],
+    "to_string": [
+      {
+        "inputHex": "48656c6c6f20776f726c6421",
+        "out": "Hello world!"
+      },
+      {
+        "inputHex": "e38391e382b9e383afe383bce38389f09f9491",
+        "out": "パスワード🔑"
+      },
+      {
+        "inputHex": "c3a9c3a8c3a7c3a0c3b1",
+        "out": "éèçàñ"
+      },
+      {
+        "inputHex": "",
+        "out": ""
+      },
+      {
+        "throws": true,
+        "inputHex": "ff",
+        "reason": "invalid UTF-8 0xff"
+      },
+      {
+        "throws": true,
+        "inputHex": "c328",
+        "reason": "invalid UTF-8 sequence"
+      }
+    ],
+    "from_string": [
+      {
+        "input": "Hello world!",
+        "outHex": "48656c6c6f20776f726c6421"
+      },
+      {
+        "input": "パスワード🔑",
+        "outHex": "e38391e382b9e383afe383bce38389f09f9491"
+      },
+      {
+        "input": "éèçàñ",
+        "outHex": "c3a9c3a8c3a7c3a0c3b1"
+      },
+      {
+        "input": "",
+        "outHex": ""
+      }
+    ]
+  },
+  "app_composites": [
+    {
+      "input": "test string",
+      "chksumHex": "570dd01d7465737420737472696e67",
+      "recoveredString": "test string"
+    },
+    {
+      "corrupted": true,
+      "chksumHex": "a70dd01d7465737420737472696e67",
+      "result": true
+    },
+    {
+      "corrupted": true,
+      "chksumHex": "570dd01d0465737420737472696e67",
+      "result": true
+    },
+    {
+      "input": "123456",
+      "chksumHex": "9c33f41f313233343536",
+      "recoveredString": "123456"
+    },
+    {
+      "corrupted": true,
+      "chksumHex": "ac33f41f313233343536",
+      "result": true
+    },
+    {
+      "corrupted": true,
+      "chksumHex": "9c33f41f013233343536",
+      "result": true
+    },
+    {
+      "input": "a",
+      "chksumHex": "ca234c5561",
+      "recoveredString": "a"
+    },
+    {
+      "corrupted": true,
+      "chksumHex": "aa234c5561",
+      "result": true
+    },
+    {
+      "corrupted": true,
+      "chksumHex": "ca234c5501",
+      "result": true
+    },
+    {
+      "input": "6543ea74c41efb4fc1af0946dc342d14ea51483ec1ca244f88d9ae41f157cefd",
+      "chksumHex": "5edaa98436353433656137346334316566623466633161663039343664633334326431346561353134383365633163613234346638386439616534316631353763656664",
+      "recoveredString": "6543ea74c41efb4fc1af0946dc342d14ea51483ec1ca244f88d9ae41f157cefd"
+    },
+    {
+      "corrupted": true,
+      "chksumHex": "aedaa98436353433656137346334316566623466633161663039343664633334326431346561353134383365633163613234346638386439616534316631353763656664",
+      "result": true
+    },
+    {
+      "corrupted": true,
+      "chksumHex": "5edaa98406353433656137346334316566623466633161663039343664633334326431346561353134383365633163613234346638386439616534316631353763656664",
+      "result": true
+    }
+  ]
+}
