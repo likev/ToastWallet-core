@@ -23,7 +23,7 @@ According to [ripple-lib-history.md](file:///root/downloads/core/www/ripple-lib-
 | **`jQuery`** | `3.3.1` | `3.7.1` | Patch prototype pollution vulnerabilities (CVE-2019-11358). |
 | **`Lodash`** | `4.x` (Obsolete) | `4.17.21` | Address critical prototype pollution risks (CVE-2019-10744). |
 | **`PouchDB`** | `6.x` (Obsolete) | `9.0.0` | Solve database corruption risks on modern browser and WebView engines. |
-| **`Libsodium`** | `sodium.js` (Legacy) | `libsodium-wrappers` | Standard WebAssembly integration, speed optimization, and secure API constants. |
+| **`Libsodium`** | `sodium.js` (Legacy asm.js) | `@noble/hashes` + `@noble/ciphers` via `sodium-compat.js` | Audited, small pure-JS primitives, permanent `window.sodium` shim, zero Wasm/async initialization issues. |
 | **`Bootstrap`** | `3.x` | `5.3.3` | Modern flexbox grids, removing outdated jQuery selectors and components. |
 
 ---

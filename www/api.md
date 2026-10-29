@@ -31,14 +31,14 @@ This document provides a comprehensive developer reference for the **Toast Walle
 Toast Wallet follows a single-page web application design. The architecture rests on three main pillars:
 * **The Single-Page Client:** Managed entirely inside [index.html](file:///root/downloads/core/www/index.html), handling both UI (using jQuery Mobile and Bootstrap) and controllers.
 * **A Local Storage Engine:** Powered by PouchDB (`toastwallet` instance) using WebSQL or IndexedDB.
-* **Cryptographic Layer:** Secured using Libsodium via `sodium.js` (for PIN and passphrase hashing and database encryption) and `ripple-lib` for transactions.
+* **Cryptographic Layer:** Secured using pure-JS `@noble` primitives and WebCrypto CSPRNG via permanent compatibility shim `sodium-compat.js` (for PIN and passphrase hashing and database encryption) and modern `xrpl.js` for transactions.
 
 ```mermaid
 graph TD
     A[index.html (UI & Controllers)] --> B[PouchDB Database 'toastwallet']
-    A --> C[sodium.js (Encryption & Hashing)]
-    A --> D[ripple-lib (XRP Node Connection)]
-    A --> E[rippleutils-build.js (Custom Serializers)]
+    A --> C[sodium-compat.js (@noble/hashes, @noble/ciphers)]
+    A --> D[xrpl.js (XRP Node Connection)]
+    A --> E[rippleutils-build.js (Custom Serializers & Shim)]
 ```
 
 ---
@@ -103,14 +103,15 @@ Toast Wallet uses a single PouchDB database named `'toastwallet'`. It stores JSO
 ```
 
 #### 1. `pindata` Schema
-Stores the short hash of the user's PIN:
+Stores the scrypt hash of the user's PIN:
 ```json
 {
   "salt": "checksummed_hex_string",
   "hash": "checksummed_hex_string"
 }
 ```
-* **Derivation:** Generates `salt` using `sodium.randombytes_buf(sodium.crypto_shorthash_KEYBYTES)`. The hash is derived using `sodium.crypto_shorthash(pin, salt)`.
+* **Derivation:** Generates `salt` using `sodium.randombytes_buf(32)`. The hash is derived using `sodium.crypto_pwhash_scryptsalsa208sha256(32, pin, salt, 4, 33554432)`.
+* **Legacy Support & Upgrade:** Legacy 16-byte-salt PINs derived via `sodium.crypto_shorthash` (SipHash-2-4) remain supported indefinitely and are automatically upgraded to 32-byte-salt scrypt on the next successful unlock.
 
 #### 2. `ppdata` & `rpdata` Schema
 Stores salt credentials and intermediate keys for encryption:
@@ -147,19 +148,21 @@ All stored secrets use custom checksum wrappers:
 
 ## Cryptographic Function Usage Analysis
 
-Toast Wallet core utilizes two main suites for cryptographic features: **Libsodium** (`sodium.js`) for data storage/key security, and **Ripple Cryptographic Libraries** (`ripple-lib` & custom utilities) for transactions and address formats.
+Toast Wallet core utilizes two main suites for cryptographic features: **Pure-JS Cryptographic API** (`sodium-compat.js` permanently exposed as `window.sodium`) for data storage/key security, and **Ripple Cryptographic Libraries** (`xrpl.js` & custom utilities) for transactions and address formats.
 
-### 1. Libsodium Cryptographic API (`sodium.js`)
+### 1. Pure-JS Cryptographic API (`sodium-compat.js` exposed as `window.sodium`)
+
+Backed by small, audited packages (`@noble/hashes`, `@noble/ciphers`), native WebCrypto CSPRNG, and in-repo SipHash-2-4:
 
 | Cryptographic Function | Mathematical Routine | What it Does | Purpose in the Application |
 | :--- | :--- | :--- | :--- |
-| `sodium.crypto_shorthash(pin, salt)` | SipHash-2-4 | Hashes input strings (PINs) using a 16-byte key (salt) into an 8-byte authentication digest. | Registers and validates the client's local login PIN stored inside the `pindata` document. |
-| `sodium.crypto_pwhash_scryptsalsa208sha256(key_len, password, salt, opslimit, memlimit)` | scrypt key derivation | Derives a cryptographically strong 32-byte key from human passphrases/passwords. | Derives the symmetric master key used to encrypt the user's recovery phrase and Ripple seed accounts. |
+| `sodium.crypto_shorthash(pin, salt)` | SipHash-2-4 | Hashes input strings (PINs) using a 16-byte key (salt) into an 8-byte authentication digest. | Verifies legacy 16-byte-salt PINs before auto-upgrade; verifies in-memory session passphrase cache. |
+| `sodium.crypto_pwhash_scryptsalsa208sha256(key_len, password, salt, opslimit, memlimit)` | scrypt key derivation | Derives a cryptographically strong 16- or 32-byte key from human passphrases/passwords (`N=1024, r=8, p=1`). | Derives login PIN hashes, intermediate keys for `ppdata`/`rpdata`, and keys used to encrypt seeds. |
 | `sodium.crypto_secretbox_easy(message, nonce, key)` | XSalsa20 + Poly1305 (Authenticated Encryption) | Encrypts a message symmetrically using a 24-byte random initialization vector (nonce). | Encrypts private account keys (seeds) and recovery keys before saving them to the database. |
 | `sodium.crypto_secretbox_open_easy(ciphertext, nonce, key)` | XSalsa20 + Poly1305 (Decryption) | Decrypts a ciphertext symmetrically after verifying its Poly1305 integrity tag. | Decrypts Ripple private seeds to authorize transactions or reveal account credentials. |
-| `sodium.crypto_generichash(hash_len, data, key)` | BLAKE2b | Generates a secure, collison-resistant cryptographic hash of the input payload. | Computes 4-byte integrity prefixes used in the `tohex_chksum` data wrappers and wallet export strings. |
-| `sodium.randombytes_buf(size)` | OS-level CSPRNG | Fills a target buffer with cryptographically secure random bytes. | Generates initialization vectors (nonces) and unique salts for each account seed. |
-| `sodium.randombytes_random()` | OS-level CSPRNG | Generates a cryptographically secure 32-bit random integer. | Generates random indices to select pronounceable syllables for new recovery phrases. |
+| `sodium.crypto_generichash(hash_len, data, key)` | BLAKE2b | Generates a secure, collision-resistant cryptographic hash of the input payload (1–64 bytes). | Computes 4-byte integrity prefixes (`tohex_chksum`), transaction confirmation hashes, and backup checksums. |
+| `sodium.randombytes_buf(size)` | WebCrypto CSPRNG (`crypto.getRandomValues`) | Fills a target buffer with cryptographically secure random bytes. | Generates initialization vectors (nonces) and unique salts for PIN, passphrases, and account seeds. |
+| `sodium.randombytes_random()` | WebCrypto CSPRNG (`crypto.getRandomValues`) | Generates a cryptographically secure 32-bit random integer. | Generates nonces for UI confirmation screens and indices to select pronounceable syllables. |
 
 ---
 

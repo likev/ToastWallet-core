@@ -25,10 +25,11 @@ Inputs, nick-names, and currency values are written to elements using `.innerHTM
 
 ## 2. Medium Severity: Cryptographic Hardening Weaknesses
 
-### Weak PIN Hashing Function (SipHash / `crypto_shorthash`)
-* **Code Reference:** [setPin](file:///root/downloads/core/www/index.html#L7040)
-* **Implementation:** The PIN is hashed using `sodium.crypto_shorthash(pin, salt)`.
-* **Risk:** SipHash is a fast, lightweight pseudorandom function designed for hash table lookups, not password/PIN hashing or key stretching. A typical 4-to-6 digit numerical PIN hashed with SipHash can be brute-forced in milliseconds if an attacker gains access to the database (e.g., from an exported backup or device compromise).
+### PIN Hashing Function (Resolved: scrypt with automatic upgrade from legacy SipHash)
+* **Code Reference:** `www/js/modules/crypto.js` (`setPin`, `validatePin`)
+* **Implementation:** The PIN is now hashed using `sodium.crypto_pwhash_scryptsalsa208sha256(32, pin, salt, 4, 33554432)` with a 32-byte CSPRNG salt.
+* **Legacy Migration:** Existing wallets storing legacy 16-byte-salt PINs hashed with SipHash-2-4 (`sodium.crypto_shorthash`) remain fully supported and are automatically upgraded in PouchDB to 32-byte-salt scrypt on the next successful unlock.
+* **Risk (Historical):** Legacy SipHash was designed for hash table lookups, not password/PIN stretching. Modern scrypt KDF provides robust key stretching against offline dictionary and brute-force attacks.
 
 ### Low Memory Limits for KDF (scrypt)
 * **Code Reference:** Key derivation using `sodium.crypto_pwhash_scryptsalsa208sha256`

@@ -12,7 +12,15 @@ The application has been completely migrated from the deprecated legacy `ripple-
 ### 2. Electron & Cordova Removal
 All Electron-specific files (`electron-start.js`, `electron_package.json`, etc.) and Electron IPC integrations have been fully removed. Cordova-specific device checking code, conditionals, and legacy plugins have also been fully stripped. This allows the wallet to run securely as a standard, highly-compatible, sandboxed HTML5 web application.
 
-### 3. Cleanup & Fixes (Review 02 Audit)
+### 3. Libsodium Removal & Pure-JS Cryptography
+The vendored `www/js/sodium.js` (libsodium 1.0.13 asm.js, ~840 KB) has been completely removed and replaced with small, audited, pure-JS primitives:
+- `@noble/hashes` (`blake2b`, `scrypt`) and `@noble/ciphers` (`xsalsa20poly1305`)
+- Native WebCrypto CSPRNG (`crypto.getRandomValues`)
+- An in-repo verified SipHash-2-4 implementation (`siphash24.js`)
+- A permanent compatibility layer (`utils-build/sodium-compat.js`) exposing the exact 19-symbol subset used by the app under `window.sodium`
+- Full backward and forward compatibility with existing wallets and backups, with automatic upgrade of legacy SipHash PINs to scrypt on unlock.
+
+### 4. Cleanup & Fixes (Review 02 Audit)
 - **Direct RPC Queries:** Defunct `data.ripple.com` API integrations were replaced with direct, active JSON-RPC requests via the connected Ripple Node WebSocket (`account_tx`, `tx`).
 - **Wiped Early Secrets:** Addressed race conditions in multi-flag settings transactions (`xrpl-tx.js`) where private secrets were cleared in memory before recursive asynchronous signing calls finished.
 - **Passphrase Cache:** Corrected caching flow in `settings.js` to hash the valid passphrase before it gets cleared from memory.
@@ -68,7 +76,19 @@ bash update
 
 This runs the template compiler (`build_views.js`), generates a fresh `www/index.html`, and bundles the app code into `www/js/app-bundle.js`.
 
-### 3. Running Locally
+### 3. Testing and Benchmarking
+The test suite validates golden vectors, cross-realm compatibility, differential tests against legacy libsodium 1.0.13, and full wallet decryption/upgrade fixtures:
+```bash
+cd utils-build
+npm test
+```
+
+To run cryptographic performance benchmarks comparing against host baselines:
+```bash
+npm run bench
+```
+
+### 4. Running Locally
 Since Toast Wallet is a static HTML5 app, you can test it locally by serving the `www/` directory using any HTTP server:
 ```bash
 npx serve ../www
