@@ -41,4 +41,17 @@ test('SipHash-2-4 input validation', () => {
   assert.throws(() => siphash24(new Uint8Array(0), new Uint8Array(15)), TypeError);
   assert.throws(() => siphash24(new Uint8Array(0), new Uint8Array(32)), TypeError);
   assert.throws(() => siphash24(new Uint8Array(0), 'not a buffer'), TypeError);
+
+  // Buffer and cross-realm Uint8Array support
+  const bufKey = Buffer.alloc(16, 0xaa);
+  const outBuf = siphash24(new Uint8Array([1, 2, 3]), bufKey);
+  assert.equal(outBuf.length, 8);
+
+  const vm = require('vm');
+  const ctx = vm.createContext({});
+  const crossRealmKey = vm.runInContext('new Uint8Array(16)', ctx);
+  for (let i = 0; i < 16; i++) crossRealmKey[i] = i;
+  const outCross = siphash24(new Uint8Array([1, 2, 3]), crossRealmKey);
+  assert.equal(outCross.length, 8);
+  assert.deepEqual(outCross, siphash24(new Uint8Array([1, 2, 3]), new Uint8Array(crossRealmKey)));
 });

@@ -23,6 +23,7 @@ function validatePin(pin, successfunc, failfunc, nopinsetfunc) {
             } else {
                     pindata = JSON.parse(pindata.data);
                     var salt = fromhex_chksum(pindata.salt);
+                    if (!salt) return failfunc();
                     var hash;
                     if (salt.length === 16) {
                         // Legacy 16-byte-salt SipHash PIN. Verify first, then transparently re-store as 32-byte-salt scrypt.
@@ -33,7 +34,7 @@ function validatePin(pin, successfunc, failfunc, nopinsetfunc) {
                                 try {
                                     return setPin(pin,
                                         function() {
-                                            if (debug) console.log("validatePin: upgraded legacy PIN to scrypt");
+                                            if (typeof debug !== 'undefined' && debug) console.log("validatePin: upgraded legacy PIN to scrypt");
                                             successfunc();
                                         },
                                         function() {

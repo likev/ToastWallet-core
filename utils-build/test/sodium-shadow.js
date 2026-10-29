@@ -13,19 +13,25 @@ function shapeOf(val) {
   return typeof val;
 }
 
+function isBytes(val) {
+  return val instanceof Uint8Array ||
+    (ArrayBuffer.isView(val) && val.constructor &&
+      (val.constructor.name === 'Uint8Array' || val.constructor.name === 'Buffer'));
+}
+
 function outcomeOf(res) {
   if (res.threw) {
     const errName = res.error && res.error.constructor ? res.error.constructor.name : 'Error';
     return `throw:${errName}`;
   }
-  if (res.val instanceof Uint8Array) return `return:Uint8Array(${res.val.length})`;
+  if (isBytes(res.val)) return `return:Uint8Array(${res.val.byteLength})`;
   if (typeof res.val === 'string') return `return:string(${res.val.length})`;
   return `return:${typeof res.val}`;
 }
 
 function cloneArg(arg) {
-  if (arg instanceof Uint8Array) {
-    return new Uint8Array(arg);
+  if (isBytes(arg)) {
+    return new Uint8Array(arg.buffer, arg.byteOffset, arg.byteLength);
   }
   return arg;
 }
@@ -139,10 +145,10 @@ function createShadow(legacy, compat) {
           if (legacyRes.threw && compatRes.threw) {
             matches = true;
           } else if (!legacyRes.threw && !compatRes.threw) {
-            if (legacyRes.val instanceof Uint8Array && compatRes.val instanceof Uint8Array) {
-              if (legacyRes.val.length === compatRes.val.length) {
+            if (isBytes(legacyRes.val) && isBytes(compatRes.val)) {
+              if (legacyRes.val.byteLength === compatRes.val.byteLength) {
                 matches = true;
-                for (let i = 0; i < legacyRes.val.length; i++) {
+                for (let i = 0; i < legacyRes.val.byteLength; i++) {
                   if (legacyRes.val[i] !== compatRes.val[i]) {
                     matches = false;
                     break;
@@ -171,9 +177,34 @@ function createShadow(legacy, compat) {
 
       if (randomFns.has(prop)) {
         return function(...args) {
-          ++callCounter;
+          const idx = ++callCounter;
           calls[prop] = (calls[prop] || 0) + 1;
-          return compat[prop].apply(compat, args);
+          const res = compat[prop].apply(compat, args);
+          // Validate output shape per §5.3
+          let validShape = false;
+          if (prop === 'randombytes_random') {
+            validShape = typeof res === 'number' && Number.isInteger(res) && res >= 0 && res <= 0xffffffff;
+          } else if (prop === 'randombytes_buf') {
+            const len = args[0];
+            const fmt = args[1];
+            if (fmt === 'hex') {
+              validShape = typeof res === 'string' && res.length === len * 2;
+            } else if (fmt === 'text') {
+              validShape = typeof res === 'string';
+            } else {
+              validShape = isBytes(res) && res.byteLength === len;
+            }
+          }
+          if (!validShape) {
+            mismatches.push({
+              fn: prop,
+              callIndex: idx,
+              argShapes: args.map(shapeOf),
+              legacyOutcome: 'expected:validShape',
+              compatOutcome: outcomeOf({ threw: false, val: res })
+            });
+          }
+          return res;
         };
       }
 

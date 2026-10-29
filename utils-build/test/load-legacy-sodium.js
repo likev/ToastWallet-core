@@ -15,6 +15,7 @@ function loadLegacySodium() {
   } else {
     try {
       src = execSync('git show xrpl.js-4.6.0:www/js/sodium.js', {
+        cwd: path.resolve(__dirname, '../..'),
         maxBuffer: 10 * 1024 * 1024,
         encoding: 'utf8',
         stdio: ['ignore', 'pipe', 'ignore']
@@ -33,8 +34,17 @@ function loadLegacySodium() {
     vm.runInThisContext('(function(exports, module, define, require){\n' + src + '\n})()', { filename: 'sodium.js' });
     cachedSodium = globalThis.sodium;
   } finally {
-    if (origWindow !== undefined) globalThis.window = origWindow;
-    if (origSelf !== undefined) globalThis.self = origSelf;
+    if (origWindow !== undefined) {
+      globalThis.window = origWindow;
+    } else {
+      delete globalThis.window;
+    }
+    if (origSelf !== undefined) {
+      globalThis.self = origSelf;
+    } else {
+      delete globalThis.self;
+    }
+    delete globalThis.sodium;
   }
   return cachedSodium;
 }

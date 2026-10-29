@@ -31013,7 +31013,10 @@ function readU64LE(buf, off) {
 }
 
 function siphash24(msg, key) {
-  if (!(key instanceof Uint8Array) || key.length !== 16) throw new TypeError('invalid key length');
+  const isKeyU8 = key instanceof Uint8Array ||
+    (ArrayBuffer.isView(key) && key.constructor &&
+      (key.constructor.name === 'Uint8Array' || key.constructor.name === 'Buffer'));
+  if (!isKeyU8 || key.length !== 16) throw new TypeError('invalid key length');
   const k0 = readU64LE(key, 0);
   const k1 = readU64LE(key, 8);
   let v0 = 0x736f6d6570736575n ^ k0;
@@ -31115,6 +31118,19 @@ function to_string(bytes) {
   return dec.decode(toBytes(bytes, 'bytes')); // fatal: true throws TypeError on invalid UTF-8
 }
 
+function getCSPRNG() {
+  if (typeof globalThis !== 'undefined' && globalThis.crypto && typeof globalThis.crypto.getRandomValues === 'function') {
+    return globalThis.crypto;
+  }
+  if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.getRandomValues === 'function') {
+    return window.crypto;
+  }
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    return crypto;
+  }
+  throw new Error('WebCrypto getRandomValues is not available');
+}
+
 // --- randomness ---
 function randombytes_buf(length, fmt) {
   checkFormat(fmt);
@@ -31122,14 +31138,15 @@ function randombytes_buf(length, fmt) {
     throw new TypeError('length must be a non-negative integer');
   }
   const out = new Uint8Array(length);
+  const csp = getCSPRNG();
   for (let off = 0; off < length; off += 65536) {
-    crypto.getRandomValues(out.subarray(off, Math.min(off + 65536, length)));
+    csp.getRandomValues(out.subarray(off, Math.min(off + 65536, length)));
   }
   return format(out, fmt);
 }
 
 function randombytes_random() {
-  return crypto.getRandomValues(new Uint32Array(1))[0];
+  return getCSPRNG().getRandomValues(new Uint32Array(1))[0];
 }
 
 // --- BLAKE2b (crypto_generichash) ---

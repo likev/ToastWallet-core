@@ -91,3 +91,21 @@ test('Shadow mode zero secret leakage on complete flow', () => {
   assert.equal(report.mismatchCount, 0);
   assert.equal(report.calls.crypto_shorthash, 1);
 });
+
+test('Shadow mode validates random output shapes', () => {
+  const legacy = { ...compat, sodium_version_string: () => '1.0.13' };
+  const faultyCompat = {
+    ...compat,
+    randombytes_buf: (len, fmt) => new Uint8Array(len + 1), // wrong length
+    randombytes_random: () => -1 // not a uint32
+  };
+
+  const shadow = createShadow(legacy, faultyCompat);
+  shadow.randombytes_buf(16);
+  shadow.randombytes_random();
+
+  const state = shadow.__shadowState;
+  assert.equal(state.mismatches.length, 2);
+  assert.equal(state.mismatches[0].fn, 'randombytes_buf');
+  assert.equal(state.mismatches[1].fn, 'randombytes_random');
+});

@@ -155,6 +155,73 @@ test('crypto.js: legacy pindata upgrade write failure still unlocks and leaves l
   assert.equal(data.salt.length, 40);
 });
 
+test('crypto.js: legacy PIN auto-upgrade succeeds even when debug is undefined in context', async () => {
+  const db = createMockDb({ pindata: walletFixture.pouchdb.pindata_legacy });
+  const cryptoSrc = fs.readFileSync(path.resolve(__dirname, '../../www/js/modules/crypto.js'), 'utf8');
+  // Notice: debug is NOT defined in this context
+  const context = {
+    console,
+    Math,
+    TypeError,
+    Error,
+    JSON,
+    window: {},
+    sodium: compat,
+    db,
+    handle_error: (e) => { throw e; }
+  };
+  context.window = context;
+  vm.createContext(context);
+  vm.runInContext(cryptoSrc, context);
+
+  let success = false;
+  await new Promise((resolve) => {
+    context.validatePin(walletFixture.credentials.pin, () => { success = true; resolve(); }, () => resolve(), () => resolve());
+  });
+  assert.equal(success, true, 'Legacy PIN failed to upgrade when debug was undefined');
+
+  const stored = db._store.get('pindata');
+  const upgradedData = JSON.parse(stored.data);
+  assert.equal(upgradedData.salt.length, 72);
+});
+
+test('crypto.js: validatePin rejects corrupted pindata.salt gracefully', async () => {
+  const corruptedPindata = JSON.parse(JSON.stringify(walletFixture.pouchdb.pindata));
+  const data = JSON.parse(corruptedPindata.data);
+  // Corrupt salt checksum
+  data.salt = (data.salt[0] === 'a' ? 'b' : 'a') + data.salt.slice(1);
+  corruptedPindata.data = JSON.stringify(data);
+
+  const db = createMockDb({ pindata: corruptedPindata });
+  const ctx = loadRealCryptoModule(db);
+
+  let fail = false;
+  await new Promise((resolve) => {
+    ctx.validatePin(walletFixture.credentials.pin, () => resolve(), () => { fail = true; resolve(); }, () => resolve());
+  });
+  assert.equal(fail, true, 'Corrupted salt should trigger failfunc');
+});
+
+test('load-legacy-sodium: cleans up globalThis without global pollution', () => {
+  const loadLegacy = require('./load-legacy-sodium.js');
+  const origWindowDefined = 'window' in globalThis;
+  const origSelfDefined = 'self' in globalThis;
+  const origSodiumDefined = 'sodium' in globalThis;
+
+  const sodium = loadLegacy();
+  assert.ok(sodium, 'Legacy sodium should load');
+
+  if (!origWindowDefined) {
+    assert.equal('window' in globalThis, false, 'globalThis.window should not be polluted');
+  }
+  if (!origSelfDefined) {
+    assert.equal('self' in globalThis, false, 'globalThis.self should not be polluted');
+  }
+  if (!origSodiumDefined) {
+    assert.equal('sodium' in globalThis, false, 'globalThis.sodium should not be polluted');
+  }
+});
+
 test('crypto.js: validatePin with empty database calls nopinsetfunc', async () => {
   const db = createMockDb({});
   const ctx = loadRealCryptoModule(db);

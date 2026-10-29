@@ -9,7 +9,10 @@ function readU64LE(buf, off) {
 }
 
 function siphash24(msg, key) {
-  if (!(key instanceof Uint8Array) || key.length !== 16) throw new TypeError('invalid key length');
+  const isKeyU8 = key instanceof Uint8Array ||
+    (ArrayBuffer.isView(key) && key.constructor &&
+      (key.constructor.name === 'Uint8Array' || key.constructor.name === 'Buffer'));
+  if (!isKeyU8 || key.length !== 16) throw new TypeError('invalid key length');
   const k0 = readU64LE(key, 0);
   const k1 = readU64LE(key, 8);
   let v0 = 0x736f6d6570736575n ^ k0;
