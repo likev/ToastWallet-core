@@ -1,309 +1,316 @@
+'use strict';
+
 function selectAccountDetailsSubTab(tabele, subtabname) {
-    $('.accdetailsinnertabselected').removeClass('accdetailsinnertabselected');
-    $(tabele).addClass('accdetailsinnertabselected');
+    removeClass('.accdetailsinnertabselected', 'accdetailsinnertabselected');
+    addClass(tabele, 'accdetailsinnertabselected');
     if (subtabname == 'address') {
-        $('#accdetailstransactiondetails').hide(); 
-        $('#accdetailstrustlinedetails').hide(); 
-        $('#accdetailsaddressdetails').show();
+        hideEl('#accdetailstransactiondetails'); 
+        hideEl('#accdetailstrustlinedetails'); 
+        showEl('#accdetailsaddressdetails');
     } else if (subtabname == 'trustlines') {
-        $('#accdetailstransactiondetails').hide(); 
-        $('#accdetailstrustlinedetails').show(); 
-        $('#accdetailsaddressdetails').hide();
+        hideEl('#accdetailstransactiondetails'); 
+        showEl('#accdetailstrustlinedetails'); 
+        hideEl('#accdetailsaddressdetails');
         refreshTrustlines(activeaccount);
     } else if (subtabname == 'transactions') {
-        $('#accdetailstransactiondetails').show(); 
-        $('#accdetailstrustlinedetails').hide(); 
-        $('#accdetailsaddressdetails').hide();
-        checkConnection(()=>{doGetTransactions($('#accdetailsaddress').data('content'), '');  renderMoreContentIndicator(); });
+        showEl('#accdetailstransactiondetails'); 
+        hideEl('#accdetailstrustlinedetails'); 
+        hideEl('#accdetailsaddressdetails');
+        checkConnection(() => {
+            doGetTransactions(domData('#accdetailsaddress', 'content'), '');
+            renderMoreContentIndicator();
+        });
     }
     renderMoreContentIndicator();
 }
 
 function showSpinner(msg) {
-	if (debug) console.log("showSpinner");
-	$("body").addClass("loading");
+    if (debug) console.log("showSpinner");
+    addClass("body", "loading");
 }
 
 function hideSpinner() {
-	if (debug) console.log("hideSpinner");
-	$("body").removeClass("loading");
+    if (debug) console.log("hideSpinner");
+    removeClass("body", "loading");
 }
 
 function showTab(tab, dontClearText) {
     // while a link is pending we will handle it as soon as we can
     if (tab == '#tablogin') {
         // once booting and/or wallet setup has finished we want to start processing paylinks
-        can_accept_paylink = true    
+        can_accept_paylink = true;
         // show the prompt
         if (paylink_pending)
-            $('#tablogin>center>div').addClass('pinpad_pending')
+            addClass('#tablogin>center>div', 'pinpad_pending');
     } else if (paylink_pending) { 
-        handleOpenURL(paylink_pending)
+        handleOpenURL(paylink_pending);
     }
     
-	if (tab == currenttab) return;
+    if (tab == currenttab) return;
     try {
         if (typeof closeAllCustomSelects === 'function') closeAllCustomSelects();
     } catch(e) {}
     if (dontClearText == undefined) dontClearText = false;
-	blockInput(true);
-	if (debug) console.log("showTab(" + tab + ")");
-	document.activeElement.blur();
-	$(".pinpad").removeClass("shake");
-	enteredpin = ""; renderEnteredPin();
-	
-	$("#morecontentindicator").removeClass("moreindicatorabovenav");
-	$("#morecontentindicator").removeClass("moreindicatordark");
-    $("#accsecret").val('');
-    $("#accsecret").data('content', '');
-    $("#accsecretqr").empty();
-	$("#accsecret").hide();
-	if ( tab == -1 && (
+    blockInput(true);
+    if (debug) console.log("showTab(" + tab + ")");
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+    }
+    removeClass(".pinpad", "shake");
+    enteredpin = "";
+    renderEnteredPin();
+    
+    removeClass("#morecontentindicator", "moreindicatorabovenav");
+    removeClass("#morecontentindicator", "moreindicatordark");
+    setVal("#accsecret", '');
+    domData("#accsecret", 'content', '');
+    emptyEl("#accsecretqr");
+    hideEl("#accsecret");
+    if ( tab == -1 && (
         currenttab == '#tabqrscan' || currenttab == '#taborderconfirm' || 
         currenttab == '#tabneworder' || currenttab == '#tabpaymentconfirm' ||
         currenttab == '#tabtrustlineconfirm'
     )) {
-		// if the user has gone for a QR scan we dont want to wipe their form.
+        // if the user has gone for a QR scan we dont want to wipe their form.
         // we also make a special exception allowing a market order to go backward from confirmation
         dontClearText = true;
-	}
+    }
     if (!dontClearText) {
-   
-    	$("input[type='password']").val("");
-        $("input[type='text']").val("");
-        $("textarea").val("");
-        $('#paytabredqr').empty();
-        $('#atltabredqr').empty();
-        $('#mtltabredqr').empty();
-        $('#paytabgreenqr').empty();
-        $('.fa-toggle-on').addClass('fa-toggle-off').removeClass('fa-toggle-on');
-    }
-    reset_xrbtns()        
-    $("#navheader").show();
-	
-	if (tab == -1) {
-		// unwind mode
-		if (previoustabs.length == 0) {
-			unblockInput();
-			return; // cannot unwind so do nothing
-		}
-		tab = currenttab = previoustabs.pop();
-        if (tab == '#tabaccountflags' && validateAddress($('#cafaddress').text())) {
-            showAccountFlags($('#cafaddress').text(), true);
+        setVal("input[type='password']", "");
+        setVal("input[type='text']", "");
+        setVal("textarea", "");
+        emptyEl('#paytabredqr');
+        emptyEl('#atltabredqr');
+        emptyEl('#mtltabredqr');
+        emptyEl('#paytabgreenqr');
+        const togglesOn = qsa('.fa-toggle-on');
+        for (const tgl of togglesOn) {
+            addClass(tgl, 'fa-toggle-off');
+            removeClass(tgl, 'fa-toggle-on');
         }
-	} else {
-		//windup mode
-		previoustabs.push(currenttab);
-		currenttab = tab;
-	}
-	if ($(tab).data('primarytab')) previoustabs = [];
-	if (tab != "#tabqrscan" && scanner != undefined) {
-		scanner.stop();
-	}
+    }
+    reset_xrbtns();
+    showEl("#navheader");
+    
+    if (tab == -1) {
+        // unwind mode
+        if (previoustabs.length == 0) {
+            unblockInput();
+            return; // cannot unwind so do nothing
+        }
+        tab = currenttab = previoustabs.pop();
+        if (tab == '#tabaccountflags' && validateAddress(getText('#cafaddress'))) {
+            showAccountFlags(getText('#cafaddress'), true);
+        }
+    } else {
+        //windup mode
+        previoustabs.push(currenttab);
+        currenttab = tab;
+    }
+    if (domData(tab, 'primarytab')) previoustabs = [];
+    if (tab != "#tabqrscan" && scanner != undefined) {
+        scanner.stop();
+    }
     if (tab == "#tabpayments" && !dontClearText) {
-            clearPaymentScreen();
+        clearPaymentScreen();
     } else if (tab == "#tabaccounts") {
-        if ( !dontClearText ) {
-           // $('#payasset').html('<option id="optpa-xrp" data-asset="XRP" data-issuer="">XRP</option>');
-            refreshAccounts( onPaymentSelectFromAccount );	
+        if (!dontClearText) {
+            refreshAccounts(onPaymentSelectFromAccount);	
         }
-	} else if (tab == "#tabaccountsecret") {
-        $("#divrsecaccpassword").show();
-		$("#lblacpassword").show();
-		$("#lblaccsecret").hide();
-		$("#btnrevealsecret").show();
-		$("#rsecaccpassword").show();
-		$("#btncopysecret").hide();
-		$("#accsecret").hide();
+    } else if (tab == "#tabaccountsecret") {
+        showEl("#divrsecaccpassword");
+        showEl("#lblacpassword");
+        hideEl("#lblaccsecret");
+        showEl("#btnrevealsecret");
+        showEl("#rsecaccpassword");
+        hideEl("#btncopysecret");
+        hideEl("#accsecret");
     } else if (tab == '#tabaddtrustline' && offlinemode) {
-        var account = $("#atladdress").data('content');
-        $("#atltabredqr").empty();
-        $("#atltabredqr").append(kjua({text: account, fill:"#ff0000"}));    
-        $('#atlofflinecodediv').css('display', 'block')
+        var account = domData("#atladdress", 'content');
+        emptyEl("#atltabredqr");
+        appendNode("#atltabredqr", kjua({text: account, fill:"#ff0000"}));    
+        showEl('#atlofflinecodediv');
     } else if (tab == '#tabmodifytrustline' && offlinemode) {
-        var account = $("#mtladdress").data('content');
-        $("#mtltabredqr").empty();
-        $("#mtltabredqr").append(kjua({text: account, fill:"#ff0000"}));    
-        $('#mtlofflinecodediv').css('display', 'block')
+        var account = domData("#mtladdress", 'content');
+        emptyEl("#mtltabredqr");
+        appendNode("#mtltabredqr", kjua({text: account, fill:"#ff0000"}));    
+        showEl('#mtlofflinecodediv');
     } else if (tab == '#tabaccountflags' && offlinemode) {
-        var account = $("#afaddress").data('content');
-        $("#aftabredqr").empty();
-        $("#aftabredqr").append(kjua({text: account, fill:"#ff0000"}));    
-        $('#afofflinecodediv').css('display', 'block');
-        $('#afoflwarningdiv').css('display', 'block');
+        var account = domData("#afaddress", 'content');
+        emptyEl("#aftabredqr");
+        appendNode("#aftabredqr", kjua({text: account, fill:"#ff0000"}));    
+        showEl('#afofflinecodediv');
+        showEl('#afoflwarningdiv');
     }
-	if (tab == '#tabpayments') {
-		var to = $('#toaddress').val();
-		if (to == 'rToastMYRQh8boeo5Ys1CnPySmt3c9x3Y') {
-			$('#toaddress').css('background-color', 'rgba(92, 184, 104, 0.63)');
-			$('#toaddress').css('color', 'white');
-			$('#toaddress').attr('readonly', 'readonly');
-			$('.btnqrpay').attr('disabled', 'disabled');
-            $('.btnqrpay').removeAttr('ontouchend');
-		} else {
-			$('#toaddress').css('background-color', '');
-			$('#toaddress').css('color', '');
-			$('#toaddress').attr('readonly', null);
-			$('.btnqrpay').removeAttr('disabled');
-            $('#btnqrpay1').attr('ontouchend', "te(event, ()=>{scanQR((x)=>{populatePaymentTabFromURI(x, '#toaddress')} )})");
-            $('#btnqrpay2').attr('ontouchend', "te(event, ()=>{clipboardPaste((content)=>{populatePaymentTabFromURI(content, '#toaddress')})})");
-		}
-	}
-	if (tab == '#tabaccounts') {
- 
-		var donorreminder = function() {
-			getLastDonation(function(donation) {
-                if(setupcompletedthissession) return; // no point asking people who just set up the wallet to donate
-				if ('lastdonation' in donation && Math.floor(new Date().getTime()/1000) - parseInt(donation['lastdonation']) < 15552000 /* 180 days */) {
-
-					// do nothing
-					return;
-				}
-				if (!('lastreminder' in donation) ||  Math.floor(new Date().getTime()/1000) - parseInt(donation['lastreminder']) > 604800 /* 1 week */ ) {
-					// reminder
-					
-					donation['lastreminder'] = "" + Math.floor(new Date().getTime()/1000);
-					db.upsert("lastdonated",
-						function(doc) {
-						return { data: JSON.stringify(donation)	}; 
-					}).then( function() {
-						showDonationTab();
-					})
-				}
-			});
-		};
-		getAccounts(function(acc) {
-			var acccount = 0;
-			for (var i in acc) acccount++;
-			if (debug) console.log("number of accounts: " + acccount);
-			if (acccount > 0) {
-				getLastBackupReminder(function(backupreminder) {
-					if (!('lastreminder' in backupreminder)) {
-						showBackupReminderTab();
-					} else {
-						donorreminder();
-					}
-				});
-			} else {
-				donorreminder();
-			}
-		});
-		
-	}
-	var tabs = $(".screentab");
-	for (var i = 0; i < tabs.length; i++) $("#" + tabs[i].id).hide();
+    if (tab == '#tabpayments') {
+        var to = getVal('#toaddress');
+        var toEl = byId('toaddress');
+        if (to == 'rToastMYRQh8boeo5Ys1CnPySmt3c9x3Y') {
+            if (toEl) {
+                toEl.style.backgroundColor = 'rgba(92, 184, 104, 0.63)';
+                toEl.style.color = 'white';
+                toEl.setAttribute('readonly', 'readonly');
+            }
+            setDisabled('.btnqrpay', true);
+            removeAttr('.btnqrpay', 'ontouchend');
+        } else {
+            if (toEl) {
+                toEl.style.backgroundColor = '';
+                toEl.style.color = '';
+                toEl.removeAttribute('readonly');
+            }
+            setDisabled('.btnqrpay', false);
+            setAttr('#btnqrpay1', 'ontouchend', "te(event, ()=>{scanQR((x)=>{populatePaymentTabFromURI(x, '#toaddress')} )})");
+            setAttr('#btnqrpay2', 'ontouchend', "te(event, ()=>{clipboardPaste((content)=>{populatePaymentTabFromURI(content, '#toaddress')})})");
+        }
+    }
+    if (tab == '#tabaccounts') {
+        var donorreminder = function() {
+            getLastDonation(function(donation) {
+                if (setupcompletedthissession) return; // no point asking people who just set up the wallet to donate
+                if ('lastdonation' in donation && Math.floor(new Date().getTime()/1000) - parseInt(donation['lastdonation']) < 15552000 /* 180 days */) {
+                    return;
+                }
+                if (!('lastreminder' in donation) || Math.floor(new Date().getTime()/1000) - parseInt(donation['lastreminder']) > 604800 /* 1 week */ ) {
+                    donation['lastreminder'] = "" + Math.floor(new Date().getTime()/1000);
+                    db.upsert("lastdonated", function(doc) {
+                        return { data: JSON.stringify(donation) }; 
+                    }).then(function() {
+                        showDonationTab();
+                    });
+                }
+            });
+        };
+        getAccounts(function(acc) {
+            var acccount = 0;
+            for (var i in acc) acccount++;
+            if (debug) console.log("number of accounts: " + acccount);
+            if (acccount > 0) {
+                getLastBackupReminder(function(backupreminder) {
+                    if (!('lastreminder' in backupreminder)) {
+                        showBackupReminderTab();
+                    } else {
+                        donorreminder();
+                    }
+                });
+            } else {
+                donorreminder();
+            }
+        });
+    }
+    hideEl(".screentab");
     try {
         if (typeof enhanceSelect === 'function') {
             document.querySelectorAll(tab + ' select').forEach((el) => enhanceSelect(el));
         }
     } catch(e) {}
-    //clean up stray dropdown
-    if (offlinemode) 
+    // clean up stray dropdown
+    if (offlinemode) {
         try {
             if (typeof destroySelect === 'function') destroySelect('#payasset');
         } catch (e) {}
-    $(tab).show();
-    if (tab != '#tabaccounts') $(tab).scrollTop(0);
-    if ($(tab).data('hasback') && previoustabs.length > 0 && 
+    }
+    showEl(tab);
+    if (tab != '#tabaccounts') {
+        const tabEl = resolveElement(tab);
+        if (tabEl) tabEl.scrollTop = 0;
+    }
+    const headerLeft = qs('.headerleft');
+    if (domData(tab, 'hasback') && previoustabs.length > 0 && 
             !( currenttab == '#tabpayments' && previoustabs.length == 1 && (previoustabs[0] == '#tabaccounts' || previoustabs[0] == '#tabsettings' ) )
     ) {
         console.log("previous tabs: "); console.log(previoustabs);
-		$(".headerleft").html('<i class="fa fa-chevron-left" aria-hidden="true"></i>');
-		$(".headerleft").off();
-		$(".headerleft").on('click', function() {showTab(-1);});
-		$(".headerleft").show();
-	} else {
-		$(".headerleft").empty();
-		$(".headerleft").off();
-	}
-	if ($(tab).data('title')) {
-		$(".headermiddle").html('<div>' + $(tab).data('title') + "</div>");
-	} else {
-		$(".headermiddle").empty();
-	}
-	if ($(tab).data('recovery')) { // set recovery icon for logged out tabs
-		$(".headerright").show();
-                $("#navfooter").hide();
-                $(".headerright>i").removeClass("fa-lock");
-                $(".headerright>i").addClass("fa-medkit");
-                $(".headerright").off();
-                $(".headerright").on('click', function(){ showTab("#tabrecovery"); });
-	} else if ($(tab).data('noright')) {
-                $(".headerright").hide();
-                $("#navfooter").hide();
+        if (headerLeft) {
+            headerLeft.innerHTML = '<i class="fa fa-chevron-left" aria-hidden="true"></i>';
+            headerLeft.onclick = function() { showTab(-1); };
+            showEl(headerLeft);
+        }
+    } else if (headerLeft) {
+        emptyEl(headerLeft);
+        headerLeft.onclick = null;
+    }
+    const headerMiddle = qs('.headermiddle');
+    if (headerMiddle) {
+        const title = domData(tab, 'title');
+        if (title) {
+            headerMiddle.innerHTML = '<div>' + title + '</div>';
+        } else {
+            emptyEl(headerMiddle);
+        }
+    }
+    const headerRight = qs('.headerright');
+    const headerRightIcon = qs('.headerright>i');
+    if (domData(tab, 'recovery')) { // set recovery icon for logged out tabs
+        showEl(headerRight);
+        hideEl("#navfooter");
+        if (headerRightIcon) {
+            removeClass(headerRightIcon, "fa-lock");
+            addClass(headerRightIcon, "fa-medkit");
+        }
+        if (headerRight) {
+            headerRight.onclick = function(){ showTab("#tabrecovery"); };
+        }
+    } else if (domData(tab, 'noright')) {
+        hideEl(headerRight);
+        hideEl("#navfooter");
     } else { // set logout icon for logged in tabs
-        		$(".headerright").show();
-                $("#navfooter").show();
-                $(".headerright>i").removeClass("fa-medkit");
-                $(".headerright>i").addClass("fa-lock");
-                $(".headerright").off();
-                $(".headerright").on('click', function(){ doShowLogin(); });
-	        $("#morecontentindicator").addClass("moreindicatorabovenav");
+        showEl(headerRight);
+        showEl("#navfooter");
+        if (headerRightIcon) {
+            removeClass(headerRightIcon, "fa-medkit");
+            addClass(headerRightIcon, "fa-lock");
+        }
+        if (headerRight) {
+            headerRight.onclick = function(){ doShowLogin(); };
+        }
+        addClass("#morecontentindicator", "moreindicatorabovenav");
     }	
-	$("body").removeClass("darkbackground");
-	$("body").removeClass("darkbackground2");
-	if ($(tab).data('dark')) { // dark background
-		if ($(tab).data('dark') == '2') {
-			$("body").addClass("darkbackground2");
-		} else {
-			$("body").addClass("darkbackground");
-		}
-	} else {
-		$("#morecontentindicator").addClass("moreindicatordark");
-	}
-	renderMoreContentIndicator();
-	// make sure the values of various input boxes are set correctly before displaying
-	var inputs = $(currenttab + " input");
-	for (var i = 0; i < inputs.length; i++) {
-		var ele = $('#' + inputs[i].id);
-        if (!ele || !ele.data || !ele.val) continue;
-        var content = ele.data('content');
-        var isaddress = ele.data('dispaddr')
-		if (content != undefined) ele.val(isaddress ? dispaddr(content) : content);
-	}
-	
-	
-	clickProxy();
-	setTimeout(unblockInput, 200);
+    removeClass("body", "darkbackground", "darkbackground2");
+    const darkVal = domData(tab, 'dark');
+    if (darkVal) { // dark background
+        if (darkVal == '2' || darkVal === 2) {
+            addClass("body", "darkbackground2");
+        } else {
+            addClass("body", "darkbackground");
+        }
+    } else {
+        addClass("#morecontentindicator", "moreindicatordark");
+    }
+    renderMoreContentIndicator();
+    // make sure the values of various input boxes are set correctly before displaying
+    var inputs = qsa(currenttab + " input");
+    for (var i = 0; i < inputs.length; i++) {
+        var ele = inputs[i];
+        if (!ele) continue;
+        var content = domData(ele, 'content');
+        var isaddress = domData(ele, 'dispaddr');
+        if (content != undefined) ele.value = isaddress ? dispaddr(content) : content;
+    }
+    
+    clickProxy();
+    setTimeout(unblockInput, 200);
 }
 
-function rebindAllHandlers() {
-    $('[ontouchstart], [ontouchend]').each(function() {
-        var el = this;
-        var $el = $(this);
-        if ($el.data('touch-bound')) return;
-        $el.data('touch-bound', true);
-        
-        $el.on('click', function(e) {
-            if (e.originalEvent && e.originalEvent.sourceCapabilities && e.originalEvent.sourceCapabilities.firesTouchEvents) {
-                return;
-            }
-            
-            var hasTouchStart = el.hasAttribute('ontouchstart');
-            var hasTouchEnd = el.hasAttribute('ontouchend');
-            
-            if (hasTouchStart) {
-                var startEvt = new CustomEvent('touchstart', { bubbles: true, cancelable: true });
-                startEvt.touches = [];
-                startEvt.targetTouches = [];
-                startEvt.changedTouches = [{ clientX: e.clientX, clientY: e.clientY }];
-                el.dispatchEvent(startEvt);
-            }
-            if (hasTouchEnd) {
-                var endEvt = new CustomEvent('touchend', { bubbles: true, cancelable: true });
-                endEvt.touches = [];
-                endEvt.targetTouches = [];
-                endEvt.changedTouches = [{ clientX: e.clientX, clientY: e.clientY }];
-                el.dispatchEvent(endEvt);
-            }
-        });
-    });
-}
+function rebindAllHandlers() {}
+function clickProxy() {}
 
 // Expose functions globally
-window.selectAccountDetailsSubTab = selectAccountDetailsSubTab;
-window.showSpinner = showSpinner;
-window.hideSpinner = hideSpinner;
-window.showTab = showTab;
-window.rebindAllHandlers = rebindAllHandlers;
+if (typeof window !== 'undefined') {
+    window.selectAccountDetailsSubTab = selectAccountDetailsSubTab;
+    window.showSpinner = showSpinner;
+    window.hideSpinner = hideSpinner;
+    window.showTab = showTab;
+    window.rebindAllHandlers = rebindAllHandlers;
+    window.clickProxy = clickProxy;
+}
 
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        selectAccountDetailsSubTab,
+        showSpinner,
+        hideSpinner,
+        showTab,
+        rebindAllHandlers,
+        clickProxy
+    };
+}

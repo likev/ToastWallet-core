@@ -32,12 +32,12 @@ function showDonationTab(){
 		if (count > 0 && exchangerate > 0) {
 			exchangerate = count / exchangerate;
 			
-			$("#btndonate20").text("Donate $20 (" + (20.0/exchangerate).toFixed(4) + " XRP)");
-			$("#btndonate10").text("Donate $10 (" + (10.0/exchangerate).toFixed(4) + " XRP)");
-			$("#btndonate5").text("Donate $5 (" + (5.0/exchangerate).toFixed(4) + " XRP)");
-			$("#btndonate20").data('amount', (20.0/exchangerate).toFixed(4));
-			$("#btndonate10").data('amount', (10.0/exchangerate).toFixed(4));
-			$("#btndonate5").data('amount', (5.0/exchangerate).toFixed(4));
+			setText("#btndonate20", "Donate $20 (" + (20.0/exchangerate).toFixed(4) + " XRP)");
+			setText("#btndonate10", "Donate $10 (" + (10.0/exchangerate).toFixed(4) + " XRP)");
+			setText("#btndonate5", "Donate $5 (" + (5.0/exchangerate).toFixed(4) + " XRP)");
+			domData("#btndonate20", 'amount', (20.0/exchangerate).toFixed(4));
+			domData("#btndonate10", 'amount', (10.0/exchangerate).toFixed(4));
+			domData("#btndonate5", 'amount', (5.0/exchangerate).toFixed(4));
 		}
 	}).catch( function(e) {
 			
@@ -45,28 +45,35 @@ function showDonationTab(){
 }
 function toggleShowPassField(field, eyebutton) 
 {
-        if (typeof field === 'string') field = [ field ]
-        var colour = ($(field[0]).attr('type')  != 'text' ? '#fcf8e3' : '#fff')
-        $(eyebutton).css('background-color', colour)
+        if (typeof field === 'string') field = [ field ];
+        var firstEl = resolveElement(field[0]);
+        var colour = (firstEl && firstEl.getAttribute('type') != 'text') ? '#fcf8e3' : '#fff';
+        var eye = resolveElement(eyebutton);
+        if (eye) eye.style.backgroundColor = colour;
         
         for (var i = 0; i < field.length; ++i) {
-            $(field[i]).attr('type', (colour != '#fff' ? 'text' : 'password') )
-            $(field[i]).css('background-color',  colour)
+            var el = resolveElement(field[i]);
+            if (el) {
+                el.setAttribute('type', (colour != '#fff' ? 'text' : 'password'));
+                el.style.backgroundColor = colour;
+            }
         }
 }
 function doToggleInvoiceId() {
-    $('#invoiceiddiv').css( 'display', ( $('#invoiceiddiv').css('display') == 'none' ? 'block' : 'none' ) );
+    toggleEl('#invoiceiddiv');
 }
 function setToggleSwitch(tgl, checked, aftertglfunc, allowunknown) {
-    var ctgl = $($(tgl).children()[0]);
-    ctgl.removeClass('fa-toggle-on');
-    ctgl.removeClass('fa-toggle-off');
-    ctgl.removeClass('unknowntoggle');
-    if (allowunknown != undefined)  $(tgl).data('allowunknown', allowunknown);
-    ctgl.addClass((checked == 'unknown' || checked == undefined ? 'unknowntoggle' : ( checked? 'fa-toggle-on' : 'fa-toggle-off')));
-    $(tgl).data('checked', '' + ( checked == 'unknown' || checked == undefined ? 'unknown' : ( checked ? 'true' : 'false' ) ));
+    var tglEl = resolveElement(tgl);
+    if (!tglEl) return;
+    var ctgl = tglEl.children[0];
+    if (ctgl) {
+        removeClass(ctgl, 'fa-toggle-on', 'fa-toggle-off', 'unknowntoggle');
+        addClass(ctgl, (checked == 'unknown' || checked == undefined ? 'unknowntoggle' : (checked ? 'fa-toggle-on' : 'fa-toggle-off')));
+    }
+    if (allowunknown != undefined) domData(tglEl, 'allowunknown', allowunknown);
+    domData(tglEl, 'checked', '' + (checked == 'unknown' || checked == undefined ? 'unknown' : (checked ? 'true' : 'false')));
     if (aftertglfunc != undefined) {
-            $(tgl).data('after', aftertglfunc);
+        domData(tglEl, 'after', aftertglfunc);
     }
 }
 
@@ -98,7 +105,7 @@ function setToggleSwitch(tgl, checked, aftertglfunc, allowunknown) {
 timeatlastQR = 0;
 function scanQR(parseContentFunc, after, ...intoFields) {
 	if (debug) console.log("scanQR");
-	timeatlastQR = $.now();
+	timeatlastQR = Date.now();
 	showTab("#tabqrscan", true);
 	scanner = new Instascan.Scanner({ video: document.getElementById('qrpreview') });
 	scanner.addListener('scan', 
@@ -163,10 +170,11 @@ function display_currency_amount(x) {
 
 function doPopulateDonation(amount) {
 	clearPaymentScreen();
-	$('#toaddress').val('rToastMYRQh8boeo5Ys1CnPySmt3c9x3Y');
-	$('#payamount').val('' + amount);
+	setVal('#toaddress', 'rToastMYRQh8boeo5Ys1CnPySmt3c9x3Y');
+	setVal('#payamount', '' + amount);
 	showTab('#tabpayments', true); 
-	$('#payamount').focus();
+	var pa = byId('payamount');
+	if (pa) pa.focus();
 }
 
 
@@ -236,62 +244,7 @@ function te(e, x) {
     return false;
 }
 /* Run this to add a click proxy to all elements so that a browser can use the wallet */
-function clickProxy() {
-    rebindAllHandlers();
-	{
-        $('*:not(input):not(.select2):not([class^="select2-"]):not(.headerleft):not(.headerright):not(.toggleswitch):not(.morecontentindicator)').unbind('click');
-		$('*:not(input):not(.select2):not([class^="select2-"]):not(.headerleft):not(.headerright):not(.toggleswitch):not(.morecontentindicator)').on('click', function(e) {
-            inClickProxy = true;
-            var ele = this;
-            var _ts;
-            var _te;
-            var maxUp = 5;
-            var srcEle;
-            do {
-                if (ele == undefined || $(ele) == undefined || $(ele)[0] == undefined) break;
-                var events = $._data($(ele)[0], 'events');
-                for (var x in events) {
-                    if (x == 'touchstart') _ts = events['touchstart'];
-                    if (x == 'touchend') _te = events['touchend'];
-                }
-                if (_ts == undefined && _te == undefined) {
-                    _ts = $(ele).attr('ontouchstart');
-                    _te = $(ele).attr('ontouchend');
-                }
-                if (_ts != undefined || _te != undefined) srcEle = (ele[0] == undefined ? ele : ele[0]);
-            } while (_ts == undefined && _te == undefined && (typeof($(ele).parent) === 'function') && (ele = $(ele).parent()) != undefined  && maxUp-- > 0 );
-            var executeHandler = (handler, eventName)=>{
-                if (typeof(handler) == 'string') {
-                    var evt = new CustomEvent(eventName, { bubbles: true, cancelable: true });
-                    evt.touches = [];
-                    evt.targetTouches = [];
-                    evt.changedTouches = [{ clientX: e.clientX, clientY: e.clientY }];
-                    srcEle.dispatchEvent(evt);
-                } else if (typeof(handler) == 'object') {
-                    if (handler[0] != undefined && handler[0].handler != undefined && typeof(handler[0].handler) == 'function') {
-                        event = {srcElement: srcEle};
-                        (handler[0].handler)(event);
-                    }
-                }
-            }
-			if (_ts != undefined) {
-                executeHandler(_ts, 'touchstart');
-			}
-			if (_te != undefined) {
-                executeHandler(_te, 'touchend');
-			};
-			e.stopPropagation();
-			e.preventDefault();
-            inClickProxy = false;
-		});
-		$("#morecontentindicator").off(); $("#morecontentindicator").on('click', function() {
-			if (currenttab == "") return;
-			$(currenttab).animate({ scrollTop: $(currenttab)[0].scrollHeight }, "fast");
-			renderMoreContentIndicator();
-			return false;
-		});
-	}
-}
+function clickProxy() {}
 currenttab = "";
 previoustabs = [];
 activeaccount = "";
@@ -475,9 +428,10 @@ function doDataCorruptionRecovery(c, passphrase, recoveryphrase, passphraseverif
 		// reset the passphrase here then proeceed to a normal boot
 		showTab('#tabsettings');
 		showTab('#tabchangepassphrase');
-		$('#setpassword3').val(recoveryphrase);
+		setVal('#setpassword3', recoveryphrase);
 		recoveryphrase = "";
-		$('#setpassword4').focus();
+		var sp4 = byId('setpassword4');
+		if (sp4) sp4.focus();
 		navigator.notification.alert("Your recovery phrase appears to be correct. You can recovery your wallet by entering and setting a new passphrase. Please do this immediately on the screen provided.",
 			function() {
 				unblockInput();
@@ -520,8 +474,7 @@ var app = {
 onDeviceReady: function() {
 			if (debug) console.log("onDeviceReady:1");
 		       	db = new WalletDB('toastwallet');
-			if (debug) console.log("onDeviceReady:2");
-			rebindAllHandlers();
+			if (typeof initTouchClickBridge === 'function') initTouchClickBridge();
 			setTimeout(initAppUI, 0);
 			if (debug) console.log("onDeviceReady:3");
             // change all select boxes to the modern graphical format

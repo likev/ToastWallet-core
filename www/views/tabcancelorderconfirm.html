@@ -20,5 +20,5 @@
     </span>
     <input ontouchend="te(event, quickSelectInput)"  type="password" id="confirmcancelorderpassword" class="form-control" placeholder="">
     <br>
-	<center><div><button  type="button" class="btn btn-success btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doConfirmCancelOrder($('#confirmcancelorderpassword').val());})">Confirm Cancel Order</button></div></center>
+	<center><div><button  type="button" class="btn btn-success btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doConfirmCancelOrder(getVal('#confirmcancelorderpassword'));})">Confirm Cancel Order</button></div></center>
 </div>

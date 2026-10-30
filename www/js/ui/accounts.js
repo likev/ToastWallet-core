@@ -1,12 +1,13 @@
+'use strict';
+
 function refreshAccounts(after) {
     // mark and sweep to remove any dead accounts
-    
     var nonce = sodium.randombytes_random();
-    var acc = $(".accountitem");
+    var acc = qsa(".accountitem");
 	for (var i = 0; i < acc.length; i++) 
-        $(acc[i]).data('markforupdate', nonce);
+        domData(acc[i], 'markforupdate', nonce);
 	
-	$("#payfromaccount").empty();
+	emptyEl("#payfromaccount");
     var fetchRateAndUpdateBalance = function(after) {
         var updateaccs = function(exchangerate, after){
             getAccounts(function(acc) {
@@ -35,10 +36,9 @@ function refreshAccounts(after) {
                                 if (res['trustlines'] != undefined && typeof(res['trustlines']) == 'object' && 
                                     res['trustlines'].length != undefined && res['trustlines'].length > 0) {
                                    
-                                    
                                     // these are cumulative balances for display purposes that discard issuer; true balances are kept in accountbalancestl
-                                    tlbalances = {};
-                                    for (t in res['trustlines']) {
+                                    var tlbalances = {};
+                                    for (var t in res['trustlines']) {
                                         var tl = res['trustlines'][t];
                                         var issuer, currency, balance, tlexchangerate;
                                         if (tl['specification'] == undefined || tl['state'] == undefined || (issuer = tl['specification']['counterparty']) == undefined || 
@@ -71,17 +71,17 @@ function refreshAccounts(after) {
                                 trustlines = '<div class="trustline"><div class="amount"><span class="mono" style=""><div class="currency">XRP</div> ' + display_currency_amount(xrpBalance) + '</span></div></div>' + trustlines;
                                 var fiatbalance = "";
                                 if (exchangerate > 0) {
-                                    var amount =  exchangerate * ( parseFloat("" + xrpBalance) + xrpvalueoftrustlinebalances );
-                                    var stramount =  display_currency_amount(amount);
+                                    var amount = exchangerate * (parseFloat("" + xrpBalance) + xrpvalueoftrustlinebalances);
+                                    var stramount = display_currency_amount(amount);
                                     fiatbalance = '<span class="mono" style="opacity:0.7"><div class="currency"><span>' + interface_settings.valuation_currency + ' ' + stramount + '</span></div></span>';
                                 }
-                                $("#ra" + account + ">.accountline>.amount").html('<span class="mono">' + fiatbalance + '</span>');
+                                setHtml("#ra" + account + ">.accountline>.amount", '<span class="mono">' + fiatbalance + '</span>');
                                 if (trustlines != "")  {
-                                    $("#ra" + account + ">.trustlines").html(trustlines);
-                                    $("#ra" + account + ">.trustlines").data('tlcount', tlcount);
+                                    setHtml("#ra" + account + ">.trustlines", trustlines);
+                                    domData("#ra" + account + ">.trustlines", 'tlcount', tlcount);
                                 }
-                                $('#ra' + account + ' .accloadspinner').hide();
-                                $("#ra" + account).removeData('markforupdate');
+                                hideEl('#ra' + account + ' .accloadspinner');
+                                removeDomData("#ra" + account, 'markforupdate');
                             } catch(e) {handle_error(e);}
                             accountbalances[account] = parseFloat(xrpBalance);
                             var balcount = Object.keys(accountbalances).length;
@@ -95,8 +95,10 @@ function refreshAccounts(after) {
                                 }
                                 if (largestindex !== "") {
                                     activeaccount = largestindex;
-                                    $("#opt" + largestindex).prop('selected', true);
-                                    $("#ra" + largestindex).addClass('active');
+                                    var opt = byId("opt" + largestindex);
+                                    if (opt) opt.selected = true;
+                                    addClass("#ra" + largestindex, 'active');
+                                    if (typeof refreshSelect === 'function') refreshSelect('#payfromaccount');
                                 }
                             }
                             if (lastacc == account && after != undefined && typeof(after) == 'function') after();
@@ -106,9 +108,9 @@ function refreshAccounts(after) {
                         function(e) {
                             if (debug) console.log("account refresh error: " + e);
                             try {
-                                $("#ra" + account + ">.accountline>.amount").html('<small style="opacity:0.7">not activated</small>');
-                                $('#ra' + account + ' .accloadspinner').hide();
-                                $("#ra" + account).removeData('markforupdate');
+                                setHtml("#ra" + account + ">.accountline>.amount", '<small style="opacity:0.7">not activated</small>');
+                                hideEl('#ra' + account + ' .accloadspinner');
+                                removeDomData("#ra" + account, 'markforupdate');
                             } catch(e) {handle_error(e);}					
                         };
                         getAccountInfo(account, f, e).catch(e);
@@ -122,39 +124,43 @@ function refreshAccounts(after) {
 	getAccounts(function(acc) {
 		accountbalances = {};
 		for (var i in acc) {
-			var nickname = ( acc[i].nickname == undefined ? "" : acc[i].nickname.replace(/[^a-zA-Z0-9 ]/g, "").trim() );
+			var nickname = (acc[i].nickname == undefined ? "" : acc[i].nickname.replace(/[^a-zA-Z0-9 ]/g, "").trim());
             var toptouchend = 'te(event, ()=>{doSelectAccount(\''+i+'\', \''+nickname+'\', false);})';
-            //var bottomtouchend = 'te(event, (x)=>{ var f=(x, m)=>{ return ((m <=0 || x == undefined) ? false : ( $(x).data(\'tlcount\') > 0 ? true : f($(x).parent(), m-1)) ) }; doSelectAccount(\''+i+'\', \''+nickname+'\', f(x, 5));})';
             var bottomtouchend = toptouchend; // changed the behaviour so it always goes to the account details tab, since the DEX is rarely used
-            if ($('#ra' + i).length == 0) {
-                $("#accountslist").prepend('<li data-account="'+i+'" ontouchstart="ts(event)" ontouchend="'+bottomtouchend+'" class="list-group-item accountitem '+(activeaccount == i?'active':'')+'" id="ra'+i+'"><span class="hashicon"></span><div class="accountline" ontouchstart="ts(event)" ontouchend="'+toptouchend+'"><a class="address"><span class="address">'+(nickname == "" ? dispaddr(i) : nickname)+'</span></a><div class="amount"><small style="opacity: 0.7">' + (offlinemode ? 'offline' : '') + '</small></div></div><div class="trustlines" ontouchstart="ts(event)" ontouchend="'+bottomtouchend+'"></div><i class="fas fa-circle-notch accloadspinner" style="'+(offlinemode? 'display:none' : '')+'"></i></li>');
-            $('#ra' + i + ' .hashicon')[0].appendChild(hashicon(xaddr(i, false), 35))
+            if (!byId('ra' + i)) {
+                var liHtml = '<li data-account="'+i+'" ontouchstart="ts(event)" ontouchend="'+bottomtouchend+'" class="list-group-item accountitem '+(activeaccount == i?'active':'')+'" id="ra'+i+'"><span class="hashicon"></span><div class="accountline" ontouchstart="ts(event)" ontouchend="'+toptouchend+'"><a class="address"><span class="address">'+(nickname == "" ? dispaddr(i) : nickname)+'</span></a><div class="amount"><small style="opacity: 0.7">' + (offlinemode ? 'offline' : '') + '</small></div></div><div class="trustlines" ontouchstart="ts(event)" ontouchend="'+bottomtouchend+'"></div><i class="fas fa-circle-notch accloadspinner" style="'+(offlinemode? 'display:none' : '')+'"></i></li>';
+                var accountsList = byId('accountslist');
+                if (accountsList) {
+                    accountsList.insertAdjacentHTML('afterbegin', liHtml);
+                }
+                var iconSpan = qs('#ra' + i + ' .hashicon');
+                if (iconSpan) iconSpan.appendChild(hashicon(xaddr(i, false), 35));
             } else {
                 // passively update without rewriting the dom
                 if (activeaccount == i) {
-                    $('#ra' + i).addClass('active');
+                    addClass('#ra' + i, 'active');
                 } else {
-                    $('#ra' + i).removeClass('active');
+                    removeClass('#ra' + i, 'active');
                 }
                 // may have changed nickname since last update
-                $('#ra' + i + ' span.address')[0].innerText = (nickname == "" ? dispaddr(i) : nickname);
+                var addrSpan = qs('#ra' + i + ' span.address');
+                if (addrSpan) addrSpan.innerText = (nickname == "" ? dispaddr(i) : nickname);
                 // update touchend event handlers
-                $('#ra' + i + ' .hashicon').removeAttr('ontouchend');
-                $('#ra' + i + ' .hashicon').attr('ontouchend', toptouchend);
-                
-                $('#ra' + i + ' .accountline').removeAttr('ontouchend');
-                $('#ra' + i + ' .accountline').attr('ontouchend', toptouchend);
-                $('#ra' + i + ' .trustlines').removeAttr('ontouchend');
-                $('#ra' + i + ' .trustlines').attr('ontouchend', bottomtouchend);
-                if (!offlinemode) $('#ra' + i + ' .accloadspinner').show();
-                
+                setAttr('#ra' + i + ' .hashicon', 'ontouchend', toptouchend);
+                setAttr('#ra' + i + ' .accountline', 'ontouchend', toptouchend);
+                setAttr('#ra' + i + ' .trustlines', 'ontouchend', bottomtouchend);
+                if (!offlinemode) showEl('#ra' + i + ' .accloadspinner');
             }
-			$("#payfromaccount").append('<option data-account="'+i+'" id="opt'+i+'"'+( i == activeaccount ? ' selected=selected' : '' )+'>' + (nickname == "" ? i : nickname) + '</option>');
+			appendHtml("#payfromaccount", '<option data-account="'+i+'" id="opt'+i+'"'+( i == activeaccount ? ' selected=selected' : '' )+'>' + (nickname == "" ? i : nickname) + '</option>');
 		}
         // check to see if there are any accounts on the stack which shouldn't be (i.e. one has been deleted)
-        var list = $('.accountitem');
-        for (var i = 0; i < list.length; i++) 
-            if (!( $(list[i]).data('account') in acc)) list[i].remove();
+        var list = qsa('.accountitem');
+        for (var i = 0; i < list.length; i++) {
+            var accItem = list[i];
+            var itemAcc = domData(accItem, 'account');
+            if (itemAcc && !(itemAcc in acc)) accItem.remove();
+        }
+        if (typeof refreshSelect === 'function') refreshSelect('#payfromaccount');
 		clickProxy();	
         if (offlinemode) return after();
         fetchRateAndUpdateBalance(after);
@@ -163,40 +169,44 @@ function refreshAccounts(after) {
 
 function doSelectAccount(accselected, nickname, trustlinesSubTab) {
 	if (debug) console.log("doSelectAccount");
-	var acc = $(".accountitem");
+	var acc = qsa(".accountitem");
 	for (var i = 0; i < acc.length; i++) {	
-		acc.removeClass("active");
+		removeClass(acc[i], "active");
 	}
-	$("#ra" + accselected).addClass("active");
+	addClass("#ra" + accselected, "active");
 	activeaccount = accselected;
-	$("#fromaccountslist>*:not(.bottom-list-button)").remove();
-    $("#fromaccountslist").prepend('<li class="list-group-item accountitem active"><span class="hashicon"></span><div class="accountline"><a href="#" class="address"><span class="address">'+accselected+'</span></a><span class="amount">'+( accountbalances[accselected] == undefined ? '' :  accountbalances[accselected] + " XRP")+'</span></div><div class="trustlines"></div></li>');
+    var fromList = byId('fromaccountslist');
+    if (fromList) {
+        var itemsToRemove = fromList.querySelectorAll('*:not(.bottom-list-button)');
+        itemsToRemove.forEach(el => el.remove());
+        fromList.insertAdjacentHTML('afterbegin', '<li class="list-group-item accountitem active"><span class="hashicon"></span><div class="accountline"><a href="#" class="address"><span class="address">'+accselected+'</span></a><span class="amount">'+( accountbalances[accselected] == undefined ? '' :  accountbalances[accselected] + " XRP")+'</span></div><div class="trustlines"></div></li>');
+    }
 	showTab("#tabaccountdetails");	
     if (trustlinesSubTab == undefined || !trustlinesSubTab) {
-        selectAccountDetailsSubTab($('#btnaccdetailsselectaddress'), 'address');
+        selectAccountDetailsSubTab(byId('btnaccdetailsselectaddress'), 'address');
     } else {
-        selectAccountDetailsSubTab($('#btnaccdetailsselecttrustlines'), 'trustlines');
+        selectAccountDetailsSubTab(byId('btnaccdetailsselecttrustlines'), 'trustlines');
     }
-    $("#accdetailsamount").html( accountbalances[accselected] == undefined ? '' :  '<b><div class="currency">XRP</div> ' + accountbalances[accselected] + '</b>' );
-	$("#accdetailsaddress").data('content', accselected );
-	$("#accdetailsqr").empty();
-	$("#accdetailsqr").append(kjua({text: dispaddr(accselected)}));
+    setHtml("#accdetailsamount", accountbalances[accselected] == undefined ? '' :  '<b><div class="currency">XRP</div> ' + accountbalances[accselected] + '</b>');
+	domData("#accdetailsaddress", 'content', accselected);
+	emptyEl("#accdetailsqr");
+	appendNode("#accdetailsqr", kjua({text: dispaddr(accselected)}));
 	
-	$("#accdetailsnickname")[0].innerText = (nickname == undefined || nickname == "" ? "XRP address" : nickname);
+	setText("#accdetailsnickname", (nickname == undefined || nickname == "" ? "XRP address" : nickname));
 	
-	$("#accdetailsaddress").val( dispaddr( accselected ));
+	setVal("#accdetailsaddress", dispaddr(accselected));
 }
 
 function doDeleteAccount(passphrase, address, toggle) {
 	if (debug) console.log("doDeleteAccount");
-    address = forceraddr(address)
+    address = forceraddr(address);
 	blockInput();
-        if (!toggle) {
-                navigator.notification.alert("You must confirm you wish to DELETE " + address, function(){}, "STOP", "OK");
+    if (!toggle) {
+        navigator.notification.alert("You must confirm you wish to DELETE " + address, function(){}, "STOP", "OK");
 		unblockInput();
-                return;
-        }
-	validatePassphrase( passphrase, false,
+        return;
+    }
+	validatePassphrase(passphrase, false,
 		function() {
 			removeSecret(address, 
 				function() { 
@@ -239,28 +249,27 @@ function doDeleteAccount(passphrase, address, toggle) {
 			);
 		}
 	);
-	
 }
 
 function doRevealRippleSecret(passphrase, address) {
 	if (debug) console.log("doRevealRippleSecret");
 	blockInput();
-    address = forceraddr(address)
-        validatePassphrase(passphrase, false,
-                function() {
+    address = forceraddr(address);
+    validatePassphrase(passphrase, false,
+        function() {
 			getSecretForAccount(passphrase, address, function(secret) {
-				$("#lblacpassword").hide();
-				$("#lblaccsecret").show();
-				$("#btnrevealsecret").hide();
-				$("#divrsecaccpassword").hide();
-        	                $("#accsecret").val(secret);
-        	                $("#accsecret").data('content', secret);
-				$("#accsecret").show();
-				$("#btncopysecret").show();
-                	        $("#accsecretqr").append(kjua({text: secret}));				
+				hideEl("#lblacpassword");
+				showEl("#lblaccsecret");
+				hideEl("#btnrevealsecret");
+				hideEl("#divrsecaccpassword");
+                setVal("#accsecret", secret);
+                domData("#accsecret", 'content', secret);
+				showEl("#accsecret");
+				showEl("#btncopysecret");
+                appendNode("#accsecretqr", kjua({text: secret}));				
 				unblockInput();
 			}, function() {
-                        	navigator.notification.alert("Your wallet data may have been corrupted. Please backup via the settings menu then restart the app to run data recovery.", 
+                navigator.notification.alert("Your wallet data may have been corrupted. Please backup via the settings menu then restart the app to run data recovery.", 
 					function(){
 						unblockInput();
 					}, 
@@ -268,33 +277,34 @@ function doRevealRippleSecret(passphrase, address) {
 					"OK"
 				);
 			});
-                },
-                function() {
-                        navigator.notification.alert("Your passphrase was entered incorrectly. Note you cannot use a recovery phrase here.", 
+        },
+        function() {
+            navigator.notification.alert("Your passphrase was entered incorrectly. Note you cannot use a recovery phrase here.", 
 				function(){
-					$("#genaccpassword").focus();
+					var gap = byId("genaccpassword");
+					if (gap) gap.focus();
 					unblockInput();
 				}, 
 				"Error", 
 				"OK"
 			);
-                },
-                function() {
-                        navigator.notification.alert("Your wallet data may have been corrupted. Please backup via the settings menu then restart the app to run data recovery.", 
+        },
+        function() {
+            navigator.notification.alert("Your wallet data may have been corrupted. Please backup via the settings menu then restart the app to run data recovery.", 
 				function(){
 					unblockInput();
 				}, 
 				"Error", 
 				"OK"
 			);
-                }
-        );
+        }
+    );
 }
 
 function doChangeNickname(address, nickname) {
 	if (debug) console.log("doChangeNickname " + nickname + " for " + address);
 	blockInput();
-    address = forceraddr(address)
+    address = forceraddr(address);
 	if (nickname == undefined) nickname = "";
 	nickname = nickname.replace(/[^a-zA-Z0-9 ]/g, "").trim();
     changeNickname(address, nickname,  
@@ -317,7 +327,8 @@ function doImportExistingAccount(passphrase, nickname, secret, vanityaddr) {
 		if (!validateAddress(vanityaddr)) {
 			navigator.notification.alert("The XRP address you've specified is invalid. If you have an ordinary address do not put anything in this field, it will be generated from your secret. If you have a vanity or setRegularKey address then you should use this field.", 
 				function(){
-					$('#vanityaddr').focus();
+					var va = byId('vanityaddr');
+					if (va) va.focus();
 					unblockInput();
 				}, 
 				"Error", 
@@ -353,7 +364,8 @@ function doImportGeneratedAccount(passphrase, nickname) {
 		function() {
 			navigator.notification.alert("Your passphrase was entered incorrectly. Note you cannot use a recovery phrase here.", 
 				function(){
-					$("#genaccpassword").focus();
+					var gap = byId("genaccpassword");
+					if (gap) gap.focus();
 					unblockInput();
 				}, 
 				"Error", 
@@ -376,13 +388,13 @@ function doShowAndGenerateAccount() {
 	if (debug) console.log("doShowAndGenerateAccount");
 	blockInput();
 	generatedAccount = generateAddress();
-	$("#generatedaddress").text(dispaddr(generatedAccount.address).slice(0,20) + "XXXXXXXXXXXX");
+	setText("#generatedaddress", dispaddr(generatedAccount.address).slice(0,20) + "XXXXXXXXXXXX");
 	showTab("#tabgenaccount");	
 	unblockInput();
 }
 
 function changeNickname(address, nickname, successfunc, failurefunc) {
-    address = forceraddr(address)
+    address = forceraddr(address);
 	if (!address) {
 		navigator.notification.alert("No address was specified when trying to set a new nickname. This could indicate a corrupt wallet. We recommend making a backup from the settings menu.", 
 			failurefunc,
@@ -414,17 +426,17 @@ function changeNickname(address, nickname, successfunc, failurefunc) {
 		}).catch(function(x){
 			navigator.notification.alert("Failed to change nickname.", function(){}, "Error", "OK");
 			failurefunc();
-		})
-	} catch(e) { handle_error(e); } }
+		});
+	} catch(e) { handle_error(e); } };
 	db.get("accounts").then(f).catch(f);
 }
 
 function importAddress(secret, address, nickname, passphrase, successfunc, failurefunc) {
-    address = forceraddr(address)
+    address = forceraddr(address);
 	// set backup reminder to nothing so they get a prompt immediately after importing
 	db.upsert("lastbackupreminder",
 		function(doc) {
-			return { data: JSON.stringify({})	}; 
+			return { data: JSON.stringify({}) }; 
 	});
 	var _import = function(secret, address, nickname, passphrase, successfunc, failurefunc) {
 	// to proceed to storage we need to generate salts and secrets
@@ -432,26 +444,26 @@ function importAddress(secret, address, nickname, passphrase, successfunc, failu
 	var rpsalt = sodium.randombytes_buf(sodium.crypto_pwhash_scryptsalsa208sha256_SALTBYTES);
 	getRpPpData(
 		function(ppdata, rpdata) {
-                        var secret32key =
+            var secret32key =
 				sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
 					passphrase,
 					fromhex_chksum(ppdata.salt1),
 					4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
 					33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
 			// decrypt erk
-			erk = fromhex_chksum(rpdata.erk);
+			var erk = fromhex_chksum(rpdata.erk);
 			var nonce = erk.slice(0, sodium.crypto_box_NONCEBYTES);
 			erk = erk.slice(sodium.crypto_box_NONCEBYTES);
 			var recoverykey = sodium.crypto_secretbox_open_easy(erk, nonce, secret32key);	
 			// generate regular secret key
-                        var secretkey =
+            var secretkey =
 				sodium.crypto_pwhash_scryptsalsa208sha256(16,
 					passphrase,
 					fromhex_chksum(ppdata.salt1),
 					4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
 					33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);			
 			passphrase = "";
-			//now generate the keys that will be used to lock the ppsecret and rpsecret boxes
+			// now generate the keys that will be used to lock the ppsecret and rpsecret boxes
 			var ppsecret32key = 
 				sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
 					secretkey,
@@ -503,7 +515,7 @@ function importAddress(secret, address, nickname, passphrase, successfunc, failu
 					navigator.notification.alert("Failed to add address.", function(){}, "Error", "OK");
 					failurefunc();
 				});
-			} catch(e) { handle_error(e); } }
+			} catch(e) { handle_error(e); } };
 			db.get("accounts").then(f).catch(f);
 		}
 	);
@@ -534,7 +546,7 @@ function importAddress(secret, address, nickname, passphrase, successfunc, failu
             // either way just add the account
             return _import(secret, address, nickname, passphrase, successfunc, failurefunc);
         });
-    }
+    };
 	if (address == "") {
 		address = generateAddress(secret).address;
         return normalImport(secret, address, nickname, passphrase, successfunc, failurefunc);
@@ -544,7 +556,6 @@ function importAddress(secret, address, nickname, passphrase, successfunc, failu
 		if (pubaddress == address) {
             return normalImport(secret, address, nickname, passphrase, successfunc, failurefunc);
 		} else {
-            
             if (offlinemode) {
                 return navigator.notification.alert("You are adding an account with a regular key in offline mode. Toast Wallet has no way to ensure this regular key corresponds to your XRP address. The account will be added however transactions may fail if the regular key is incorrect.", ()=>{return _import(secret, address, nickname, passphrase, successfunc, failurefunc);}, "Warning", "OK");
             }
@@ -576,13 +587,13 @@ function generateAddress(secret) {
 	
 		return {
 			secret: secret,
-			address: 	xrpl.deriveAddress(	xrpl.deriveKeypair(secret).publicKey )
+			address: xrpl.deriveAddress(xrpl.deriveKeypair(secret).publicKey)
 		};
 	}
 }
 
 function getSecretForAccount(passphrase, address, successfunc, failurefunc) {
-    address = forceraddr(address)
+    address = forceraddr(address);
 	getRpPpData(function(ppdata, rpdata) { try {
 		getAccounts(function(accounts) { try {
 			if (accounts[address] == undefined || accounts[address].ppsecret == undefined || accounts[address].ppsalt == undefined) {
@@ -600,7 +611,7 @@ function getSecretForAccount(passphrase, address, successfunc, failurefunc) {
 					4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
 					33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);			
 			passphrase = "";
-			//now generate the keys that will be used to lock the ppsecret and rpsecret boxes
+			// now generate the keys that will be used to lock the ppsecret and rpsecret boxes
 			var ppsecret32key = 
 				sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
 					secretkey,
@@ -611,7 +622,7 @@ function getSecretForAccount(passphrase, address, successfunc, failurefunc) {
 			secretkey = "";
 		
 			// decrypt ppsecret 
-			ppsecret = fromhex_chksum(accounts[address].ppsecret);
+			var ppsecret = fromhex_chksum(accounts[address].ppsecret);
 			var nonce = ppsecret.slice(0, sodium.crypto_box_NONCEBYTES);
 			ppsecret = ppsecret.slice(sodium.crypto_box_NONCEBYTES);
 			var secret = sodium.crypto_secretbox_open_easy(ppsecret, nonce, ppsecret32key);
@@ -621,7 +632,7 @@ function getSecretForAccount(passphrase, address, successfunc, failurefunc) {
 }
 
 function removeSecret(address, successfunc, failurefunc) {
-	address = forceraddr(address)
+	address = forceraddr(address);
     var f = function(accounts) { try {
 		if (accounts.data == undefined || accounts.data == "") 
 			return failurefunc();
@@ -635,21 +646,41 @@ function removeSecret(address, successfunc, failurefunc) {
 		}).catch(function(x){
 			failurefunc();
 		});
-	} catch(e) { handle_error(e); } }
+	} catch(e) { handle_error(e); } };
 	db.get("accounts").then(f).catch(f);
 }
 
 // Expose functions globally
-window.refreshAccounts = refreshAccounts;
-window.doSelectAccount = doSelectAccount;
-window.doDeleteAccount = doDeleteAccount;
-window.doRevealRippleSecret = doRevealRippleSecret;
-window.doChangeNickname = doChangeNickname;
-window.doImportExistingAccount = doImportExistingAccount;
-window.doImportGeneratedAccount = doImportGeneratedAccount;
-window.doShowAndGenerateAccount = doShowAndGenerateAccount;
-window.changeNickname = changeNickname;
-window.importAddress = importAddress;
-window.generateAddress = generateAddress;
-window.getSecretForAccount = getSecretForAccount;
-window.removeSecret = removeSecret;
+if (typeof window !== 'undefined') {
+    window.refreshAccounts = refreshAccounts;
+    window.doSelectAccount = doSelectAccount;
+    window.doDeleteAccount = doDeleteAccount;
+    window.doRevealRippleSecret = doRevealRippleSecret;
+    window.doChangeNickname = doChangeNickname;
+    window.doImportExistingAccount = doImportExistingAccount;
+    window.doImportGeneratedAccount = doImportGeneratedAccount;
+    window.doShowAndGenerateAccount = doShowAndGenerateAccount;
+    window.changeNickname = changeNickname;
+    window.importAddress = importAddress;
+    window.generateAddress = generateAddress;
+    window.getSecretForAccount = getSecretForAccount;
+    window.removeSecret = removeSecret;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        refreshAccounts,
+        doSelectAccount,
+        doDeleteAccount,
+        doRevealRippleSecret,
+        doChangeNickname,
+        doImportExistingAccount,
+        doImportGeneratedAccount,
+        doShowAndGenerateAccount,
+        changeNickname,
+        importAddress,
+        generateAddress,
+        getSecretForAccount,
+        removeSecret
+    };
+}

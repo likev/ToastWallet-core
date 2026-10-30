@@ -23,7 +23,7 @@
 	<br />
 	<label id='lblpaytodesttag'>Destination Tag</label>
     <span class="pasteqr">
-        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  $('#desttag').val(content) })})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  setVal('#desttag', content) })})"><i class="fa fa-paste"></i></button>
 		<button  class="btn btn-default" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doToggleInvoiceId();})" id="btnpayshowmore" type="button"><i class="fa fa-ellipsis-v"></i></button>
     </span>
 	<input ontouchend="te(event, quickSelectInput)"  type="text" id="desttag" class="form-control" placeholder="Only if provided by receiver">
@@ -31,7 +31,7 @@
     <div id="invoiceiddiv" style="display:none">
 	<label>Invoice ID</label>
     <span class="pasteqr">
-        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  $('#invoiceid').val(content) })})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  setVal('#invoiceid', content) })})"><i class="fa fa-paste"></i></button>
     </span>
     <div>
 	<input ontouchend="te(event, quickSelectInput)"  type="text" id="invoiceid" class="form-control" placeholder="Only if provided by receiver">
@@ -47,13 +47,13 @@
     <div id="currencyerror" style="display:none; color:red;"></div>
     <div id="oflcurrencydiv" style="display:none">
         <span class="pasteqr" style="position: absolute; right: 0; transform: translate(0, -100%);">
-            <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  $('#payassetofl').val(content) })})"><i class="fa fa-paste"></i></button>
+            <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  setVal('#payassetofl', content) })})"><i class="fa fa-paste"></i></button>
         </span>
         <input ontouchend="te(event, quickSelectInput)" type="text" id="payassetofl" class="form-control" placeholder="Leave blank for XRP">
         <br />
         <label>Issuer Addresss</label>
         <span class="pasteqr" id="issueraddressbtnpaste">
-            <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  $('#payissuerofl').val(content) })})"><i class="fa fa-paste"></i></button>
+            <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  setVal('#payissuerofl', content) })})"><i class="fa fa-paste"></i></button>
         </span>        
         <input data-dispaddr="true"  ontouchend="te(event, quickSelectInput)" type="text" id="payissuerofl" class="form-control" placeholder="Leave blank for XRP">
 	</div>
@@ -62,7 +62,7 @@
     <br>
 	<label >Amount</label>
     <span class="pasteqr">
-        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  $('#payamount').val(content) })})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  setVal('#payamount', content) })})"><i class="fa fa-paste"></i></button>
     </span>
 	<input ontouchend="te(event, quickSelectInput)"  type="text" id="payamount" class="form-control" placeholder="">
     <br>

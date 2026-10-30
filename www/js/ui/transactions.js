@@ -1,7 +1,9 @@
+'use strict';
+
 function doViewTransaction(hash) {
     if (debug) console.log('doViewTransaction -- ' + hash);
     blockInput();	
-    $('#vtxhash').val(hash);
+    setVal('#vtxhash', hash);
     
     remote.request({
         command: "tx",
@@ -18,30 +20,30 @@ function doViewTransaction(hash) {
         unblockInput();
         // todo: better server error handling here
         if (typeof(x.transaction) == "undefined" || typeof(x.transaction.tx) == "undefined" || typeof(x.transaction.meta) == "undefined") {
-            $('#vtxstatus').val('Unknown / Not Found');
-            $('#vtxdetails').hide();
+            setVal('#vtxstatus', 'Unknown / Not Found');
+            hideEl('#vtxdetails');
             showTab('#tabviewtransaction', true);
             return;
         }
         // execution to here means the tx details were returned
-        $('#vtxdetails').show();
-        $('#vtxstatus').val(x.transaction.tx.TransactionType + ( typeof(x.transaction.meta.TransactionResult) != undefined ? ' - ' + x.transaction.meta.TransactionResult : ' - Unknown Status')); 
-        $('#vtxfrom').val( dispaddr(x.transaction.tx.Account) )
-        $('#vtxdtag').val( typeof(x.transaction.tx.DestinationTag) == 'undefined' ? 'not specified' :   x.transaction.tx.DestinationTag)
+        showEl('#vtxdetails');
+        setVal('#vtxstatus', x.transaction.tx.TransactionType + (typeof(x.transaction.meta.TransactionResult) != 'undefined' ? ' - ' + x.transaction.meta.TransactionResult : ' - Unknown Status')); 
+        setVal('#vtxfrom', dispaddr(x.transaction.tx.Account));
+        setVal('#vtxdtag', typeof(x.transaction.tx.DestinationTag) == 'undefined' ? 'not specified' : x.transaction.tx.DestinationTag);
         if (interface_settings.display_xaddresses) {
-            $('#vtxto').val(xaddr(x.transaction.tx.Destination,  x.transaction.tx.DestinationTag == undefined ? false : x.transaction.tx.DestinationTag))
-            $('#vtxdtgroup').hide()
+            setVal('#vtxto', xaddr(x.transaction.tx.Destination, x.transaction.tx.DestinationTag == undefined ? false : x.transaction.tx.DestinationTag));
+            hideEl('#vtxdtgroup');
         } else {
-            $('#vtxdtgroup').show()
-            $('#vtxto').val(x.transaction.tx.Destination)
+            showEl('#vtxdtgroup');
+            setVal('#vtxto', x.transaction.tx.Destination);
         }
-        $('#vtxdeliveredamount').val( typeof(x.transaction.meta.delivered_amount) != undefined ?  x.transaction.meta.delivered_amount/1000000.0 : 'not specified') ;
-        $('#vtxrawtx')[0].innerText = JSON.stringify(x, null, 4) + '';
+        setVal('#vtxdeliveredamount', typeof(x.transaction.meta.delivered_amount) != 'undefined' ? x.transaction.meta.delivered_amount/1000000.0 : 'not specified');
+        setText('#vtxrawtx', JSON.stringify(x, null, 4) + '');
         showTab('#tabviewtransaction', true);
     }).catch(err => {
         unblockInput();
-        $('#vtxstatus').val('Unknown / Not Found');
-        $('#vtxdetails').hide();
+        setVal('#vtxstatus', 'Unknown / Not Found');
+        hideEl('#vtxdetails');
         showTab('#tabviewtransaction', true);
     });
 }
@@ -86,8 +88,8 @@ function doGetTransactions(address, marker) {
             marker: nextMarker
         };
         
-		var root = $('#accdetailstransactiondetails');
-		root.empty();
+		var root = byId('accdetailstransactiondetails');
+		emptyEl(root);
 		var tx = "";
 		var count = 0;
 		if (x.payments != undefined) {
@@ -95,33 +97,42 @@ function doGetTransactions(address, marker) {
 				tx += '<li class="txrow '+(x.payments[i].source == address ? 'txsent' : 'txreceived')+'" data-txhash="'+x.payments[i].tx_hash+'" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doViewTransaction(\''+x.payments[i].tx_hash+'\')})">';
 				var outgoing = (x.payments[i].source == address);
 				tx += '<span><i class="fa ' + ( outgoing ? 'fa-paper-plane' : 'fa-inbox' ) + '" aria-hidden="true"></i>';
-				var addr = ( outgoing ? x.payments[i].destination : x.payments[i].source ) 
-                tx += dispaddr( addr ) + '</span>';
+				var addr = ( outgoing ? x.payments[i].destination : x.payments[i].source );
+                tx += dispaddr(addr) + '</span>';
 				tx += '<span >' + x.payments[i].amount + '</span>';
-				tx += '</li>'
+				tx += '</li>';
 				count++;
 			}
 		}
 		if (count == 0) {
 			tx = '<li style="color:black;"><center><i>No transactions found</i></center></li>';
 		}
-		root.append('<ul class="transactionlist">'+tx+'</ul>');
+		appendHtml(root, '<ul class="transactionlist">'+tx+'</ul>');
 		if (x.marker != undefined && count > 0) {
-			root.append('<button  type="button" class="btn btn-primary" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doGetTransactions(\'' + address + '\', ' + JSON.stringify(x.marker).replace(/"/g, '&quot;') + ')})">More</button>');
+			appendHtml(root, '<button type="button" class="btn btn-primary" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doGetTransactions(\'' + address + '\', ' + JSON.stringify(x.marker).replace(/"/g, '&quot;') + ')})">More</button>');
 		} else if (count > 0) {
-			root.append('<button  type="button" class="btn btn-primary" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doGetTransactions(\'' + address + '\', \'\')})">Back to Start</button>');			
+			appendHtml(root, '<button type="button" class="btn btn-primary" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doGetTransactions(\'' + address + '\', \'\')})">Back to Start</button>');			
 		}
 		clickProxy();	
 		unblockInput();
     }).catch(err => {
         if (debug) console.log("Get transactions error: " + err);
         unblockInput();
-		var root = $('#accdetailstransactiondetails');
-		root.empty();
-		root.append('<ul class="transactionlist"><li style="color:black;"><center><i>Error loading transactions</i></center></li></ul>');
+		var root = byId('accdetailstransactiondetails');
+		emptyEl(root);
+		appendHtml(root, '<ul class="transactionlist"><li style="color:black;"><center><i>Error loading transactions</i></center></li></ul>');
     });
 }
 
 // Expose functions globally
-window.doViewTransaction = doViewTransaction;
-window.doGetTransactions = doGetTransactions;
+if (typeof window !== 'undefined') {
+    window.doViewTransaction = doViewTransaction;
+    window.doGetTransactions = doGetTransactions;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        doViewTransaction,
+        doGetTransactions
+    };
+}

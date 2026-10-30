@@ -1,24 +1,27 @@
 function doUpdateInterfaceSettings() {
-    var currency = $('#valuationcurrency option:selected').data('currency')
-    var counterparty = $('#valuationcurrency option:selected').data('counterparty')
-    var xaddr = $('#tglUseXAddress').data('checked')
+    var valCurEl = byId('valuationcurrency');
+    var selectedOpt = (valCurEl && valCurEl.selectedOptions) ? valCurEl.selectedOptions[0] : null;
+    var currency = selectedOpt ? domData(selectedOpt, 'currency') : undefined;
+    var counterparty = selectedOpt ? domData(selectedOpt, 'counterparty') : undefined;
+    var xaddr = domData('#tglUseXAddress', 'checked');
     if (currency && counterparty) { 
-        interface_settings.valuation_currency = currency
-        interface_settings.valuation_counterparty = counterparty
+        interface_settings.valuation_currency = currency;
+        interface_settings.valuation_counterparty = counterparty;
     }
     // switches return strings of true false or undefined
-    interface_settings.display_xaddresses = xaddr === 'true'
-    saveInterfaceSettings()
-    showTab('#tabaccounts')
+    interface_settings.display_xaddresses = xaddr === 'true' || xaddr === true;
+    saveInterfaceSettings();
+    showTab('#tabaccounts');
 }
 
 function showInterfaceTab() {
     try {
-        $('#valuationcurrency > option[data-currency="'+interface_settings.valuation_currency+'"][data-counterparty="'+interface_settings.valuation_counterparty+'"]')[0].selected = true
+        var opt = qs('#valuationcurrency > option[data-currency="'+interface_settings.valuation_currency+'"][data-counterparty="'+interface_settings.valuation_counterparty+'"]');
+        if (opt) opt.selected = true;
         if (typeof refreshSelect === 'function') refreshSelect('#valuationcurrency');
     } catch(e) {}
-    setToggleSwitch('#tglUseXAddress', interface_settings.display_xaddresses)
-    showTab('#tabinterface', true)
+    setToggleSwitch('#tglUseXAddress', interface_settings.display_xaddresses);
+    showTab('#tabinterface', true);
 }
 
 function doResetPassphrase(pp1, pp2, oldpp, successfunc, firstrun) {
@@ -145,7 +148,7 @@ function setAndShowNewRecoveryPhrase(passphrase) {
 		rp += randomWord() + (i == 5 ? '' : ' ');
 	}
 	
-	$("#showrecoveryphrase").text(rp);
+	setText("#showrecoveryphrase", rp);
 	setPassphrase(rp, passphrase, true, 
 		function(){ 
 			showTab("#tabshowrecovery"); 

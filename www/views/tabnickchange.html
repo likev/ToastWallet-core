@@ -15,5 +15,5 @@
     <br>
 	<center><div>
 			<button  type="button" class="btn btn-primary btnbig" id="btnimport" 
-				ontouchstart="ts(event)" ontouchend="te(event, ()=>{doChangeNickname($('#nickchangeaddress').data('content'), $('#nickchangenick').val());})">Change Nickname</button></div></center>
+				ontouchstart="ts(event)" ontouchend="te(event, ()=>{doChangeNickname(domData('#nickchangeaddress', 'content'), getVal('#nickchangenick'));})">Change Nickname</button></div></center>
 </div>

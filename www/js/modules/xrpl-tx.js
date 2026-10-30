@@ -115,8 +115,8 @@ function sendPaymentOffline(passphrase, fromacc, xrpAmount, destination, sourceT
                     secret = "";
 				    
                     console.log('Payment transaction signed...');
-                    $('#divgreenqrdisplay').empty();
-                    $('#divgreenqrdisplay').append(kjua({text: 'ripple:signed-transaction:' + signedTransaction, fill: "#008000", ecLevel: 'L', size: 340}));
+                    emptyEl('#divgreenqrdisplay');
+                    appendNode('#divgreenqrdisplay', kjua({text: 'ripple:signed-transaction:' + signedTransaction, fill: "#008000", ecLevel: 'L', size: 340}));
                     showTab('#tabgreenqr');
                     unblockInput();
             },
@@ -227,8 +227,8 @@ function sendTrustLineTxOffline(passphrase, fromacc, issuer, currency, limit, ri
                 const {signedTransaction} = remote.sign(prepared.txJSON, secret);
                 console.log('Trustline transaction signed...');
                 secret = "";
-                    $('#divgreenqrdisplay').empty();
-                    $('#divgreenqrdisplay').append(kjua({text: 'ripple:signed-transaction:' + signedTransaction, fill: "#008000", ecLevel: 'L', size: 340}));
+                    emptyEl('#divgreenqrdisplay');
+                    appendNode('#divgreenqrdisplay', kjua({text: 'ripple:signed-transaction:' + signedTransaction, fill: "#008000", ecLevel: 'L', size: 340}));
                     showTab('#tabgreenqr');
                     unblockInput();
             },
@@ -361,8 +361,8 @@ function sendOfferCreateOffline(passphrase, fromacc, amount, asset, issuer, pric
                     secret = "";
 				    
                     console.log('Order transaction signed...');
-                    $('#divgreenqrdisplay').empty();
-                    $('#divgreenqrdisplay').append(kjua({text: 'ripple:signed-transaction:' + signedTransaction, fill: "#008000", ecLevel: 'L', size: 340}));
+                    emptyEl('#divgreenqrdisplay');
+                    appendNode('#divgreenqrdisplay', kjua({text: 'ripple:signed-transaction:' + signedTransaction, fill: "#008000", ecLevel: 'L', size: 340}));
                     showTab('#tabgreenqr');
                     unblockInput();
             },
@@ -467,8 +467,8 @@ function sendOfferCancelOffline(passphrase, fromacc, seq, accSeqID, ledSeqID, fe
                     secret = "";
 				    
                     console.log('OfferCancel transaction signed...');
-                    $('#divgreenqrdisplay').empty();
-                    $('#divgreenqrdisplay').append(kjua({text: 'ripple:signed-transaction:' + signedTransaction, fill: "#008000", ecLevel: 'L', size: 340}));
+                    emptyEl('#divgreenqrdisplay');
+                    appendNode('#divgreenqrdisplay', kjua({text: 'ripple:signed-transaction:' + signedTransaction, fill: "#008000", ecLevel: 'L', size: 340}));
                     showTab('#tabgreenqr');
                     unblockInput();
             },
@@ -597,8 +597,8 @@ function  sendAccountFlagsTxOffline(passphrase, fromacc, defaultRipple, depositA
                 const {signedTransaction} = remote.sign(prepared.txJSON, secret);
                 console.log('Settings transaction signed...');
                 secret = "";
-                    $('#divgreenqrdisplay').empty();
-                    $('#divgreenqrdisplay').append(kjua({text: 'ripple:signed-transaction:' + signedTransaction, fill: "#008000", ecLevel: 'L', size: 340}));
+                    emptyEl('#divgreenqrdisplay');
+                    appendNode('#divgreenqrdisplay', kjua({text: 'ripple:signed-transaction:' + signedTransaction, fill: "#008000", ecLevel: 'L', size: 340}));
                     showTab('#tabgreenqr');
                     unblockInput();
             },

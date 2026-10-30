@@ -24,7 +24,7 @@ function connectToRipple(funcsuccess, suppressbootsequence) {
 	remote.connect().then(function() {
 			if (debug) console.log("connect success");
 			
-			$('.currentgateway').text(currentServer);
+			setText('.currentgateway', currentServer);
 			// check if the user has connected via a custom gateway and add it to our gateway list for next time if they have
 			var isDefaultGateway = false;
 			for (var i = 0; i < defaultServerStack.length; i++) {
@@ -60,9 +60,8 @@ function connectToRipple(funcsuccess, suppressbootsequence) {
 			remote.getServerInfo().then(info => {
 				if (info != undefined && info['validatedLedger'] != undefined && info['validatedLedger']['reserveBaseXRP'] != undefined) 
 					xrpreserve = parseInt('' +   info['validatedLedger']['reserveBaseXRP']);
-//					$("#minxrp").text("" + xrpreserve);
-					$("#minxrp2").text("" + xrpreserve);
-					$("#minxrp3").text("" + xrpreserve);
+					setText("#minxrp2", "" + xrpreserve);
+					setText("#minxrp3", "" + xrpreserve);
 			}).catch(e => {
 				console.log("xrp reserve request error: " + e);
 			});
@@ -107,9 +106,9 @@ function doRetryConnection(gateway) {
 	}
 	
 	setRemoteGateway(serverStack[0]);
-	$('#tabconnectionselect').hide();
-	$('#navheader').hide();
-	$('body').removeClass('darkbackground');
+	hideEl('#tabconnectionselect');
+	hideEl('#navheader');
+	removeClass('body', 'darkbackground');
 	currenttab = "";
 	showSpinner();
 	normalboot();	
@@ -119,7 +118,7 @@ function doOfflineMode(withboot) {
 	offlinemode = true;
 	remote = new xrpl.Client("wss://s1.ripple.com");
 	injectCompatibilityLayer(remote);
-	$('#offlinemodewarning').show();
+	showEl('#offlinemodewarning');
 	if (withboot) normalboot();	
 }
 

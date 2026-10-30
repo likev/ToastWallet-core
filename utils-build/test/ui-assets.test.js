@@ -59,7 +59,8 @@ test('ui-assets: purged dead vendor files and packages are absent', () => {
         'www/js/hashicon.js',
         'www/css/bootstrap.min.css',
         'www/js/select2.js',
-        'www/css/select2.css'
+        'www/css/select2.css',
+        'www/js/jquery-3.7.1.min.js'
     ];
 
     for (const file of deadFiles) {

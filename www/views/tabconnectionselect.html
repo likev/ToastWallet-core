@@ -8,7 +8,7 @@
 			<input ontouchend="te(event, quickSelectInput)" type="text" id="txtnewgateway" class="form-control" placeholder="wss://">
 		</div>
 		<br>
-		<button class="btn btn-success btnbig" type="button" id="btnconnect1" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doRetryConnection($('#txtnewgateway').val());})">Retry Connection</button><br><br>
+		<button class="btn btn-success btnbig" type="button" id="btnconnect1" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doRetryConnection(getVal('#txtnewgateway'));})">Retry Connection</button><br><br>
 		<button class="btn btn-primary btnbig" type="button" id="btnofflinemode" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doOfflineMode(true);})">Offline Mode</button><br>
 	</div>
     </center>

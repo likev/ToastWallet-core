@@ -1,22 +1,24 @@
+'use strict';
+
 function doShowLogin() {
 	if (debug) console.log("doShowLogin");
-    if (paylink_pending != null) $('#tablogin>center>div').addClass('pinpad_pending');
+    if (paylink_pending != null) addClass('#tablogin>center>div', 'pinpad_pending');
     runPinPad("#tablogin", function(pin) {
 		validatePin(pin, function() {
-			$("#btnbootstrapsequence").hide();
+			hideEl("#btnbootstrapsequence");
             if (paylink_pending == null) {
                 showTab("#tabaccounts");
             } else {
-                $('#tablogin>center>div').removeClass('pinpad_pending');
+                removeClass('#tablogin>center>div', 'pinpad_pending');
                 doPayLink(); 
             }
 		}, function() {
-			$("#btnbootstrapsequence").hide();
-                        setTimeout(function() {
-                                doShakeAndClearPinPad( function() { });
-                        }, 0);
+			hideEl("#btnbootstrapsequence");
+            setTimeout(function() {
+                doShakeAndClearPinPad(function() {});
+            }, 0);
 		}, function() {
-			$("#btnbootstrapsequence").hide();
+			hideEl("#btnbootstrapsequence");
 			showTab("#tablicense");
 		});
 		return true;
@@ -50,9 +52,9 @@ function normalboot () {
 		);
 	} else {
 		validatePin("",
-			function() {   connectToRipple( doShowLogin ); },
-			function() {   connectToRipple( doShowLogin ); },
-			function() {   connectToRipple( function() {showTab("#tablicense");}); }
+			function() { connectToRipple(doShowLogin); },
+			function() { connectToRipple(doShowLogin); },
+			function() { connectToRipple(function() {showTab("#tablicense");}); }
 		);
 	}
 }
@@ -93,22 +95,22 @@ function doPinPad(x) {
 			renderEnteredPin();
 		} else {
 			setTimeout(function() {
-				doShakeAndClearPinPad( function() { pinpadfailure(enteredpin); });
+				doShakeAndClearPinPad(function() { pinpadfailure(enteredpin); });
 			}, 0);
 		}
 	}
 }
 
 function doShakeAndClearPinPad(afterfunc) {
-	$(".pinpad").removeClass("shake");
+	removeClass(".pinpad", "shake");
 	blockInput(true);
 	setTimeout(function(){
-		$(".pinpad").addClass("shake");
+		addClass(".pinpad", "shake");
 		setTimeout(
 			function() {
 				enteredpin = "";
 				renderEnteredPin();
-				$(".pinpad").removeClass("shake");
+				removeClass(".pinpad", "shake");
 				unblockInput();
 				afterfunc();
 			}, 500);
@@ -117,12 +119,13 @@ function doShakeAndClearPinPad(afterfunc) {
 
 function renderEnteredPin() {
 	for (var i = 1; i <= PIN_MAX; i++) {
+		const pinIcons = qsa(".pinnumber>i:nth-of-type("+i+")");
 		if (i <= enteredpin.length) {
-			$(".pinnumber>i:nth-of-type("+i+")").removeClass("far");
-			$(".pinnumber>i:nth-of-type("+i+")").addClass("fa");
+			removeClass(pinIcons, "far");
+			addClass(pinIcons, "fa");
 		} else {
-			$(".pinnumber>i:nth-of-type("+i+")").addClass("far");
-			$(".pinnumber>i:nth-of-type("+i+")").removeClass("fa");
+			addClass(pinIcons, "far");
+			removeClass(pinIcons, "fa");
 		}
 	}
 	refreshWebView();
@@ -131,7 +134,7 @@ function renderEnteredPin() {
 function doFinishSetup() {
 	if (debug) console.log("doFinishSetup");
 	blockInput();
-	if ($("#tglsw1").data('checked') != "true" || $("#tglsw2").data('checked') != "true" ) {
+	if (domData("#tglsw1", 'checked') != "true" || domData("#tglsw2", 'checked') != "true") {
 		navigator.notification.alert("You must confirm that you've written your recovery phrase down and that you understand it's not a backup.", 
 			function(){
 				unblockInput();
@@ -142,7 +145,7 @@ function doFinishSetup() {
 		return;
 	}
 	// destroy the data from memory
-	$("#showrecoveryphrase").empty();
+	emptyEl("#showrecoveryphrase");
 	// we're all done
 	showTab("#tabaccounts");
 	unblockInput();
@@ -169,13 +172,30 @@ function __freshinstall() {
         }
 
 // Expose functions globally
-window.doShowLogin = doShowLogin;
-window.runPinPad = runPinPad;
-window.normalboot = normalboot;
-window.recoveryboot = recoveryboot;
-window.doPinPad = doPinPad;
-window.doShakeAndClearPinPad = doShakeAndClearPinPad;
-window.renderEnteredPin = renderEnteredPin;
-window.doFinishSetup = doFinishSetup;
-window.restart = restart;
-window.__freshinstall = __freshinstall;
+if (typeof window !== 'undefined') {
+    window.doShowLogin = doShowLogin;
+    window.runPinPad = runPinPad;
+    window.normalboot = normalboot;
+    window.recoveryboot = recoveryboot;
+    window.doPinPad = doPinPad;
+    window.doShakeAndClearPinPad = doShakeAndClearPinPad;
+    window.renderEnteredPin = renderEnteredPin;
+    window.doFinishSetup = doFinishSetup;
+    window.restart = restart;
+    window.__freshinstall = __freshinstall;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        doShowLogin,
+        runPinPad,
+        normalboot,
+        recoveryboot,
+        doPinPad,
+        doShakeAndClearPinPad,
+        renderEnteredPin,
+        doFinishSetup,
+        restart,
+        __freshinstall
+    };
+}

@@ -19,11 +19,11 @@
 	</div>
     <br><label>Passphrase</label>
     <span class="pasteqr">
-        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{$('#extaccpassword').val(content)})})"><i class="fa fa-paste"></i></button>            
-        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {$('#extaccpassword').val(content)})})" type="button"><i class="fa fa-camera"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{setVal('#extaccpassword', content)})})"><i class="fa fa-paste"></i></button>            
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {setVal('#extaccpassword', content)})})" type="button"><i class="fa fa-camera"></i></button>
         <button class="btn btn-default" id="extaccpasswordeyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#extaccpassword', '#extaccpasswordeyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
     </span>
     <input ontouchend="te(event, quickSelectInput)"  id="extaccpassword" type="password" class="form-control" placeholder="">
     <br>
-	<center><div><button  type="button" class="btn btn-primary btnbig" id="btnimport" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doImportExistingAccount($('#extaccpassword').val(), $('#extaccnick').val(), $('#txtsecret').val(), $('#vanityaddr').val());})">Import Account</button></div></center>
+	<center><div><button  type="button" class="btn btn-primary btnbig" id="btnimport" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doImportExistingAccount(getVal('#extaccpassword'), getVal('#extaccnick'), getVal('#txtsecret'), getVal('#vanityaddr'));})">Import Account</button></div></center>
 </div>

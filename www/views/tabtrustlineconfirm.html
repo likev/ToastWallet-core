@@ -29,5 +29,5 @@
     </span>
     <input ontouchend="te(event, quickSelectInput)"  type="password" id="confirmatlpassword" class="form-control" placeholder="">
     <br>
-	<center><div><button  type="button" class="btn btn-success btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doConfirmTrustline($('#confirmatlpassword').val());})">Submit Trustline</button></div></center>
+	<center><div><button  type="button" class="btn btn-success btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doConfirmTrustline(getVal('#confirmatlpassword'));})">Submit Trustline</button></div></center>
 </div>

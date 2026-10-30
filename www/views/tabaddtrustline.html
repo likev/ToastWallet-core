@@ -21,20 +21,20 @@
     
 	<label >Issuer Address</label>
     <span class="pasteqr">
-        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{$('#atlissueraddr').val(content)})})"><i class="fa fa-paste"></i></button>
-        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {$('#atlissueraddr').val(content)})})" type="button"><i class="fa fa-camera"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{setVal('#atlissueraddr', content)})})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {setVal('#atlissueraddr', content)})})" type="button"><i class="fa fa-camera"></i></button>
     </span>
     <input data-dispaddr="true" ontouchend="te(event, quickSelectInput)"  class="form-control" type="text" placeholder=""  id="atlissueraddr">
 	<br>
     <label >Currency</label>
     <span class="pasteqr">
-        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{$('#atlcurrency').val(content)})})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{setVal('#atlcurrency', content)})})"><i class="fa fa-paste"></i></button>
     </span>
     <input ontouchend="te(event, quickSelectInput)"  class="form-control" type="text" placeholder=""  id="atlcurrency">
     <br>
     <label >Trustline Limit</label>
     <span class="pasteqr">
-        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{$('#atllimit').val(content)})})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{setVal('#atllimit', content)})})"><i class="fa fa-paste"></i></button>
     </span>
     <input ontouchend="te(event, quickSelectInput)"  class="form-control" type="text" placeholder=""  id="atllimit">
 	<br>

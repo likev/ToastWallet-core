@@ -1,37 +1,42 @@
+'use strict';
+
 function showNewOrder(account, direction, currency, issuer, balance, bid, ask) {
     if (debug) console.log("showNewOrder - direction: " + direction + ", currency: " + currency + ", issuer: " + issuer + ", balance: " + balance + ", bid: " + bid + ", ask: " + ask); 
-    $('#ntloaddress').val(dispaddr(account));
-    $('#ntloaddress').data('content', account);
-    $('#ntloaddress').data('direction', direction);
+    setVal('#ntloaddress', dispaddr(account));
+    domData('#ntloaddress', 'content', account);
+    domData('#ntloaddress', 'direction', direction);
     if (direction == 'sell') {
-        $('#lblntlosell').show();
-        $('#lblntlobuy').hide();
+        showEl('#lblntlosell');
+        hideEl('#lblntlobuy');
     } else {
-        $('#lblntlosell').hide();
-        $('#lblntlobuy').show();
+        hideEl('#lblntlosell');
+        showEl('#lblntlobuy');
     }
-    $('#ntloissuer').val(currency + ' - ' + dispaddr(issuer));
-    $('#ntloissuer').data('currency', currency);
-    $('#ntloissuer').data('issuer', issuer);
-    $('#btnntloall').removeAttr('ontouchend');
-    $('#btnntloall').attr('ontouchend', "te(event, ()=>{$('#ntloamount').val("+balance+"); renderOrderPreview();})");
+    setVal('#ntloissuer', currency + ' - ' + dispaddr(issuer));
+    domData('#ntloissuer', 'currency', currency);
+    domData('#ntloissuer', 'issuer', issuer);
+    removeAttr('#btnntloall', 'ontouchend');
+    setAttr('#btnntloall', 'ontouchend', "te(event, ()=>{setVal('#ntloamount', " + balance + "); renderOrderPreview();})");
     if (direction == 'buy') {
         // use minimum ask
-        $('#ntloprice').val(ask);
+        setVal('#ntloprice', ask);
     } else {
         // use minimum bid
-        $('#ntloprice').val(bid);
+        setVal('#ntloprice', bid);
     }
-    $('#ntloamount').val('1');
-    $('#customexpirydiv').hide();
-    $('#ntloexpiry').show();
+    setVal('#ntloamount', '1');
+    hideEl('#customexpirydiv');
+    showEl('#ntloexpiry');
     if (typeof setSelectVisible === 'function') setSelectVisible('#ntloexpiry', true);
-    $('#ntloexpiry > option').removeAttr('selected');
-    $('#ntloexpiry-24h').attr('selected', 'selected');
+    var expEl = byId('ntloexpiry');
+    if (expEl) {
+        for (var i = 0; i < expEl.options.length; i++) expEl.options[i].selected = false;
+        var opt24h = byId('ntloexpiry-24h');
+        if (opt24h) opt24h.selected = true;
+    }
     if (typeof refreshSelect === 'function') refreshSelect('#ntloexpiry');
     renderOrderPreview(direction == 'sell');
     showTab('#tabneworder', true);
-    
 }
 
 function onToggleNewOrder() {
@@ -40,8 +45,8 @@ function onToggleNewOrder() {
     // enforce the mutually exclusive options in the order screen toggles
     //https://github.com/ripple/rippled/blob/817d2339b8632cb2f97d3edd6f7af33aa7631744/src/ripple/app/tx/impl/CreateOffer.cpp#L63
     
-    var ioc = $('#tglntloioc').data('checked') == 'true';
-    var fok = $('#tglntlofok').data('checked') == 'true';  
+    var ioc = domData('#tglntloioc', 'checked') == 'true';
+    var fok = domData('#tglntlofok', 'checked') == 'true';  
     if (ioc && fok) {
         return navigator.notification.alert("An order can have Fill-or-Kill or Immediate-or-Cancel but not both.", 
 				function(){
@@ -57,19 +62,22 @@ function onToggleNewOrder() {
 }
 
 function renderOrderPreview(sell) {
-    if (typeof(sell) == 'undefined') sell = $('#lblntlosell').is(':visible');
-    var currency = $('#ntloissuer').data('currency');
-    var amount1 = $('#ntloamount').val();
+    if (typeof(sell) == 'undefined') sell = isVisible('#lblntlosell');
+    var currency = domData('#ntloissuer', 'currency');
+    var amount1 = getVal('#ntloamount');
     if ((amount1=parseFloat(amount1 + '')) + '' == 'NaN') amount1 = 0;
-    var price = $('#ntloprice').val();
+    var price = getVal('#ntloprice');
     if ((price=parseFloat(price + '')) + '' == 'NaN') price = 0;
     var amount2 = price * amount1;
-    $('#ntlopriceupdate')[0].style.border = ( sell ? '1px solid rgb(217, 83, 79)' : '1px solid rgb(92, 184, 92)' );
-    $('#ntlopriceupdate').html('<b>'+(sell ? 'SELL' : 'BUY')+'</b> <span class="currency">'+currency+'</span> '+display_currency_amount(amount1)+' for <span class="currency">XRP</span>'+display_currency_amount(amount2));
+    var priceUpdate = byId('ntlopriceupdate');
+    if (priceUpdate) {
+        priceUpdate.style.border = (sell ? '1px solid rgb(217, 83, 79)' : '1px solid rgb(92, 184, 92)');
+        priceUpdate.innerHTML = '<b>'+(sell ? 'SELL' : 'BUY')+'</b> <span class="currency">'+currency+'</span> '+display_currency_amount(amount1)+' for <span class="currency">XRP</span>'+display_currency_amount(amount2);
+    }
 }
 
 function adjustOrderPrice(x) {
-    var previous = parseFloat(''+$('#ntloprice').val());
+    var previous = parseFloat(''+getVal('#ntloprice'));
     if (previous + '' == 'NaN' || (previous == 0 && x > 0)) previous  = 0.000001;
 	
     x = ( x >= 0 ? 1 : -1 );
@@ -79,7 +87,7 @@ function adjustOrderPrice(x) {
     next = Math.round(next);
     next /= roundingpower;
     if (next + '' == 'NaN' || next <= 0) next = previous;
-	$('#ntloprice').val("" + next);
+	setVal('#ntloprice', "" + next);
     renderOrderPreview();
 }
 
@@ -87,7 +95,7 @@ function doPlaceCancelOrder(nonce, dataset) {
     // needed
     var account;
     var seq;
-    var offlinecode;// = $('#---offlinecode').val().trim().replace(/ /g, "").toUpperCase();
+    var offlinecode;
     var accID = '';
     var ledID = '';
     var fee = '';
@@ -97,6 +105,8 @@ function doPlaceCancelOrder(nonce, dataset) {
     var currency2;
     var amount2;
     var direction;
+    var sell;
+    var issuer;
     
 	if (debug) console.log("doPlaceCancelOrder");
 	blockInput();
@@ -109,40 +119,6 @@ function doPlaceCancelOrder(nonce, dataset) {
        currency2 = dataset.currency2;
        amount2 = dataset.amount2;
        sell = dataset.sell;
-    } else {
-    /*
-   //todo: offline mode way to cancel orders -- when implemented pull in data here
-    if (offlinemode) {
-        ofl = validateOfflineCode(offlinecode, '#---offlinecode');
-        if (ofl === false) return;
-        accID = ofl.accID;
-        ledID = ofl.ledID;
-        fee = ofl.fee;
-    }
-    // it should not be possible for this to happen but check anyway
-	if (validateAddress(account)) {
-		// valid
-	} else {
-		navigator.notification.alert("The account specified is not a valid XRP address.", 
-			function(){
-				$("#---address").focus();
-				unblockInput();
-			}, 
-			"Unusual address format", 
-			"OK"
-		);
-	}
-    if (!/^[0-9]+$/m.test(seq) || (seq = parseInt(expiry) ) < 0 ) {
-        return navigator.notification.alert("Invalid sequence number. Must be a whole number greater than 0.", 
-            function(){
-                $('#---seq').focus();
-                unblockInput();
-            }, 
-            "Invalid expiry", 
-            "OK"
-        );
-    }
-    */
     }
 	var nextscreen = function() {
         confirmcancelorder = { 
@@ -154,9 +130,9 @@ function doPlaceCancelOrder(nonce, dataset) {
             fee: fee
         };
 		confirmcancelorderhash = sodium.crypto_generichash(16, JSON.stringify(confirmcancelorder), ''+nonce, 'hex');
-		$('#confirmcancelorderaccount')[0].innerText = dispaddr(account);
-        $('#confirmcancelorderpreview')[0].innerText = (sell ? 'SELL ' : 'BUY ') +  currency1 + ' ' + display_currency_amount(parseFloat(''+amount1)) + ' @ ' + currency2 + ' ' + display_currency_amount(parseFloat(''+amount2)/parseFloat(''+amount1));
-        $('#confirmcancelordersequence')[0].innerText = '#' + seq;
+		setText('#confirmcancelorderaccount', dispaddr(account));
+        setText('#confirmcancelorderpreview', (sell ? 'SELL ' : 'BUY ') + currency1 + ' ' + display_currency_amount(parseFloat(''+amount1)) + ' @ ' + currency2 + ' ' + display_currency_amount(parseFloat(''+amount2)/parseFloat(''+amount1)));
+        setText('#confirmcancelordersequence', '#' + seq);
 		showTab("#tabcancelorderconfirm");
 		
 		unblockInput();
@@ -167,39 +143,45 @@ function doPlaceCancelOrder(nonce, dataset) {
 function doPlaceOrder(nonce) {
 	if (debug) console.log("doPlaceOrder");
 	blockInput();
-	var account = $('#ntloaddress').data('content');
-	var asset = $('#ntloissuer').data('currency');
-	var issuer = $('#ntloissuer').data('issuer');
-	var amount = $('#ntloamount').val().trim();
-	var price = $('#ntloprice').val().trim();    
-    var sell = $('#lblntlosell').is(':visible');
-    var fok = $('#tglntlofok').data('checked') == 'true';
-    var ioc = $('#tglntloioc').data('checked') == 'true';
-    var passive = $('#tglntlopas').data('checked') == 'true';
+	var account = domData('#ntloaddress', 'content');
+	var asset = domData('#ntloissuer', 'currency');
+	var issuer = domData('#ntloissuer', 'issuer');
+	var amount = getVal('#ntloamount').trim();
+	var price = getVal('#ntloprice').trim();    
+    var sell = isVisible('#lblntlosell');
+    var fok = domData('#tglntlofok', 'checked') == 'true';
+    var ioc = domData('#tglntloioc', 'checked') == 'true';
+    var passive = domData('#tglntlopas', 'checked') == 'true';
     var expiry;
     var expiryunits;
     var expirydisplay; // what to show the user
     var expiryfocus; // what to focus on expiry entry error
-    if ($('#ntloexpiry').is(":visible")) {
+    if (isVisible('#ntloexpiry')) {
         // using presets
-        expiry = parseInt($($('#ntloexpiry').find(":selected")[0]).data('hours')) * 60.0 + parseInt($($('#ntloexpiry').find(":selected")[0]).data('minutes'));
+        var expSelect = byId('ntloexpiry');
+        var selOpt = (expSelect && expSelect.selectedOptions) ? expSelect.selectedOptions[0] : null;
+        var hrs = selOpt ? domData(selOpt, 'hours') : 0;
+        var mins = selOpt ? domData(selOpt, 'minutes') : 0;
+        expiry = parseInt(hrs || 0) * 60.0 + parseInt(mins || 0);
         expiryunits = 'minute';
-        expirydisplay = $('#ntloexpiry').find(":selected")[0].innerText;
+        expirydisplay = selOpt ? selOpt.innerText : '';
         expiryfocus = '#ntloexpiry';
     } else {
         // using custom
-        expiry = $('#ntloexpirycustom').val();
-        expiryunits = $($('#ntloexpirycustomunit').find(':selected')[0]).data('unit');
-        expirydisplay = parseInt(expiry) + ' ' + $('#ntloexpirycustomunit').find(":selected")[0].innerText;
+        expiry = getVal('#ntloexpirycustom');
+        var unitSelect = byId('ntloexpirycustomunit');
+        var selUnitOpt = (unitSelect && unitSelect.selectedOptions) ? unitSelect.selectedOptions[0] : null;
+        expiryunits = selUnitOpt ? domData(selUnitOpt, 'unit') : '';
+        expirydisplay = parseInt(expiry) + ' ' + (selUnitOpt ? selUnitOpt.innerText : '');
         expiryfocus = '#ntloexpirycustom';
     }
-    var offlinecode = $('#ntloofflinecode').val().trim().replace(/ /g, "").toUpperCase();
+    var offlinecode = getVal('#ntloofflinecode').trim().replace(/ /g, "").toUpperCase();
     var accID = '';
     var ledID = '';
     var fee = '';
 	if (amount != undefined && (amount+"").charAt(0) == '.') amount = "0" + amount;
     if (offlinemode) {
-        ofl = validateOfflineCode(offlinecode, '#ntloofflinecode');
+        var ofl = validateOfflineCode(offlinecode, '#ntloofflinecode');
         if (ofl === false) return;
         accID = ofl.accID;
         ledID = ofl.ledID;
@@ -213,12 +195,13 @@ function doPlaceOrder(nonce) {
 			}, 
 			"Invalid selection", 
 			"OK"
-		)
+		);
     }
     var invalidAmount = ()=>{
 		return navigator.notification.alert("Invalid amount. Must be greater than or equal to 0.", 
 			function(){
-				$("#ntloamount").focus();
+                var na = byId("ntloamount");
+                if (na) na.focus();
 				unblockInput();
 			}, 
 			"Invalid amount", 
@@ -236,7 +219,8 @@ function doPlaceOrder(nonce) {
     var invalidPrice = ()=>{
 		return navigator.notification.alert("Invalid price. Must be greater than or equal to 0.", 
 			function(){
-				$("#ntloprice").focus();
+                var np = byId("ntloprice");
+                if (np) np.focus();
 				unblockInput();
 			}, 
 			"Invalid amount", 
@@ -257,7 +241,8 @@ function doPlaceOrder(nonce) {
 	} else {
 		navigator.notification.alert("The account specified is not a valid XRP address.", 
 			function(){
-				$("#ntloaddress").focus();
+                var na = byId("ntloaddress");
+                if (na) na.focus();
 				unblockInput();
 			}, 
 			"Unusual address format", 
@@ -269,7 +254,8 @@ function doPlaceOrder(nonce) {
 	} else {
 		navigator.notification.alert("The issuer specified is not a valid XRP address.", 
 			function(){
-				$("#ntloissuer").focus();
+                var ni = byId("ntloissuer");
+                if (ni) ni.focus();
 				unblockInput();
 			}, 
 			"Unusual address format", 
@@ -279,7 +265,8 @@ function doPlaceOrder(nonce) {
     if (!validateCurrency(asset)) {
 		return navigator.notification.alert("Invalid currency code. Must be 3 characters A-Z, 0-9 or any of the following ? ! @ # $ % ^ & * < > ( ) { } [ ] |", 
 			function(){
-				$("#ntloissuer").focus();
+                var ni = byId("ntloissuer");
+                if (ni) ni.focus();
 				unblockInput();
 			}, 
 			"Invalid currency code", 
@@ -289,7 +276,8 @@ function doPlaceOrder(nonce) {
     if (!/^[0-9]+$/m.test(expiry) || (expiry = parseInt(expiry) ) <= 0 ) {
         return navigator.notification.alert("Invalid expiry. Must be a whole number greater than 0.", 
             function(){
-                $(expiryfocus).focus();
+                var ef = resolveElement(expiryfocus);
+                if (ef) ef.focus();
                 unblockInput();
             }, 
             "Invalid expiry", 
@@ -301,7 +289,8 @@ function doPlaceOrder(nonce) {
     if (!(expiryunits in expirylookup)) {
         return navigator.notification.alert("Invalid expiry. Invalid expiry unit.", 
             function(){
-                $(expiryfocus).focus();
+                var ef = resolveElement(expiryfocus);
+                if (ef) ef.focus();
                 unblockInput();
             }, 
             "Invalid expiry", 
@@ -328,18 +317,18 @@ function doPlaceOrder(nonce) {
             fee: fee
 		};
 		confirmorderhash = sodium.crypto_generichash(16, JSON.stringify(confirmorder), ''+nonce, 'hex');
-		$('#confirmorderaccount')[0].innerText = dispaddr(account)
-		$('#confirmorderasset')[0].innerText = asset
-		$('#confirmorderissuer')[0].innerText = dispaddr(issuer) 
-        $('#confirmorderamount')[0].innerText = amount;
-        $('#confirmorderprice')[0].innerText = price;
-		$('#confirmorderdirection')[0].innerText = ( sell ? 'SELL' : 'BUY' );
-        $('#confirmorderexpiry')[0].innerText = expirydisplay;
-        $('#confirmorderextra')[0].innerText = (passive ? 'PASSIVE' : '');
-        if (fok || ioc) $('#confirmorderextra')[0].innerText += '' + ( passive ? ' + ' : '' ) + ( fok ? 'FILL-OR-KILL' : 'IMMEDIATE-OR-CANCEL' );
+		setText('#confirmorderaccount', dispaddr(account));
+		setText('#confirmorderasset', asset);
+		setText('#confirmorderissuer', dispaddr(issuer));
+        setText('#confirmorderamount', amount);
+        setText('#confirmorderprice', price);
+		setText('#confirmorderdirection', (sell ? 'SELL' : 'BUY'));
+        setText('#confirmorderexpiry', expirydisplay);
+        setText('#confirmorderextra', (passive ? 'PASSIVE' : ''));
+        if (fok || ioc) setText('#confirmorderextra', getText('#confirmorderextra') + (passive ? ' + ' : '') + (fok ? 'FILL-OR-KILL' : 'IMMEDIATE-OR-CANCEL'));
         
         if (!passive && !fok && !ioc) {
-            $('#confirmorderextra')[0].innerText = 'NONE';
+            setText('#confirmorderextra', 'NONE');
         }
 		showTab("#taborderconfirm");
 		
@@ -507,12 +496,69 @@ function doConfirmOrder(passphrase) {
 	);
 }
 
+function onNtloExpiryUnitChange() {
+    var sel = byId('ntloexpirycustomunit');
+    var opt = sel && sel.selectedOptions ? sel.selectedOptions[0] : qs('#ntloexpirycustomunit option:checked');
+    if (opt && opt.id == 'ntloexpirycustomunit-nocustom') {
+        hideEl('#customexpirydiv');
+        showEl('#ntloexpiry');
+        if (typeof setSelectVisible === 'function') setSelectVisible('#ntloexpiry', true);
+        var opts = qsa('#ntloexpiry > option');
+        for (var o of opts) { o.removeAttribute('selected'); o.selected = false; }
+        var opt24 = byId('ntloexpiry-24h');
+        if (opt24) { opt24.setAttribute('selected', 'selected'); opt24.selected = true; }
+        if (typeof refreshSelect === 'function') refreshSelect('#ntloexpiry');
+    } else {
+        showEl('#customexpirydiv');
+        hideEl('#ntloexpiry');
+        if (typeof setSelectVisible === 'function') setSelectVisible('#ntloexpiry', false);
+    }
+}
+
+function onNtloExpiryChange() {
+    var sel = byId('ntloexpiry');
+    var opt = sel && sel.selectedOptions ? sel.selectedOptions[0] : qs('#ntloexpiry option:checked');
+    if (opt && opt.id == 'ntloexpiry-opt-custom') {
+        showEl('#customexpirydiv');
+        hideEl('#ntloexpiry');
+        if (typeof setSelectVisible === 'function') setSelectVisible('#ntloexpiry', false);
+        var opts = qsa('#ntloexpirycustomunit > option');
+        for (var o of opts) { o.removeAttribute('selected'); o.selected = false; }
+        var optHour = byId('ntloexpirycustomunit-hour');
+        if (optHour) { optHour.setAttribute('selected', 'selected'); optHour.selected = true; }
+        if (typeof refreshSelect === 'function') refreshSelect('#ntloexpirycustomunit');
+    } else {
+        hideEl('#customexpirydiv');
+        showEl('#ntloexpiry');
+        if (typeof setSelectVisible === 'function') setSelectVisible('#ntloexpiry', true);
+    }
+}
+
 // Expose functions globally
-window.showNewOrder = showNewOrder;
-window.onToggleNewOrder = onToggleNewOrder;
-window.renderOrderPreview = renderOrderPreview;
-window.adjustOrderPrice = adjustOrderPrice;
-window.doPlaceCancelOrder = doPlaceCancelOrder;
-window.doPlaceOrder = doPlaceOrder;
-window.doConfirmCancelOrder = doConfirmCancelOrder;
-window.doConfirmOrder = doConfirmOrder;
+if (typeof window !== 'undefined') {
+    window.showNewOrder = showNewOrder;
+    window.onToggleNewOrder = onToggleNewOrder;
+    window.renderOrderPreview = renderOrderPreview;
+    window.adjustOrderPrice = adjustOrderPrice;
+    window.doPlaceCancelOrder = doPlaceCancelOrder;
+    window.doPlaceOrder = doPlaceOrder;
+    window.doConfirmCancelOrder = doConfirmCancelOrder;
+    window.doConfirmOrder = doConfirmOrder;
+    window.onNtloExpiryUnitChange = onNtloExpiryUnitChange;
+    window.onNtloExpiryChange = onNtloExpiryChange;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        showNewOrder,
+        onToggleNewOrder,
+        renderOrderPreview,
+        adjustOrderPrice,
+        doPlaceCancelOrder,
+        doPlaceOrder,
+        doConfirmCancelOrder,
+        doConfirmOrder,
+        onNtloExpiryUnitChange,
+        onNtloExpiryChange
+    };
+}

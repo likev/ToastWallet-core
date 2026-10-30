@@ -7,9 +7,9 @@
 	<br>
 	<div>
 		<button class="btn btn-primary btnbig" type="button" id="btndonatecustom" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doPopulateDonation('')})">Donate Custom Amount</button><br>
-		<button class="btn btn-success btnbig" type="button" id="btndonate20" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doPopulateDonation($('#btndonate20').data('amount'))})">Donate $20</button><br>
-<button class="btn btn-info btnbig" type="button" id="btndonate10" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doPopulateDonation($('#btndonate10').data('amount'))})">Donate $10</button><br>
-<button class="btn btn-warning btnbig" type="button" id="btndonate5" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doPopulateDonation($('#btndonate5').data('amount'))})">Donate $5</button><br>
+		<button class="btn btn-success btnbig" type="button" id="btndonate20" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doPopulateDonation(domData('#btndonate20', 'amount'))})">Donate $20</button><br>
+<button class="btn btn-info btnbig" type="button" id="btndonate10" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doPopulateDonation(domData('#btndonate10', 'amount'))})">Donate $10</button><br>
+<button class="btn btn-warning btnbig" type="button" id="btndonate5" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doPopulateDonation(domData('#btndonate5', 'amount'))})">Donate $5</button><br>
 <button class="btn btn-danger btnbig" type="button" id="btndonate0" ontouchstart="ts(event)" ontouchend="te(event, ()=>{showTab('#tabaccounts');})">Not at this time</button><br>
 	</div>
 	<br>

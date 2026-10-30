@@ -5,8 +5,8 @@
     <div id="submitofflinetxstep1">
 	<label style="">Scan Red QR Code</label>
 	<span class="pasteqr">
-        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  $('#txtredqr').val(content); doSubmitOfflineTransaction(1, content); })})"><i class="fa fa-paste"></i></button>
-        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => { $('#txtredqr').val(content); doSubmitOfflineTransaction(1, content); })})" type="button"><i class="fa fa-camera"></i></button>        
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{  setVal('#txtredqr', content); doSubmitOfflineTransaction(1, content); })})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => { setVal('#txtredqr', content); doSubmitOfflineTransaction(1, content); })})" type="button"><i class="fa fa-camera"></i></button>        
 	</span>
     <input ontouchend="te(event, quickSelectInput)" type="text" id="txtredqr" class="form-control" placeholder="">
     </div>
@@ -20,8 +20,8 @@
 	<div id="submitofflinetxstep3">
         <label style="">Scan Green QR Code</label>
 	<span class="pasteqr">
-        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{ $('#txtgreenqr').val(content);doSubmitOfflineTransaction(2, content); })})"><i class="fa fa-paste"></i></button>
-        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => { $('#txtgreenqr').val(content);doSubmitOfflineTransaction(2, content); })})" type="button"><i class="fa fa-camera"></i></button>        
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{ setVal('#txtgreenqr', content);doSubmitOfflineTransaction(2, content); })})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => { setVal('#txtgreenqr', content);doSubmitOfflineTransaction(2, content); })})" type="button"><i class="fa fa-camera"></i></button>        
 	</span>    
 	<input ontouchend="te(event, quickSelectInput)" type="text" id="txtgreenqr" class="form-control" placeholder="">
 	

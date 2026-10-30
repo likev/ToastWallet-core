@@ -4,7 +4,7 @@
     <div>
     <label>Backup code</label>
 	<span class="pasteqr">
-		<button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste(function(content){$('#restorebackup').val(content)})})"><i class="fa fa-paste"></i></button>
+		<button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste(function(content){setVal('#restorebackup', content)})})"><i class="fa fa-paste"></i></button>
 		
     </span><!--todo: add backup checking code to this screen as well-->
     <textarea rows="3" ontouchend="te(event, quickSelectInput)" id="restorebackup" type="text" class="form-control" placeholder=""></textarea>

@@ -47,8 +47,8 @@ function renderOrderbookChart(orders, eleid, exchangerate, tlbalance) {
     var vertrange = 100.00 / (Math.max(askacc, bidacc) - smallestamount);
     // percentage accumulator helps us debug the drawing calculations
     var pcacc = 0;
-    var chart = $(eleid);
-    chart.empty();
+    var chart = resolveElement(eleid);
+    emptyEl(chart);
     // draw bids
     last = -1;
     for (var x in bids) {
@@ -60,7 +60,7 @@ function renderOrderbookChart(orders, eleid, exchangerate, tlbalance) {
             pcacc += pc;
             var width = display_currency_amount(pc);
             var height = display_currency_amount( height_raw * vertrange );
-            chart.append('<span class="chartelegreen" style="width: '+width+'%; height: '+height+'%;"></span>');
+            appendHtml(chart, '<span class="chartelegreen" style="width: '+width+'%; height: '+height+'%;"></span>');
             bidacc -= amount;
         }
         last = x;
@@ -70,7 +70,7 @@ function renderOrderbookChart(orders, eleid, exchangerate, tlbalance) {
     var pc = width_raw * range;
     pcacc += pc;
     var hwidth = display_currency_amount(pc);
-    chart.append('<span class="charteleblank" style="min-width: 1px; min-width: 1px; width: '+hwidth+'%; background: rgba(0,0,0,0); height: 100%;"></span>');
+    appendHtml(chart, '<span class="charteleblank" style="min-width: 1px; min-width: 1px; width: '+hwidth+'%; background: rgba(0,0,0,0); height: 100%;"></span>');
     // draw the asks
     askacc = 0;
     last = -1;
@@ -85,14 +85,17 @@ function renderOrderbookChart(orders, eleid, exchangerate, tlbalance) {
             var width = display_currency_amount(pc);
             var height = display_currency_amount( height_raw * vertrange );
             
-            chart.append('<span class="chartelered" style="width: '+width+'%; height: '+height+'%;"></span>');
+            appendHtml(chart, '<span class="chartelered" style="width: '+width+'%; height: '+height+'%;"></span>');
         }
         last = x;
     }
     lastbid = parseFloat(lastbid + "");
     firstask = parseFloat(firstask + ""); 
-    $(eleid).parent().find(".bidask>.bid").html('<span class="currency">XRP</span> ' + ( lastbid == -1 ? 'N/A' : display_currency_amount(lastbid) )) ;
-    $(eleid).parent().find(".bidask>.ask").html('<span class="currency">XRP</span> ' + ( firstask == -1 ? 'N/A' : display_currency_amount(firstask) ));
+    var parent = chart ? chart.parentNode : null;
+    if (parent) {
+        setHtml(qs(".bidask>.bid", parent), '<span class="currency">XRP</span> ' + ( lastbid == -1 ? 'N/A' : display_currency_amount(lastbid) ));
+        setHtml(qs(".bidask>.ask", parent), '<span class="currency">XRP</span> ' + ( firstask == -1 ? 'N/A' : display_currency_amount(firstask) ));
+    }
  
     // set these for order creation in the event of an empty book 
     if (lastbid == -1 && firstask == -1) {
@@ -103,8 +106,8 @@ function renderOrderbookChart(orders, eleid, exchangerate, tlbalance) {
     } else if (firstask != -1 && lastbid == -1) {
         lastbid = firstask;
     }
-    $(eleid).data('bid', display_currency_amount(lastbid));
-    $(eleid).data('ask', display_currency_amount(firstask));
+    domData(chart, 'bid', display_currency_amount(lastbid));
+    domData(chart, 'ask', display_currency_amount(firstask));
     // calculate exchange rate from the data we already have
     var valuationrate = 0;
     var bidcount = 0;
@@ -112,8 +115,11 @@ function renderOrderbookChart(orders, eleid, exchangerate, tlbalance) {
     for (var x in bids) if (--bidcount < 10) valuationrate += parseFloat(""+x);
     valuationrate /= 10.0;
     
-    $(eleid).parent().find(".tlvaluation>.currency")[0].innerText = 'USD ' + display_currency_amount(exchangerate * tlbalance * valuationrate);
-    $(eleid).parent().find(".tlvaluation").show();
+    if (parent) {
+        var tlValCurr = qs(".tlvaluation>.currency", parent);
+        if (tlValCurr) tlValCurr.innerText = 'USD ' + display_currency_amount(exchangerate * tlbalance * valuationrate);
+        showEl(qs(".tlvaluation", parent));
+    }
 }
 
 function getOrders(account, then, then2) {

@@ -4,8 +4,8 @@
     <div>
         <label >Passphrase</label>
         <span class="pasteqr">
-            <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{$('#corruptionpp').val(content)})})"><i class="fa fa-paste"></i></button>
-            <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content)=>{$('#corruptionpp').val(content)})})" type="button"><i class="fa fa-camera"></i></button>
+            <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{setVal('#corruptionpp', content)})})"><i class="fa fa-paste"></i></button>
+            <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content)=>{setVal('#corruptionpp', content)})})" type="button"><i class="fa fa-camera"></i></button>
             <button class="btn btn-default " id="corruptionppeyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#corruptionpp', '#corruptionppeyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
         </span>
         <input ontouchend="te(event, quickSelectInput)"  type="password" id="corruptionpp" class="form-control" placeholder="">
@@ -14,11 +14,11 @@
     <div>
         <label >Recovery Phrase</label>
         <span class="pasteqr">
-            <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{$('#corruptionrp').val(content)})})"><i class="fa fa-paste"></i></button>
-            <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content)=>{$('#corruptionrp').val(content)})})" type="button"><i class="fa fa-camera"></i></button>
+            <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{setVal('#corruptionrp', content)})})"><i class="fa fa-paste"></i></button>
+            <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content)=>{setVal('#corruptionrp', content)})})" type="button"><i class="fa fa-camera"></i></button>
             <button class="btn btn-default " id="corruptionrpeyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#corruptionrp', '#corruptionrpeyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
         </span>
         <input ontouchend="te(event, quickSelectInput)"  type="password" id="corruptionrp" class="form-control" placeholder="">
     </div><br>
-    <div><center><button  type="button" class="btn btn-primary btnbig" id="btncorruptionprompt" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doDataCorruptionRecovery(corruptionstate, $('#corruptionpp').val(), $('#corruptionrp').val());})">Attempt Recovery</button></center></div>
+    <div><center><button  type="button" class="btn btn-primary btnbig" id="btncorruptionprompt" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doDataCorruptionRecovery(corruptionstate, getVal('#corruptionpp'), getVal('#corruptionrp'));})">Attempt Recovery</button></center></div>
 </div>

@@ -37,7 +37,7 @@
     <label >Trustline Limit</label>
     <div>
         <span class="pasteqr">
-            <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{$('#mtllimit').val(content)})})"><i class="fa fa-paste"></i></button>            
+            <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{setVal('#mtllimit', content)})})"><i class="fa fa-paste"></i></button>            
         </span>
         <input ontouchend="te(event, quickSelectInput)"  class="form-control" type="text" placeholder=""  id="mtllimit" >
     </div>

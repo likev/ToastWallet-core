@@ -8,8 +8,8 @@ function doGenerateBackup() {
 	exportWallet(
 		function(data){
 			showTab('#tabbackup2');
-			$('#walletbackup').val( data ); 
-			$('#walletbackup').data('content', data);
+			setVal('#walletbackup', data); 
+			domData('#walletbackup', 'content', data);
 			// update backup reminder
 			getLastBackupReminder(function(backupreminder) {
 				backupreminder['lastreminder'] = "" + Math.floor(new Date().getTime()/1000);
@@ -49,7 +49,7 @@ function getLastDonation(callback) {
 
 function doRestoreBackupFreshInstall() {
 	if (debug) console.log('doRestoreBackupFreshInstall');
-    var backupcode = $('#restorebackup2').val().trim();
+    var backupcode = getVal('#restorebackup2').trim();
 	blockInput(true);
     if (backupcode == "") {
     	return navigator.notification.alert("You must enter a backup code. This is a long code you were given when you added your first XRPL address to the wallet.", 
@@ -84,9 +84,12 @@ function doRestoreBackupFreshInstall() {
     // run the backup checker
     var check = doCheckBackup(backupcode);
     if (check.error) {
-        $('#divrestorerror').html("Errors were found in your backup code:<br/>" + check.error + "<br/>");
-        $('#divrestorerror').css('color', '#ffeb3b');
-        $('#divrestorerror').css('text-align', 'center');
+        setHtml('#divrestorerror', "Errors were found in your backup code:<br/>" + check.error + "<br/>");
+        var dre = byId('divrestorerror');
+        if (dre) {
+            dre.style.color = '#ffeb3b';
+            dre.style.textAlign = 'center';
+        }
         return navigator.notification.alert("Your backup contained errors! This could happen if you miscopied it or it has been damaged or truncated. Check you copied the whole text.", ()=>{unblockInput();}, "Failure", "OK");
     }
     var backupcode2 = check.cleanedbackupcode; // this is the rebuilt backup code returned by the checker, we'll use it only if the raw backup doesn't work
@@ -144,7 +147,7 @@ function doRestoreBackupFreshInstall() {
 function doRestoreBackup() {
 	if (debug) console.log('doRestoreBackup');
 	blockInput();
-	if ($('#tabrestore .toggleswitch').data('checked') != 'true') {
+	if (domData('#tabrestore .toggleswitch', 'checked') != 'true') {
 		navigator.notification.alert("You must acknowledge that you understand this will DESTROY your current wallet.", 
 			function(){
 				unblockInput();
@@ -154,19 +157,19 @@ function doRestoreBackup() {
 		);
 		return;
 	}
-    if ($('#restorebackup').val().trim().toLowerCase() == 'delete') {
+    if (getVal('#restorebackup').trim().toLowerCase() == 'delete') {
         return db.upsert("accounts", function(doc) { return { data: "" }; }).then(function() {
                         db.upsert("ppdata", function(doc) { return { data: "" }; }).then(function() {
                         db.upsert("rpdata", function(doc) { return { data: "" }; }).then(function() {
                         db.upsert("pindata", function(doc) { return { data: "" }; }).then(function() {
                                 unblockInput();
-                                $('#btnbootstrapsequence').show();
-                                $('#btnbootstraprestorebackup').show();
+                                showEl('#btnbootstrapsequence');
+                                showEl('#btnbootstraprestorebackup');
                                 normalboot();
         })})})});
     }
     importWallet(
-        $('#restorebackup').val(),
+        getVal('#restorebackup'),
         function() {
             db.upsert("lastbackupreminder",
                 function(doc) {
@@ -315,7 +318,7 @@ function doCheckBackup(raw) {
     raw = raw.replace(/;/mg, ":");
     raw = raw.replace(/[\u2018\u2019\u201C\u201D`\u2032\u2033']/mg, '"');
     
-    $('#backupcode').val(raw);
+    setVal('#backupcode', raw);
     var json = raw; 
     // pull off the front checksum we dont need it
     while (json != '' && json.charAt(0) != '{') json = json.slice(1);

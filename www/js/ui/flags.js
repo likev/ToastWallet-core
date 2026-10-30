@@ -1,15 +1,17 @@
+'use strict';
+
 function showAccountFlags(account, dontshow) {
     blockInput();
-    $('#afaddress').val(dispaddr(account));
-    $('#afaddress').data('content', account);
+    setVal('#afaddress', dispaddr(account));
+    domData('#afaddress', 'content', account);
     var toggles = [ "#tglDefaultRipple", "#tglDepositAuth", "#tglDisableMasterKey", "#tglDisallowIncomingXRP", "#tglGlobalFreeze", "#tglNoFreeze", "#tglRequireAuthorization", "#tglRequireDestinationTag"];
     // special instructions for disable master key
-    setToggleSwitch('#tglDisableMasterKey', (offlinemode ? 'unknown' : false), (tgl)=>{
+    setToggleSwitch('#tglDisableMasterKey', (offlinemode ? 'unknown' : false), (tgl) => {
         blockInput();
-        var checked = ( offlinemode ? 'unknown' : tgl.data('checked') != 'true');
+        var checked = (offlinemode ? 'unknown' : domData(tgl, 'checked') != 'true');
         // flip the switch back -- they can't change this setting on this screen
-        setToggleSwitch('#tglDisableMasterKey',  checked);
-        return 	navigator.notification.alert("Master key cannot be enabled or disabled here, it is shown for information only. Please use Rekey in the Account Details screen instead.", 
+        setToggleSwitch('#tglDisableMasterKey', checked);
+        return navigator.notification.alert("Master key cannot be enabled or disabled here, it is shown for information only. Please use Rekey in the Account Details screen instead.", 
             function(){
                 unblockInput();
             }, 
@@ -21,26 +23,26 @@ function showAccountFlags(account, dontshow) {
     if (offlinemode) {
         // in offline set the toggles to an unknown state
         for (var i in toggles) if (toggles[i] != '#tglDisableMasterKey') setToggleSwitch(toggles[i], 'unknown', 
-                (tgl)=>{
+                (tgl) => {
                     blockInput();
                     // on toggle action count toggles currently set then prevent them setting a new one because offline mode limits to one toggle setting
                     var c = 0;
                     for (var n in toggles) {
-                        if ($(toggles[n]).data('checked') != 'unknown') c++;
+                        if (domData(toggles[n], 'checked') != 'unknown') c++;
                         if (c > 1) {
                             setToggleSwitch(tgl, 'unknown');
-                            return 	navigator.notification.alert("Unfortunately in offline mode it is only possible to set one account flag at a time.", 
-                			function(){
-                                unblockInput();
-                            }, 
-                			"WARNING", 
-                			"OK"
-                    		);
+                            return navigator.notification.alert("Unfortunately in offline mode it is only possible to set one account flag at a time.", 
+                                function(){
+                                    unblockInput();
+                                }, 
+                                "WARNING", 
+                                "OK"
+                            );
                         }
                     }
                     unblockInput();
                 }, true);
-           if (!dontshow) showTab('#tabaccountflags', true);
+        if (!dontshow) showTab('#tabaccountflags', true);
     } else {
         var flags = {};
         // then check any entries we have values for
@@ -54,31 +56,29 @@ function showAccountFlags(account, dontshow) {
         setToggleSwitch("#tglNoFreeze", flags['noFreeze'] === true);
         setToggleSwitch("#tglRequireAuthorization", flags['requireAuthorization'] === true);
         setToggleSwitch("#tglRequireDestinationTag", flags['requireDestinationTag'] === true);
-        
     }
  
     unblockInput();
 }
 
 function doSetAccountFlags(nonce) {
-    
 	if (debug) console.log("doSetAccountFlags");
 	blockInput();
-	var afaddress = $("#afaddress").val().trim();
-    var defaultRipple = $('#tglDefaultRipple').data('checked');
-    var depositAuth = $('#tglDepositAuth').data('checked');
-    var disableMasterKey = $('#tglDisableMasterKey').data('checked');
-    var disallowIncomingXRP = $('#tglDisallowIncomingXRP').data('checked');
-    var globalFreeze = $('#tglGlobalFreeze').data('checked');
-    var noFreeze = $('#tglNoFreeze').data('checked');
-    var requireAuthorization = $('#tglRequireAuthorization').data('checked');
-    var requireDestinationTag = $('#tglRequireDestinationTag').data('checked');
-    var offlinecode = $('#afofflinecode').val().trim().replace(/ /g, "").toUpperCase();
+	var afaddress = getVal("#afaddress").trim();
+    var defaultRipple = domData('#tglDefaultRipple', 'checked');
+    var depositAuth = domData('#tglDepositAuth', 'checked');
+    var disableMasterKey = domData('#tglDisableMasterKey', 'checked');
+    var disallowIncomingXRP = domData('#tglDisallowIncomingXRP', 'checked');
+    var globalFreeze = domData('#tglGlobalFreeze', 'checked');
+    var noFreeze = domData('#tglNoFreeze', 'checked');
+    var requireAuthorization = domData('#tglRequireAuthorization', 'checked');
+    var requireDestinationTag = domData('#tglRequireDestinationTag', 'checked');
+    var offlinecode = getVal('#afofflinecode').trim().replace(/ /g, "").toUpperCase();
     var accID = '';
     var ledID = '';
     var fee = '';
     if (offlinemode) {
-        ofl = validateOfflineCode(offlinecode, '#atlofflinecode');
+        var ofl = validateOfflineCode(offlinecode, '#atlofflinecode');
         if (ofl === false) return;
         accID = ofl.accID;
         ledID = ofl.ledID;
@@ -89,40 +89,40 @@ function doSetAccountFlags(nonce) {
     var old_flags_orig = {};
     var old_flags = {};
     if (accountflags[afaddress] != undefined) old_flags_orig = accountflags[afaddress];
-    for (var i in flag_keys)  old_flags[flag_keys[i]] = ( offlinemode ? 'unknown' :  ( flag_keys[i] in old_flags_orig && old_flags_orig[flag_keys[i]] ) );
+    for (var i in flag_keys) old_flags[flag_keys[i]] = (offlinemode ? 'unknown' : (flag_keys[i] in old_flags_orig && old_flags_orig[flag_keys[i]]));
     var nextscreen = function(){ 
-        var changedflagcount = 0;
-        confirmfl = {
+        var confirmfl_obj = {
             afaddress: forceraddr(afaddress),
-            defaultRipple: ( defaultRipple == '' + old_flags['defaultRipple'] ? 'unchanged' : defaultRipple ),
-            depositAuth: ( depositAuth == '' + old_flags['depositAuth'] ? 'unchanged' : depositAuth ),
-            disableMasterKey: ( disableMasterKey == '' + old_flags['disableMasterKey'] ? 'unchanged' : disableMasterKey ),
-            disallowIncomingXRP: ( disallowIncomingXRP == '' + old_flags['disallowIncomingXRP'] ? 'unchanged' : disallowIncomingXRP ),
-            globalFreeze: ( globalFreeze == '' + old_flags['globalFreeze'] ? 'unchanged' : globalFreeze ),
-            noFreeze: ( noFreeze == '' + old_flags['noFreeze'] ? 'unchanged' : noFreeze ),
-            requireAuthorization: ( requireAuthorization == '' + old_flags['requireAuthorization'] ? 'unchanged' : requireAuthorization ),
-            requireDestinationTag: ( requireDestinationTag == '' + old_flags['requireDestinationTag'] ? 'unchanged' : requireDestinationTag ),
+            defaultRipple: (defaultRipple == '' + old_flags['defaultRipple'] ? 'unchanged' : defaultRipple),
+            depositAuth: (depositAuth == '' + old_flags['depositAuth'] ? 'unchanged' : depositAuth),
+            disableMasterKey: (disableMasterKey == '' + old_flags['disableMasterKey'] ? 'unchanged' : disableMasterKey),
+            disallowIncomingXRP: (disallowIncomingXRP == '' + old_flags['disallowIncomingXRP'] ? 'unchanged' : disallowIncomingXRP),
+            globalFreeze: (globalFreeze == '' + old_flags['globalFreeze'] ? 'unchanged' : globalFreeze),
+            noFreeze: (noFreeze == '' + old_flags['noFreeze'] ? 'unchanged' : noFreeze),
+            requireAuthorization: (requireAuthorization == '' + old_flags['requireAuthorization'] ? 'unchanged' : requireAuthorization),
+            requireDestinationTag: (requireDestinationTag == '' + old_flags['requireDestinationTag'] ? 'unchanged' : requireDestinationTag),
             nonce: nonce,
             accseqid: accID, // used for offline tx
             ledseqid: ledID,
             fee: fee
         };
-        var changedflagcount = ( confirmfl.defaultRipple != 'unchanged' ? 1 : 0) +( confirmfl.depositAuth != 'unchanged' ? 1 : 0) +( confirmfl.disableMasterKey != 'unchanged' ? 1 : 0) +( confirmfl.disallowIncomingXRP != 'unchanged' ? 1 : 0) +( confirmfl.globalFreeze != 'unchanged' ? 1 : 0) +( confirmfl.noFreeze != 'unchanged' ? 1 : 0) +( confirmfl.requireAuthorization != 'unchanged' ? 1 : 0) +( confirmfl.requireDestinationTag != 'unchanged' ? 1 : 0);
+        var changedflagcount = (confirmfl_obj.defaultRipple != 'unchanged' ? 1 : 0) + (confirmfl_obj.depositAuth != 'unchanged' ? 1 : 0) + (confirmfl_obj.disableMasterKey != 'unchanged' ? 1 : 0) + (confirmfl_obj.disallowIncomingXRP != 'unchanged' ? 1 : 0) + (confirmfl_obj.globalFreeze != 'unchanged' ? 1 : 0) + (confirmfl_obj.noFreeze != 'unchanged' ? 1 : 0) + (confirmfl_obj.requireAuthorization != 'unchanged' ? 1 : 0) + (confirmfl_obj.requireDestinationTag != 'unchanged' ? 1 : 0);
         if (changedflagcount == 0) return navigator.notification.alert("You have not made any changes to submit.", ()=>{unblockInput();}, "ERROR", "OK");
             
+        confirmfl = confirmfl_obj;
         confirmfl['changedflagcount'] = changedflagcount;
         confirmflhash = sodium.crypto_generichash(16, JSON.stringify(confirmfl), ''+nonce, 'hex');
-        $('#cafaddress')[0].innerText = afaddress;
-        $('#cafdefaultripple')[0].innerText = '' + confirmfl.defaultRipple;
-        $('#cafdepositauth')[0].innerText = '' + confirmfl.depositAuth;
-        $('#cafdisablemasterkey')[0].innerText = '' + confirmfl.disableMasterKey;
-        $('#cafdisallowincomingxrp')[0].innerText = '' + confirmfl.disallowIncomingXRP;
-        $('#cafglobalfreeze')[0].innerText = '' + confirmfl.globalFreeze;        
-        $('#cafnofreeze')[0].innerText = '' + confirmfl.noFreeze;
-        $('#cafrequireauthorization')[0].innerText = '' + confirmfl.requireAuthorization;        
-        $('#cafrequiredestinationtag')[0].innerText = '' + confirmfl.requireDestinationTag;       
+        setText('#cafaddress', afaddress);
+        setText('#cafdefaultripple', '' + confirmfl.defaultRipple);
+        setText('#cafdepositauth', '' + confirmfl.depositAuth);
+        setText('#cafdisablemasterkey', '' + confirmfl.disableMasterKey);
+        setText('#cafdisallowincomingxrp', '' + confirmfl.disallowIncomingXRP);
+        setText('#cafglobalfreeze', '' + confirmfl.globalFreeze);        
+        setText('#cafnofreeze', '' + confirmfl.noFreeze);
+        setText('#cafrequireauthorization', '' + confirmfl.requireAuthorization);        
+        setText('#cafrequiredestinationtag', '' + confirmfl.requireDestinationTag);       
         
-        $('#cafnotransactions')[0].innerText = changedflagcount + ' transactions';
+        setText('#cafnotransactions', changedflagcount + ' transactions');
         showTab("#tabaccountflagsconfirm");
         
         unblockInput();
@@ -134,7 +134,8 @@ function doSetAccountFlags(nonce) {
 					if (b == 1) {
 						nextscreen();
 					} else {
-						$('#atladdress').focus();
+						var atla = byId('atladdress');
+						if (atla) atla.focus();
 						unblockInput();
 					}
 				}, 
@@ -142,7 +143,8 @@ function doSetAccountFlags(nonce) {
 				[ "Try anyway", "Cancel" ]
                 );},
                 function() {
-					$('#atladdress').focus();
+					var atla = byId('atladdress');
+					if (atla) atla.focus();
 					unblockInput();                    
                 }, nextscreen);
 }
@@ -225,6 +227,16 @@ function doConfirmAccountFlags(passphrase) {
 }
 
 // Expose functions globally
-window.showAccountFlags = showAccountFlags;
-window.doSetAccountFlags = doSetAccountFlags;
-window.doConfirmAccountFlags = doConfirmAccountFlags;
+if (typeof window !== 'undefined') {
+    window.showAccountFlags = showAccountFlags;
+    window.doSetAccountFlags = doSetAccountFlags;
+    window.doConfirmAccountFlags = doConfirmAccountFlags;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        showAccountFlags,
+        doSetAccountFlags,
+        doConfirmAccountFlags
+    };
+}

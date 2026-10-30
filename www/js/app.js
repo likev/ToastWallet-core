@@ -1,3 +1,4 @@
+require('./modules/dom.js');
 require('./state.js');
 require('./modules/storage.js');
 require('./modules/custom-select.js');

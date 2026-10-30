@@ -1,30 +1,43 @@
 function showPaymentTab(account, currency, issuer, balance) {
     if (debug) console.log("showPaymentTab - account: " + account + ", currency: " + currency + ", issuer: " + issuer + ", balance: " + balance); 
     clearPaymentScreen();
-    $('#payfromaccount').find('[data-account="'+account+'"]').attr('selected', 'selected');
+    var payFromOpt = qs('#payfromaccount [data-account="'+account+'"]');
+    if (payFromOpt) {
+        payFromOpt.selected = true;
+        setAttr(payFromOpt, 'selected', 'selected');
+    }
     onPaymentSelectFromAccount();
-    $('#optpa-'+currency+'-'+issuer).attr('selected', 'selected');
-    $('#payamount').val(balance);
+    var curOpt = byId('optpa-'+currency+'-'+issuer);
+    if (curOpt) {
+        curOpt.selected = true;
+        setAttr(curOpt, 'selected', 'selected');
+    }
+    setVal('#payamount', balance);
     showTab('#tabpayments', true);
-    $('#toaddress').focus();
+    var toEl = byId('toaddress');
+    if (toEl && toEl.focus) toEl.focus();
 }
 
 function doPay(nonce) {
 	if (debug) console.log("doPay");
 	blockInput();
-	var payfrom = $("#payfromaccount").find(":selected").data('account');
-	var payto = $("#toaddress").val().trim();
-	var dest = $("#desttag").val().trim();
-	var invid = ($("#invoiceid").val().trim() + "").toUpperCase();
-	var amount = $("#payamount").val().trim();
-    var owncurrencytgl = $('#tglIssueOwnCurrency').data('checked') == 'true';
-    var asset = ( $('#payasset').is(':visible') ? ("" + $('#payasset').find(':selected').data('asset')).trim().toUpperCase() :  $('#payassetofl').val().trim().toUpperCase() );
-    var issuer = ( $('#payasset').is(':visible') ? $('#payasset').find(':selected').data('issuer') : $('#payissuerofl').val().trim() );
+	var payFromSel = byId('payfromaccount');
+	var payFromOpt = payFromSel && (payFromSel.selectedOptions ? payFromSel.selectedOptions[0] : qs('#payfromaccount option:checked'));
+	var payfrom = payFromOpt ? domData(payFromOpt, 'account') : undefined;
+	var payto = getVal("#toaddress").trim();
+	var dest = getVal("#desttag").trim();
+	var invid = (getVal("#invoiceid").trim() + "").toUpperCase();
+	var amount = getVal("#payamount").trim();
+    var owncurrencytgl = domData('#tglIssueOwnCurrency', 'checked') == 'true';
+    var payAssetSel = byId('payasset');
+    var payAssetOpt = payAssetSel && (payAssetSel.selectedOptions ? payAssetSel.selectedOptions[0] : qs('#payasset option:checked'));
+    var asset = ( isVisible('#payasset') ? ("" + (payAssetOpt ? domData(payAssetOpt, 'asset') : '')).trim().toUpperCase() : getVal('#payassetofl').trim().toUpperCase() );
+    var issuer = ( isVisible('#payasset') ? (payAssetOpt ? domData(payAssetOpt, 'issuer') : '') : getVal('#payissuerofl').trim() );
     if (owncurrencytgl) {
         issuer = payfrom;
     }
     if (asset == '') asset = 'XRP';
-    var offlinecode = $('#payofflinecode').val().trim().replace(/ /g, "").toUpperCase();
+    var offlinecode = getVal('#payofflinecode').trim().replace(/ /g, "").toUpperCase();
     var accID = '';
     var ledID = '';
     var fee = '';
@@ -35,7 +48,8 @@ function doPay(nonce) {
 		if (dest != "" && dest.trim() != newdest.trim()) {
 			navigator.notification.alert("Destination tag specified twice. You specified a destination tag at the end of your send-to address then again in the destination box. Please remove one.", 
 				function(){
-					$("#desttag").focus();
+					var dt = byId("desttag");
+					if (dt && dt.focus) dt.focus();
 					unblockInput();
 				}, 
 				"Destination tag duplicate", 
@@ -78,7 +92,8 @@ function doPay(nonce) {
 	if (!destTagResult.valid) {
 		navigator.notification.alert(destTagResult.error,
 			function(){
-				$("#desttag").focus();
+				var dt = byId("desttag");
+				if (dt && dt.focus) dt.focus();
 				unblockInput();
 			},
 			"Destination tag invalid",
@@ -97,7 +112,8 @@ function doPay(nonce) {
         if (!/^[A-F0-9]{64}$/m.test(invid)) {
 			navigator.notification.alert("Invoice ID must either be blank or be hex-encoded 256bit value. We recommend not to use an invoice id unless your counter party has instructed you to use one.", 
 				function(){
-					$("#invoiceid").focus();
+					var inv = byId("invoiceid");
+					if (inv && inv.focus) inv.focus();
 					unblockInput();
 				}, 
 				"Invoice ID invalid", 
@@ -109,7 +125,8 @@ function doPay(nonce) {
 	if (payfrom == undefined || payfrom == "") {
 		navigator.notification.alert("You must select an account to pay from", 
 			function(){
-				$("#payfromaccount").focus();
+				var pfa = byId("payfromaccount");
+				if (pfa && pfa.focus) pfa.focus();
 				unblockInput();
 			}, 
 			"Select a from account", 
@@ -120,7 +137,8 @@ function doPay(nonce) {
 	if (payto == "") {
 		navigator.notification.alert("You must select an address to pay to", 
 			function(){
-				$("#toaddress").focus();
+				var to = byId("toaddress");
+				if (to && to.focus) to.focus();
 				unblockInput();
 			}, 
 			"Select a to address", 
@@ -131,7 +149,8 @@ function doPay(nonce) {
 	if (!validateAddress(payto)) {
 		navigator.notification.alert("The destination address you have entered does not appear to be a valid XRP address. You can still attempt to send but the XRP Ledger will charge a fee on failure.", 
 			function(){
-				$("#toaddress").focus();
+				var to = byId("toaddress");
+				if (to && to.focus) to.focus();
 				unblockInput();
 			}, 
 			"Unusual address format", 
@@ -141,7 +160,8 @@ function doPay(nonce) {
 	if (payto == payfrom) {
 		navigator.notification.alert("A XRP address cannot pay XRP from itself to itself.", 
 			function(){
-				$("#toaddress").focus();
+				var to = byId("toaddress");
+				if (to && to.focus) to.focus();
 				unblockInput();
 			}, 
 			"Cannot pay to this address", 
@@ -152,10 +172,12 @@ function doPay(nonce) {
     if (asset == 'XRP' && ( issuer != '' || owncurrencytgl)) {
 		navigator.notification.alert("You cannot specify an issuer for XRP.", 
 			function(){
-                if ($('#oflcurrencydiv').is(':visible')) {
-                    $("#payassetofl").focus();
+                if (isVisible('#oflcurrencydiv')) {
+                    var oflEl = byId("payassetofl");
+                    if (oflEl && oflEl.focus) oflEl.focus();
                 } else {
-    				$("#payasset").focus();
+    				var paEl = byId("payasset");
+    				if (paEl && paEl.focus) paEl.focus();
                 }
 				unblockInput();
 			}, 
@@ -168,7 +190,8 @@ function doPay(nonce) {
 	if (amount == "" || parseFloat(amount)+ "" != (""+amount).trim()) {
 		navigator.notification.alert("You must select a valid amount to send", 
 			function(){
-				$("#payamount").focus();
+				var pa = byId("payamount");
+				if (pa && pa.focus) pa.focus();
 				unblockInput();
 			}, 
 			"Select a payment amount", 
@@ -192,26 +215,27 @@ function doPay(nonce) {
             issuer: issuer
 		};
 		confirmpayhash = sodium.crypto_generichash(16, JSON.stringify(confirmpay), ''+nonce, 'hex');
-		$('#confirmpayfromaccount')[0].innerText = dispaddr(payfrom)
-		$('#confirmpaytoaddress')[0].innerText = payto;
+		setText('#confirmpayfromaccount', dispaddr(payfrom));
+		setText('#confirmpaytoaddress', payto);
+		var confirmDestTag = byId('confirmdesttag');
 	    if (isXAddress(payto)) {
-            $('#confirmdesttag')[0].parentNode.style.display = 'none'
+            if (confirmDestTag && confirmDestTag.parentNode) confirmDestTag.parentNode.style.display = 'none';
         } else {
-            $('#confirmdesttag')[0].parentNode.style.display = 'inherit'
+            if (confirmDestTag && confirmDestTag.parentNode) confirmDestTag.parentNode.style.display = 'inherit';
     	}
-        $('#confirmdesttag')[0].innerText =  paytoreal.tag || '(not provided)';
-		$('#confirminvoiceid')[0].innerText = ( invid == "" ? "(not provided)" : invid );
-		$('#confirmpayamount')[0].innerText = amount;
-        $('#confirmasset')[0].innerText = asset;
-        $('#confirmissuer')[0].innerText = dispaddr(issuer);
+        setText('#confirmdesttag', paytoreal.tag || '(not provided)');
+		setText('#confirminvoiceid', ( invid == "" ? "(not provided)" : invid ));
+		setText('#confirmpayamount', amount);
+        setText('#confirmasset', asset);
+        setText('#confirmissuer', dispaddr(issuer));
         if (asset == 'XRP') {
-            $('#confirmissuerpaygroup').hide();
+            hideEl('#confirmissuerpaygroup');
         } else {
-            $('#confirmissuerpaygroup').show();
+            showEl('#confirmissuerpaygroup');
             if (owncurrencytgl) {
-                $('#confirmissuer')[0].innerText = 'This Account';
+                setText('#confirmissuer', 'This Account');
             } else {
-                $('#confirmissuer')[0].innerText = dispaddr(issuer);
+                setText('#confirmissuer', dispaddr(issuer));
             }
         }
 		showTab("#tabpaymentconfirm", true);
@@ -225,7 +249,8 @@ function doPay(nonce) {
 					if (b == 1) {
 						nextscreen();
 					} else {
-						$('#payamount').focus();
+						var pa = byId('payamount');
+						if (pa && pa.focus) pa.focus();
 						unblockInput();
 					}
 				}, 
@@ -233,7 +258,8 @@ function doPay(nonce) {
 				[ "Try anyway", "Cancel" ]
                 );}, 
                 function() { 
-                    $('#payamount').focus();
+                    var pa = byId('payamount');
+                    if (pa && pa.focus) pa.focus();
                     unblockInput();
                 }, nextscreen);
 }
@@ -339,35 +365,47 @@ function doConfirmPay(passphrase) {
 
 function clearPaymentScreen() {
 	try {
-        $('#desttag').attr('readonly', false)
-        $('#currencyerror').hide();
-        $('#currencyerror').empty();
-        if ($('#payfromaccount').find(':selected').data('account') != activeaccount) {
-            $('#payfromaccount').find(':selected').removeAttr('selected');
-            $('#opt' + activeaccount).attr('selected', 'selected');
+        var dt = byId("desttag");
+        if (dt) dt.readOnly = false;
+        removeAttr("#desttag", "readonly");
+        hideEl("#currencyerror");
+        emptyEl("#currencyerror");
+        var payFromSel = byId("payfromaccount");
+        var curSelOpt = payFromSel && (payFromSel.selectedOptions ? payFromSel.selectedOptions[0] : qs("#payfromaccount option:checked"));
+        if (curSelOpt && domData(curSelOpt, "account") != activeaccount) {
+            curSelOpt.removeAttribute("selected");
+            curSelOpt.selected = false;
+            var targetOpt = byId("opt" + activeaccount);
+            if (targetOpt) {
+                targetOpt.setAttribute("selected", "selected");
+                targetOpt.selected = true;
+            }
         }
         onPaymentSelectFromAccount();
-		$("#toaddress").val("");
-		$("#desttag").val("");
-		$("#invoiceid").val("");
-		$("#payamount").val("");
-        $("#payamount").removeAttr('placeholder');
-        var tgl = $($('#tglIssueOwnCurrency').children()[0]);
-        tgl.removeClass('fa-toggle-on');
-        tgl.removeClass('fa-toggle-off');
-        tgl.addClass('fa-toggle-off');
-        $('#tglIssueOwnCurrency').data('checked', 'false');
+		setVal("#toaddress", "");
+		setVal("#desttag", "");
+		setVal("#invoiceid", "");
+		setVal("#payamount", "");
+        removeAttr("#payamount", "placeholder");
+        var tglContainer = byId("tglIssueOwnCurrency");
+        var tgl = tglContainer && tglContainer.firstElementChild;
+        if (tgl) {
+            removeClass(tgl, "fa-toggle-on");
+            removeClass(tgl, "fa-toggle-off");
+            addClass(tgl, "fa-toggle-off");
+        }
+        domData("#tglIssueOwnCurrency", "checked", "false");
         onToggleIssueOwnCurrency(true);
-        $('#payassetofl').val('');
-        $('#payissuerofl').val('');
-        $('#invoiceiddiv').css( 'display', 'none' );
-//        $('#btnpayshowmore').html('More');
+        setVal("#payassetofl", "");
+        setVal("#payissuerofl", "");
+        hideEl("#invoiceiddiv");
+//        setHtml("#btnpayshowmore", "More");
         if (offlinemode) {
-            $('#oflcurrencydiv').show();
-            $('#payasset').hide();
+            showEl("#oflcurrencydiv");
+            hideEl("#payasset");
         } else {
-            $('#oflcurrencydiv').hide();
-            $('#payasset').show();
+            hideEl("#oflcurrencydiv");
+            showEl("#payasset");
         }
 	} catch(e) {handle_error(e);}
 }
@@ -376,77 +414,89 @@ function onPaymentSelectFromAccount() {
     //clean up stray dropdown
     if (offlinemode) 
         try {
-            if (typeof destroySelect === 'function') destroySelect('#payasset');
+            if (typeof destroySelect === "function") destroySelect("#payasset");
         } catch (e) {}
-    if ($("#payfromaccount").find(":selected") == undefined) {
+    var payFromSel = byId("payfromaccount");
+    var selOpt = payFromSel && (payFromSel.selectedOptions ? payFromSel.selectedOptions[0] : qs("#payfromaccount option:checked"));
+    if (!selOpt) {
         if (activeaccount == undefined) return;
-        $('#opt' + activeaccount).attr('selected', 'selected');
+        var opt = byId("opt" + activeaccount);
+        if (opt) {
+            opt.setAttribute("selected", "selected");
+            opt.selected = true;
+            selOpt = opt;
+        }
     } 
-    var account = $("#payfromaccount").find(":selected").data('account');
+    var account = selOpt ? domData(selOpt, "account") : undefined;
     if (account == undefined) return;
     
     if (offlinemode) {
-        $('#payofflinecodediv').css('display', 'block');
-        $("#paytabredqr").empty();
-        $("#paytabredqr").append(kjua({text: account, fill:"#ff0000"}));    
-        $("#payasset").hide();
+        showEl("#payofflinecodediv");
+        emptyEl("#paytabredqr");
+        if (typeof kjua === "function") {
+            appendNode("#paytabredqr", kjua({text: account, fill:"#ff0000"}));
+        }
+        hideEl("#payasset");
         try {
-            if (typeof destroySelect === 'function') destroySelect('#payasset');
+            if (typeof destroySelect === "function") destroySelect("#payasset");
         } catch (e) {}
-        $('#oflcurrencydiv').show();
+        showEl("#oflcurrencydiv");
         
     } else {
-        $('#payasset').show();
-        $('#payofflinecodediv').css('display', 'none');
-        $("#paytabredqr").empty();
+        showEl("#payasset");
+        hideEl("#payofflinecodediv");
+        emptyEl("#paytabredqr");
         var xrpoption = '<option data-issuer="" data-asset="XRP" id="optpa-xrp">XRP</option>';
         if (trustlinesdropdown[account] != undefined) {
             var tloptions = "";
             for (var x in trustlinesdropdown[account]) 
                 tloptions += trustlinesdropdown[account][x];
-            $('#payasset').html(xrpoption + tloptions);
+            setHtml("#payasset", xrpoption + tloptions);
         } else {
-            $('#payasset').html(xrpoption);
+            setHtml("#payasset", xrpoption);
         }
         try {
-            if (typeof enhanceSelect === 'function') {
-                enhanceSelect('#payasset');
-                refreshSelect('#payasset');
+            if (typeof enhanceSelect === "function") {
+                enhanceSelect("#payasset");
+                refreshSelect("#payasset");
             }
         } catch(e) {}
     }
 }
 
 function checkPayToAddressForCommonErrors() {
-    var payto = ($('#toaddress').val() + '').trim()
-    if (payto.substr(0,1) == 'r' && forceraddr(payto)) {
-        if (payto == 'rDsbeomae4FXwgQTJp9Rs64Qg9vDiTCdBv') {
-            $('#lblpaytodesttag').html('Destination Tag (<i color="red">Required!</i>)');
-        } else if (payto == 'rLHzPsX6oXkzU2qL12kHCH8G8cnZv1rBJh') {
-            $('#lblpaytodesttag').html('Destination Tag (<i color="red">Required!</i>)');
+    var payto = (getVal("#toaddress") + "").trim();
+    if (payto.substr(0,1) == "r" && forceraddr(payto)) {
+        if (payto == "rDsbeomae4FXwgQTJp9Rs64Qg9vDiTCdBv") {
+            setHtml("#lblpaytodesttag", "Destination Tag (<i color=\"red\">Required!</i>)");
+        } else if (payto == "rLHzPsX6oXkzU2qL12kHCH8G8cnZv1rBJh") {
+            setHtml("#lblpaytodesttag", "Destination Tag (<i color=\"red\">Required!</i>)");
         } else if (offlinemode) {
-            $('#lblpaytodesttag').html('Destination Tag')
+            setHtml("#lblpaytodesttag", "Destination Tag");
         } else {
             remote.getSettings(payto).then(settings => {
                 if (settings && settings.requireDestinationTag) {
-                    $('#lblpaytodesttag').html('Destination Tag (<i color="red">Required!</i>)')
+                    setHtml("#lblpaytodesttag", "Destination Tag (<i color=\"red\">Required!</i>)");
                 } else {
-                    $('#lblpaytodesttag').html('Destination Tag')
+                    setHtml("#lblpaytodesttag", "Destination Tag");
                 }
             }).catch(e=>{
-                $('#lblpaytodesttag').html('Destination Tag')
+                setHtml("#lblpaytodesttag", "Destination Tag");
             })
         }
     }
    
-     $('#currencyerror').hide(); 
+    hideEl("#currencyerror"); 
    
     // disable or enable desttag depending on if its an xaddress
-    if (payto.substr(0,1) == 'X') { 
-        $('#desttag').attr('readonly', true) 
-        $('#desttag').val('')
+    var dt = byId("desttag");
+    if (payto.substr(0,1) == "X") { 
+        if (dt) dt.readOnly = true;
+        setAttr("#desttag", "readonly", "readonly"); 
+        setVal("#desttag", "");
     } else {
-        $('#desttag').attr('readonly', false) 
+        if (dt) dt.readOnly = false;
+        removeAttr("#desttag", "readonly"); 
     }
 }
 
@@ -459,36 +509,42 @@ function populatePaymentTabFromURI(uri, targetfield) {
         !xrpl.isValidClassicAddress(parsed.to) &&
         !xto)) {
         // could not parse, that's fine we'll just populate it anyway
-        if (targetfield) $(targetfield).val(uri)
-        checkPayToAddressForCommonErrors()
-        return
+        if (targetfield) setVal(targetfield, uri);
+        checkPayToAddressForCommonErrors();
+        return;
     }
-    if (parsed.to) $('#toaddress').val(parsed.to)
-    if (!xto && parsed.dt) $('#desttag').val(parsed.dt)
-    if (parsed.amount) $('#payamount').val(parsed.amount)
-    checkPayToAddressForCommonErrors()
+    if (parsed.to) setVal("#toaddress", parsed.to);
+    if (!xto && parsed.dt) setVal("#desttag", parsed.dt);
+    if (parsed.amount) setVal("#payamount", parsed.amount);
+    checkPayToAddressForCommonErrors();
     /*try {
-        $('#payfromaccount').find('[data-account="'+account+'"]').attr('selected', 'selected');
+        var payFromOpt = qs("#payfromaccount [data-account=\""+account+"\"]");
+        if (payFromOpt) {
+            payFromOpt.selected = true;
+            payFromOpt.setAttribute("selected", "selected");
+        }
     } catch (e) {}
     onPaymentSelectFromAccount();
     */
-    $('#currencyerror').hide()
+    hideEl("#currencyerror");
     if (parsed.currency.currency && parsed.currency.issuer) {
         if (offlinemode) {
-            $('#payassetofl').val(parsed.currency.currency);
-            $('#payissuerofl').val(parsed.currency.issuer);
+            setVal("#payassetofl", parsed.currency.currency);
+            setVal("#payissuerofl", parsed.currency.issuer);
         } else {
-            if ($('#optpa-'+parsed.currency.currency+'-'+ parsed.currency.issuer).length > 0) {
-                $('#optpa-'+parsed.currency.currency+'-'+ parsed.currency.issuer).attr('selected', 'selected');
+            var curOpt = byId("optpa-"+parsed.currency.currency+"-"+ parsed.currency.issuer);
+            if (curOpt) {
+                curOpt.selected = true;
+                curOpt.setAttribute("selected", "selected");
             } else {
-                $('#currencyerror').text('Pay URI specified ' + (''+parsed.currency.currency).replace(/[^a-z]/gi, '')  + ' issued by ' + (''+parsed.currency.issuer).replace(/[^a-z0-9]/gi, '') + " but you don't have a trustline for that on this account"); //todo: add a button here to make adding a trustline easy
-                $('#currencyerror').show();
+                setText("#currencyerror", "Pay URI specified " + (""+parsed.currency.currency).replace(/[^a-z]/gi, "")  + " issued by " + (""+parsed.currency.issuer).replace(/[^a-z0-9]/gi, "") + " but you don't have a trustline for that on this account"); //todo: add a button here to make adding a trustline easy
+                showEl("#currencyerror");
             }
         }
     } 
     if (parsed.invoiceid) {
-        $('#invoiceiddiv').show();
-        $('#invoiceid').val(parsed.invoiceid);
+        showEl("#invoiceiddiv");
+        setVal("#invoiceid", parsed.invoiceid);
     }
 }
 
@@ -501,7 +557,7 @@ function doPayLink() {
     
     showTab("#tabpayments")
     populatePaymentTabFromURI(paylink)
-    $('#tablogin>center>div').removeClass('pinpad_pending')
+    removeClass("#tablogin > center > div", "pinpad_pending");
     if (activeaccount == "") 
         refreshAccounts()
 }
@@ -519,15 +575,15 @@ function doSubmitOfflineTransaction(stage, content) {
     }
     if (stage == 0) {
         
-        $('#submitofflinetxstep1').css('display', 'block');
-        $('#submitofflinetxstep2').css('display', 'none' );
-        $('#submitofflinetxstep3').css('display', 'none' );
+        showEl("#submitofflinetxstep1");
+        hideEl("#submitofflinetxstep2");
+        hideEl("#submitofflinetxstep3");
         showTab('#tabsubmitofflinetx');
     } else if (stage == 1) {
         blockInput();
         var account = content;
         // query the ledger sequence ID and account sequence ID
-        if (account == undefined) account = $('#txtredqr').val();
+        if (account == undefined) account = getVal("#txtredqr");
         console.log("RED QR: " + account);
         account = forceraddr(account)
         if (!account || !validateAddress(account)) {
@@ -641,11 +697,11 @@ function doSubmitOfflineTransaction(stage, content) {
                             for (var i = 0; i < hex.length; i+= 4) 
                                 displayhex += hex.slice(i, i + 4) + " ";
                             displayhex = displayhex.trim();
-                            $('#lblofflinetxconfirm').text(displayhex);
+                            setText("#lblofflinetxconfirm", displayhex);
                             unblockInput();
-                            $('#submitofflinetxstep1').css('display', 'block');
-                            $('#submitofflinetxstep2').css('display', 'block' );
-                            $('#submitofflinetxstep3').css('display', 'block' );
+                            showEl("#submitofflinetxstep1");
+                            showEl("#submitofflinetxstep2");
+                            showEl("#submitofflinetxstep3");
                             showTab('#tabsubmitofflinetx');
                             
                         }).catch(e => {
@@ -664,7 +720,7 @@ function doSubmitOfflineTransaction(stage, content) {
         // ready to submit the transaction!
         blockInput();
         var signedTx = content;
-        if (signedTx == undefined) signedTx =$('#txtgreenqr').val();
+        if (signedTx == undefined) signedTx = getVal("#txtgreenqr");
         if (signedTx.slice(0, 'ripple:signed-transaction:'.length) != 'ripple:signed-transaction:') {
             return  navigator.notification.alert("The QR code you scanned is not a valid transaction QR. Ensure you are scanning the GREEN QR code you received after finalizing your transaction on the offline device.", 
                         function(){
@@ -749,20 +805,20 @@ function xls2d(uri) {
 function decodeSecretAddressURI(uri, after, secretfield, addrfield, defaultfield) {
 	uri = uri.replace(/^([a-z\/:.]+\/)?(.+)$/mg, "$2");
     var emplace = (val) => {
-        var first = val.charAt(0) ;
-        if (first == 's' && secretfield != undefined) {
-            $(secretfield).val(val);
-        } else if ((first == 'X' || first == 'r' || first == 'n') && addrfield != undefined) {
-            $(addrfield).val(val);
+        var first = val.charAt(0);
+        if (first == "s" && secretfield != undefined) {
+            setVal(secretfield, val);
+        } else if ((first == "X" || first == "r" || first == "n") && addrfield != undefined) {
+            setVal(addrfield, val);
         } else {
-            $(defaultfield).val(val)
+            setVal(defaultfield, val);
         }
-    } 
+    };
 	if (/^[^?&=]+$/m.test(uri) && defaultfield != undefined) {
 		// if this is a simple regex with no uri stuff then we'll just import it directly into the
 		// field next to the QR button
-		//$(defaultfield).val(uri);
-        emplace(uri)
+		//setVal(defaultfield, uri);
+        emplace(uri);
 	} else {
 		var addressRegex = /(?:[?&]?([a-z]+)=|^)([^&?\r\n]*)/mg;
 		var match = addressRegex.exec(uri);
@@ -846,7 +902,8 @@ function validateOfflineCode(offlinecode, offlinecodefield) {
         if (!codevalid) {
             navigator.notification.alert("Your offline code appears to be incorrect. Check you scanned the red QR code on the online version of Toast Wallet first.", 
                 function(){
-                    $(offlinecodefield).focus();
+                    var ocf = resolveElement(offlinecodefield);
+                    if (ocf && ocf.focus) ocf.focus();
                     unblockInput();
                 }, 
                 "Offline code invalid", 

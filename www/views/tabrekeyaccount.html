@@ -7,8 +7,8 @@
 		<input data-dispaddr="true" ontouchend="te(event, quickSelectInput)"  class="form-control" readonly="readonly" type="text" placeholder=""  id="rekeyaddress">
         <br><label>Passphrase</label>
     	<span class="pasteqr">
-            <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{$('#rekeypassword').val(content)})})"><i class="fa fa-paste"></i></button>
-            <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {$('#rekeypassword').val(content)})})" type="button"><i class="fa fa-camera"></i></button>
+            <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{setVal('#rekeypassword', content)})})"><i class="fa fa-paste"></i></button>
+            <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {setVal('#rekeypassword', content)})})" type="button"><i class="fa fa-camera"></i></button>
             <button class="btn btn-default" id="rekeypasswordeyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#rekeypassword', '#rekeypasswordeyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
         </span>        
         <input ontouchend="te(event, quickSelectInput)"  type="password" id="rekeypassword" class="form-control" placeholder=""><!--todo: enable REKEYING!!-->
