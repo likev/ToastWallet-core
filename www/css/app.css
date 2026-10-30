@@ -260,17 +260,47 @@ ul#adtrustlines {
     margin-right: 1em;    
 }
 
+.unknowntoggle {
+    background-color: transparent !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+    position: relative;
+}
+
 .unknowntoggle:before {
-    content: "\f205";
-    color:red;
-    
+    content: "";
+    display: inline-block;
+    width: 1.125em;
+    height: 1em;
+    background-color: red;
+    -webkit-mask-image: var(--icon-toggle-on);
+    mask-image: var(--icon-toggle-on);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-position: center;
+    mask-position: center;
 }
 
 .unknowntoggle:after {
+    content: "";
+    display: inline-block;
     position: absolute;
-    transform: translateX(-100%) rotate(180deg);
-    content: "\f205";
-    color:red;
+    left: 0;
+    top: 0;
+    width: 1.125em;
+    height: 1em;
+    background-color: red;
+    transform: rotate(180deg);
+    -webkit-mask-image: var(--icon-toggle-on);
+    mask-image: var(--icon-toggle-on);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-position: center;
+    mask-position: center;
 }
 
 
@@ -463,44 +493,51 @@ input {
 
 .liteloading:after {
     display: block;
-    content: "\f1ce";
-    color: #307ee0;
-    font-size: 4em;
-    font-family: 'Font Awesome 5 Free';
-    font-weight: 900;
+    content: "";
+    width: 4em;
+    height: 4em;
+    background-color: #307ee0;
+    -webkit-mask-image: var(--icon-circle-notch);
+    mask-image: var(--icon-circle-notch);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-position: center;
+    mask-position: center;
+    animation: fa-spin 2s infinite linear;
     -webkit-animation: fa-spin 2s infinite linear;
-    text-rendering: auto;
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     position: fixed;
-    left: calc(50% - 0.5em);
-    top: calc(50% - 0.5em);
+    left: calc(50% - 2em);
+    top: calc(50% - 2em);
     z-index: 101;
 }
 
 .loading:before {
     display: block;
+    content: "";
+    width: 4em;
+    height: 4em;
+    background-color: #307ee0;
+    -webkit-mask-image: var(--icon-spinner);
+    mask-image: var(--icon-spinner);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-position: center;
+    mask-position: center;
     animation: fa-spin 2s infinite linear;
-    z-index: 102;
-    background: white;
-    content: "\f110";
-    color: #307ee0;
-    font-size: 4em;
-    font-family: 'Font Awesome 5 Free';
-    font-weight: 900;
     -webkit-animation: fa-spin 2s infinite linear;
-    text-rendering: auto;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     position: fixed;
-    left: calc(50% - 0.5em);
-    top: calc(50% - 0.5em);
+    left: calc(50% - 2em);
+    top: calc(50% - 2em);
     z-index: 104;
 }
 .loading:after {
