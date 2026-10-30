@@ -869,7 +869,7 @@ var app = {
 	    // function, we must explicitly call 'app.receivedEvent(...);'
 onDeviceReady: function() {
 			if (debug) console.log("onDeviceReady:1");
-		       	db = new PouchDB('toastwallet');
+		       	db = new WalletDB('toastwallet');
 			if (debug) console.log("onDeviceReady:2");
 			rebindAllHandlers();
 			setTimeout(initAppUI, 0);
@@ -991,6 +991,7 @@ function roundXRP(x) {
 
 },{}],3:[function(require,module,exports){
 require('./state.js');
+require('./modules/storage.js');
 require('./modules/address.js');
 require('./modules/clipboard.js');
 require('./modules/navigation.js');
@@ -1011,7 +1012,7 @@ require('./ui/transactions.js');
 require('./app-init.js');
 require('./app-logic.js');
 
-},{"./app-init.js":1,"./app-logic.js":2,"./modules/address.js":4,"./modules/clipboard.js":5,"./modules/crypto.js":6,"./modules/db.js":7,"./modules/navigation.js":8,"./modules/orderbook.js":9,"./modules/xrpl-client.js":10,"./modules/xrpl-tx.js":11,"./state.js":12,"./ui/accounts.js":13,"./ui/backup.js":14,"./ui/flags.js":15,"./ui/login.js":16,"./ui/orders.js":17,"./ui/payments.js":18,"./ui/settings.js":19,"./ui/transactions.js":20,"./ui/trustlines.js":21}],4:[function(require,module,exports){
+},{"./app-init.js":1,"./app-logic.js":2,"./modules/address.js":4,"./modules/clipboard.js":5,"./modules/crypto.js":6,"./modules/db.js":7,"./modules/navigation.js":8,"./modules/orderbook.js":9,"./modules/storage.js":10,"./modules/xrpl-client.js":11,"./modules/xrpl-tx.js":12,"./state.js":13,"./ui/accounts.js":14,"./ui/backup.js":15,"./ui/flags.js":16,"./ui/login.js":17,"./ui/orders.js":18,"./ui/payments.js":19,"./ui/settings.js":20,"./ui/transactions.js":21,"./ui/trustlines.js":22}],4:[function(require,module,exports){
 function xaddr(raddr, tag) {
 	try {
 		return xrpl.classicAddressToXAddress(raddr, tag, false);
@@ -1101,24 +1102,76 @@ window.validateAddress = validateAddress;
 window.validateSecret = validateSecret;
 
 },{}],5:[function(require,module,exports){
-function clipboardCopy(data) {
+function fallbackCopyText(text) {
+    if (typeof document === 'undefined') return false;
+    let textArea;
+    let succeeded = false;
+    const activeElement = document.activeElement;
     try {
-        return navigator.clipboard.writeText(data);
-    } catch (E) {
-        console.log(E);
+        textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.setAttribute('readonly', '');
+        textArea.style.position = 'fixed';
+        textArea.style.top = '-9999px';
+        textArea.style.left = '-9999px';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        textArea.setSelectionRange(0, text.length);
+        succeeded = document.execCommand('copy');
+    } catch (err) {
+        console.warn('fallbackCopyText error:', err);
+    } finally {
+        if (textArea && textArea.parentNode) {
+            textArea.parentNode.removeChild(textArea);
+        }
+        if (activeElement && typeof activeElement.focus === 'function') {
+            activeElement.focus();
+        }
     }
+    return succeeded;
 }
-function clipboardPaste(f) {
-    try {
-        return navigator.clipboard.readText().then(f);
-    } catch (E) {
-        console.log(E);
+
+function clipboardCopy(data) {
+    const text = String(data ?? '');
+    if (typeof navigator !== 'undefined' && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        const isSecure = typeof window !== 'undefined' ? (window.isSecureContext ?? true) : true;
+        if (isSecure) {
+            return navigator.clipboard.writeText(text).catch(function (err) {
+                console.warn('navigator.clipboard.writeText failed, falling back to execCommand:', err);
+                fallbackCopyText(text);
+            });
+        }
     }
+    fallbackCopyText(text);
+    return Promise.resolve();
+}
+
+function clipboardPaste(f) {
+    if (typeof navigator !== 'undefined' && navigator.clipboard && typeof navigator.clipboard.readText === 'function') {
+        return navigator.clipboard.readText()
+            .then(function (text) {
+                if (typeof f === 'function') {
+                    f(text);
+                }
+            })
+            .catch(function (err) {
+                console.warn('navigator.clipboard.readText failed or permission denied:', err);
+            });
+    }
+    return Promise.resolve();
 }
 
 // Expose functions globally
-window.clipboardCopy = clipboardCopy;
-window.clipboardPaste = clipboardPaste;
+if (typeof window !== 'undefined') {
+    window.clipboardCopy = clipboardCopy;
+    window.clipboardPaste = clipboardPaste;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { clipboardCopy, clipboardPaste, fallbackCopyText };
+}
 
 },{}],6:[function(require,module,exports){
 function setPin(pin, successfunc, failfunc) {
@@ -1862,6 +1915,432 @@ window.renderOrderbookChart = renderOrderbookChart;
 window.getOrders = getOrders;
 window.getExchangeRate = getExchangeRate;
 },{}],10:[function(require,module,exports){
+'use strict';
+
+function create404Error(id) {
+    const err = new Error('missing');
+    err.status = 404;
+    err.name = 'not_found';
+    err.message = 'missing';
+    err.error = true;
+    if (id !== undefined) {
+        err.id = id;
+    }
+    return err;
+}
+
+class WalletDB {
+    constructor(name) {
+        this.name = name || 'toastwallet';
+        this.dbName = this.name + '_kv';
+        this.legacyName = '_pouch_' + this.name;
+        this._locks = new Map();
+        this._db = null;
+        this._useFallback = false;
+        this._fallbackMem = new Map();
+        this._ready = this._init();
+    }
+
+    async _init() {
+        if (typeof indexedDB === 'undefined') {
+            this._useFallback = true;
+            return;
+        }
+
+        try {
+            this._db = await this._openKVDatabase();
+            await this._migrateFromLegacyPouch();
+        } catch (err) {
+            console.warn('WalletDB: IndexedDB initialization failed, falling back to storage:', err);
+            this._useFallback = true;
+        }
+    }
+
+    _openKVDatabase() {
+        return new Promise((resolve, reject) => {
+            const req = indexedDB.open(this.dbName, 1);
+            req.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains('kv')) {
+                    db.createObjectStore('kv', { keyPath: '_id' });
+                }
+            };
+            req.onsuccess = (event) => {
+                resolve(event.target.result);
+            };
+            req.onerror = (event) => {
+                reject(event.target.error || new Error('Failed to open IndexedDB'));
+            };
+        });
+    }
+
+    async _migrateFromLegacyPouch() {
+        if (!this._db) return;
+
+        // Fast path: check if already migrated or initialized
+        const alreadyMigrated = await new Promise((resolve) => {
+            try {
+                const tx = this._db.transaction(['kv'], 'readonly');
+                const store = tx.objectStore('kv');
+                const req = store.get('_meta:pouch_migrated');
+                req.onsuccess = () => {
+                    if (req.result) {
+                        resolve(true);
+                    } else {
+                        // Check if store already contains user data
+                        const countReq = store.count ? store.count() : null;
+                        if (countReq) {
+                            countReq.onsuccess = () => resolve(countReq.result > 0);
+                            countReq.onerror = () => resolve(false);
+                        } else {
+                            resolve(false);
+                        }
+                    }
+                };
+                req.onerror = () => resolve(false);
+            } catch (e) {
+                resolve(false);
+            }
+        });
+
+        if (alreadyMigrated) {
+            return;
+        }
+
+        // Probe whether legacy PouchDB database exists
+        let legacyDbExists = false;
+        if (typeof indexedDB.databases === 'function') {
+            try {
+                const dbs = await indexedDB.databases();
+                legacyDbExists = dbs.some((d) => d.name === this.legacyName);
+            } catch (e) {
+                legacyDbExists = false;
+            }
+        } else {
+            // For browsers without indexedDB.databases():
+            // Open cautiously: if onupgradeneeded fires with oldVersion === 0, abort to avoid creating empty DB
+            legacyDbExists = await new Promise((resolve) => {
+                let aborted = false;
+                try {
+                    const req = indexedDB.open(this.legacyName);
+                    req.onupgradeneeded = (event) => {
+                        if (event.oldVersion === 0) {
+                            aborted = true;
+                            if (event.target.transaction) {
+                                try {
+                                    event.target.transaction.abort();
+                                } catch (_) {}
+                            }
+                            resolve(false);
+                        }
+                    };
+                    req.onsuccess = (event) => {
+                        const db = event.target.result;
+                        db.close();
+                        if (aborted) {
+                            resolve(false);
+                        } else {
+                            resolve(true);
+                        }
+                    };
+                    req.onerror = () => resolve(false);
+                } catch (e) {
+                    resolve(false);
+                }
+            });
+        }
+
+        if (!legacyDbExists) {
+            return;
+        }
+
+        // Open legacy database in read-only mode and read active winning documents
+        const docsToMigrate = await new Promise((resolve) => {
+            let legacyDb;
+            try {
+                const req = indexedDB.open(this.legacyName);
+                req.onsuccess = (event) => {
+                    legacyDb = event.target.result;
+                    const storeNames = legacyDb.objectStoreNames;
+                    if (!storeNames.contains('document-store') || !storeNames.contains('by-sequence')) {
+                        legacyDb.close();
+                        return resolve([]);
+                    }
+
+                    const tx = legacyDb.transaction(['document-store', 'by-sequence'], 'readonly');
+                    const docStore = tx.objectStore('document-store');
+                    const seqStore = tx.objectStore('by-sequence');
+                    const bySeqIndex = seqStore.indexNames && seqStore.indexNames.contains('_doc_id_rev') ? seqStore.index('_doc_id_rev') : null;
+
+                    const allDocsReq = docStore.getAll ? docStore.getAll() : null;
+
+                    if (allDocsReq) {
+                        allDocsReq.onsuccess = async () => {
+                            const entries = (allDocsReq.result || []).filter((e) => e && e.deletedOrLocal !== '1');
+                            const results = [];
+                            for (const entry of entries) {
+                                const doc = await new Promise((resDoc) => {
+                                    const targetKey = entry.id + '::' + entry.winningRev;
+                                    if (bySeqIndex) {
+                                        const r = bySeqIndex.get(targetKey);
+                                        r.onsuccess = () => {
+                                            if (r.result) return resDoc(r.result);
+                                            const rSeq = seqStore.get(entry.seq);
+                                            rSeq.onsuccess = () => resDoc(rSeq.result || null);
+                                            rSeq.onerror = () => resDoc(null);
+                                        };
+                                        r.onerror = () => {
+                                            const rSeq = seqStore.get(entry.seq);
+                                            rSeq.onsuccess = () => resDoc(rSeq.result || null);
+                                            rSeq.onerror = () => resDoc(null);
+                                        };
+                                    } else {
+                                        const rSeq = seqStore.get(entry.seq);
+                                        rSeq.onsuccess = () => resDoc(rSeq.result || null);
+                                        rSeq.onerror = () => resDoc(null);
+                                    }
+                                });
+
+                                if (doc) {
+                                    const cleanDoc = { ...doc };
+                                    delete cleanDoc._doc_id_rev;
+                                    delete cleanDoc._rev;
+                                    cleanDoc._id = entry.id;
+                                    results.push(cleanDoc);
+                                }
+                            }
+                            legacyDb.close();
+                            resolve(results);
+                        };
+                        allDocsReq.onerror = () => {
+                            legacyDb.close();
+                            resolve([]);
+                        };
+                    } else {
+                        // Fallback cursor if getAll is unavailable
+                        const entries = [];
+                        const cursorReq = docStore.openCursor();
+                        cursorReq.onsuccess = (e) => {
+                            const cursor = e.target.result;
+                            if (cursor) {
+                                if (cursor.value && cursor.value.deletedOrLocal !== '1') {
+                                    entries.push(cursor.value);
+                                }
+                                cursor.continue();
+                            } else {
+                                (async () => {
+                                    const results = [];
+                                    for (const entry of entries) {
+                                        const doc = await new Promise((resDoc) => {
+                                            const targetKey = entry.id + '::' + entry.winningRev;
+                                            if (bySeqIndex) {
+                                                const r = bySeqIndex.get(targetKey);
+                                                r.onsuccess = () => resDoc(r.result || null);
+                                                r.onerror = () => resDoc(null);
+                                            } else {
+                                                const rSeq = seqStore.get(entry.seq);
+                                                rSeq.onsuccess = () => resDoc(rSeq.result || null);
+                                                rSeq.onerror = () => resDoc(null);
+                                            }
+                                        });
+                                        if (doc) {
+                                            const cleanDoc = { ...doc };
+                                            delete cleanDoc._doc_id_rev;
+                                            delete cleanDoc._rev;
+                                            cleanDoc._id = entry.id;
+                                            results.push(cleanDoc);
+                                        }
+                                    }
+                                    legacyDb.close();
+                                    resolve(results);
+                                })();
+                            }
+                        };
+                        cursorReq.onerror = () => {
+                            legacyDb.close();
+                            resolve([]);
+                        };
+                    }
+                };
+                req.onerror = () => resolve([]);
+            } catch (err) {
+                if (legacyDb) {
+                    try { legacyDb.close(); } catch (_) {}
+                }
+                resolve([]);
+            }
+        });
+
+        // Write migrated documents atomically into "kv"
+        if (this._db && docsToMigrate.length > 0) {
+            await new Promise((resolve, reject) => {
+                try {
+                    const tx = this._db.transaction(['kv'], 'readwrite');
+                    const store = tx.objectStore('kv');
+                    for (const doc of docsToMigrate) {
+                        store.put(doc);
+                    }
+                    store.put({
+                        _id: '_meta:pouch_migrated',
+                        migratedAt: Date.now(),
+                        count: docsToMigrate.length
+                    });
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = (e) => reject(e.target.error);
+                    tx.onabort = (e) => reject(e.target.error || new Error('Transaction aborted'));
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        }
+    }
+
+    async get(docId) {
+        if (typeof docId !== 'string') {
+            return Promise.reject(new TypeError('docId must be a string'));
+        }
+        if (docId === '_meta:pouch_migrated') {
+            return Promise.reject(create404Error(docId));
+        }
+
+        await this._ready;
+
+        if (this._useFallback || !this._db) {
+            return this._getFallback(docId);
+        }
+
+        return new Promise((resolve, reject) => {
+            try {
+                const tx = this._db.transaction(['kv'], 'readonly');
+                const store = tx.objectStore('kv');
+                const req = store.get(docId);
+                req.onsuccess = () => {
+                    if (req.result) {
+                        const doc = { ...req.result, _id: docId };
+                        resolve(doc);
+                    } else {
+                        reject(create404Error(docId));
+                    }
+                };
+                req.onerror = (e) => {
+                    reject(e.target.error || create404Error(docId));
+                };
+            } catch (e) {
+                this._getFallback(docId).then(resolve, reject);
+            }
+        });
+    }
+
+    upsert(docId, diffFn) {
+        if (typeof docId !== 'string') {
+            return Promise.reject(new TypeError('docId must be a string'));
+        }
+        if (typeof diffFn !== 'function') {
+            return Promise.reject(new TypeError('diffFn must be a function'));
+        }
+
+        const prevLock = this._locks.get(docId) || Promise.resolve();
+        const currentLock = (async () => {
+            try {
+                await prevLock;
+            } catch (_) {}
+            await this._ready;
+            return this._doUpsert(docId, diffFn);
+        })();
+
+        this._locks.set(docId, currentLock);
+        return currentLock;
+    }
+
+    async _doUpsert(docId, diffFn) {
+        let currentDoc = {};
+        try {
+            currentDoc = await this.get(docId);
+        } catch (err) {
+            if (err && err.status === 404) {
+                currentDoc = {};
+            } else {
+                throw err;
+            }
+        }
+
+        const next = diffFn(currentDoc);
+        if (!next) {
+            return { updated: false, id: docId };
+        }
+
+        const toSave = { ...next, _id: docId };
+
+        if (this._useFallback || !this._db) {
+            return this._setFallback(docId, toSave);
+        }
+
+        return new Promise((resolve, reject) => {
+            try {
+                const tx = this._db.transaction(['kv'], 'readwrite');
+                const store = tx.objectStore('kv');
+                store.put(toSave);
+                tx.oncomplete = () => {
+                    resolve({ updated: true, id: docId });
+                };
+                tx.onerror = (e) => {
+                    reject(e.target.error || new Error('Upsert write failed'));
+                };
+                tx.onabort = (e) => {
+                    reject(e.target.error || new Error('Upsert transaction aborted'));
+                };
+            } catch (e) {
+                this._setFallback(docId, toSave).then(resolve, reject);
+            }
+        });
+    }
+
+    _getFallback(docId) {
+        if (typeof localStorage !== 'undefined') {
+            try {
+                const key = 'toastwallet_kv:' + this.name + ':' + docId;
+                const raw = localStorage.getItem(key);
+                if (raw !== null) {
+                    return Promise.resolve({ ...JSON.parse(raw), _id: docId });
+                }
+            } catch (e) {}
+        }
+        if (this._fallbackMem.has(docId)) {
+            return Promise.resolve({ ...this._fallbackMem.get(docId), _id: docId });
+        }
+        return Promise.reject(create404Error(docId));
+    }
+
+    _setFallback(docId, toSave) {
+        if (typeof localStorage !== 'undefined') {
+            try {
+                const key = 'toastwallet_kv:' + this.name + ':' + docId;
+                localStorage.setItem(key, JSON.stringify(toSave));
+            } catch (e) {}
+        }
+        this._fallbackMem.set(docId, { ...toSave });
+        return Promise.resolve({ updated: true, id: docId });
+    }
+
+    close() {
+        if (this._db) {
+            try {
+                this._db.close();
+            } catch (_) {}
+            this._db = null;
+        }
+    }
+}
+
+if (typeof window !== 'undefined') {
+    window.WalletDB = WalletDB;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { WalletDB, create404Error };
+}
+
+},{}],11:[function(require,module,exports){
 function setRemoteGateway(server) {
 	currentServer = server;
 	remote = new xrpl.Client(server, { connectionTimeout: 10000 });
@@ -2438,7 +2917,7 @@ window.checkConnection = checkConnection;
 window.serverCycle = serverCycle;
 window.injectCompatibilityLayer = injectCompatibilityLayer;
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 function sendPayment(passphrase, fromacc, xrpAmount, destination, sourceTag, destTag, invoiceID, asset, issuer, successfunc, failurefunc) {
 	
 	if (debug) console.log("sendPayment - " + xrpAmount);
@@ -3128,7 +3607,7 @@ window.sendAccountFlagsTx = sendAccountFlagsTx;
 window.sendAccountFlagsTxOffline = sendAccountFlagsTxOffline;
 window.submitSignedTransaction = submitSignedTransaction;
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 window.AppState = {
     debug: true,
     ontestnet: false,
@@ -3202,7 +3681,7 @@ Object.keys(window.AppState).forEach(function(key) {
     });
 });
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 function refreshAccounts(after) {
     // mark and sweep to remove any dead accounts
     
@@ -3858,7 +4337,7 @@ window.importAddress = importAddress;
 window.generateAddress = generateAddress;
 window.getSecretForAccount = getSecretForAccount;
 window.removeSecret = removeSecret;
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 function showBackupReminderTab(){
 	showTab('#tabbackupreminder');
 }
@@ -4253,7 +4732,7 @@ window.doRestoreBackup = doRestoreBackup;
 window.exportWallet = exportWallet;
 window.importWallet = importWallet;
 window.doCheckBackup = doCheckBackup;
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 function showAccountFlags(account, dontshow) {
     blockInput();
     $('#afaddress').val(dispaddr(account));
@@ -4484,7 +4963,7 @@ function doConfirmAccountFlags(passphrase) {
 window.showAccountFlags = showAccountFlags;
 window.doSetAccountFlags = doSetAccountFlags;
 window.doConfirmAccountFlags = doConfirmAccountFlags;
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 function doShowLogin() {
 	if (debug) console.log("doShowLogin");
     if (paylink_pending != null) $('#tablogin>center>div').addClass('pinpad_pending');
@@ -4666,7 +5145,7 @@ window.renderEnteredPin = renderEnteredPin;
 window.doFinishSetup = doFinishSetup;
 window.restart = restart;
 window.__freshinstall = __freshinstall;
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 function showNewOrder(account, direction, currency, issuer, balance, bid, ask) {
     if (debug) console.log("showNewOrder - direction: " + direction + ", currency: " + currency + ", issuer: " + issuer + ", balance: " + balance + ", bid: " + bid + ", ask: " + ask); 
     $('#ntloaddress').val(dispaddr(account));
@@ -5183,7 +5662,7 @@ window.doPlaceCancelOrder = doPlaceCancelOrder;
 window.doPlaceOrder = doPlaceOrder;
 window.doConfirmCancelOrder = doConfirmCancelOrder;
 window.doConfirmOrder = doConfirmOrder;
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 function showPaymentTab(account, currency, issuer, balance) {
     if (debug) console.log("showPaymentTab - account: " + account + ", currency: " + currency + ", issuer: " + issuer + ", balance: " + balance); 
     clearPaymentScreen();
@@ -6062,7 +6541,7 @@ window.xls2d = xls2d;
 window.decodeSecretAddressURI = decodeSecretAddressURI;
 window.checkAccountIsFunded = checkAccountIsFunded;
 window.validateOfflineCode = validateOfflineCode;
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 function doUpdateInterfaceSettings() {
     var currency = $('#valuationcurrency option:selected').data('currency')
     var counterparty = $('#valuationcurrency option:selected').data('counterparty')
@@ -6746,7 +7225,7 @@ window._validatePassphraseCacheHit = _validatePassphraseCacheHit;
 window.setPassphrase = setPassphrase;
 window.getRpPpData = getRpPpData;
 window.validatePassphaseOrRecovery = validatePassphaseOrRecovery;
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 function doViewTransaction(hash) {
     if (debug) console.log('doViewTransaction -- ' + hash);
     blockInput();	
@@ -6874,7 +7353,7 @@ function doGetTransactions(address, marker) {
 // Expose functions globally
 window.doViewTransaction = doViewTransaction;
 window.doGetTransactions = doGetTransactions;
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 function refreshTrustlines(account, after) {
     if (offlinemode) { $('#adtrustlines').html('<li><center><i>Offline trading not yet supported.<br>You can still send from a trustline balance and/or create a trustline.</i></center></li>'); return; }
     

@@ -53,7 +53,9 @@ test('ui-assets: purged dead vendor files and packages are absent', () => {
         'www/css/bootstrap-theme.css',
         'www/css/bootstrap-theme.css.map',
         'www/css/bootstrap-theme.min.css',
-        'www/css/bootstrap-theme.min.css.map'
+        'www/css/bootstrap-theme.min.css.map',
+        'www/js/pouchdb.min.js',
+        'www/js/pouchdb.upsert.min.js'
     ];
 
     for (const file of deadFiles) {
@@ -65,4 +67,6 @@ test('ui-assets: purged dead vendor files and packages are absent', () => {
     assert.equal(pkg.dependencies['jquery'], undefined, 'jquery must be purged from package.json');
     assert.equal(pkg.dependencies['node-pre-gyp'], undefined, 'node-pre-gyp must be purged from package.json');
     assert.equal(pkg.dependencies['random-bytes'], undefined, 'random-bytes must be purged from package.json');
+    assert.equal(pkg.dependencies['pouchdb'], undefined, 'pouchdb must be purged from package.json');
+    assert.equal(pkg.dependencies['pouchdb-upsert'], undefined, 'pouchdb-upsert must be purged from package.json');
 });

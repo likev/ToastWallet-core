@@ -567,7 +567,7 @@ var app = {
 	    // function, we must explicitly call 'app.receivedEvent(...);'
 onDeviceReady: function() {
 			if (debug) console.log("onDeviceReady:1");
-		       	db = new PouchDB('toastwallet');
+		       	db = new WalletDB('toastwallet');
 			if (debug) console.log("onDeviceReady:2");
 			rebindAllHandlers();
 			setTimeout(initAppUI, 0);

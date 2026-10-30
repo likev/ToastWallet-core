@@ -1,0 +1,172 @@
+{
+  "database": "_pouch_toastwallet",
+  "version": 5,
+  "stores": {
+    "document-store": [
+      {
+        "id": "pindata",
+        "winningRev": "2-pindata-rev2",
+        "deletedOrLocal": "0",
+        "seq": 2,
+        "data": "{\"rev_tree\":[{\"pos\":1,\"ids\":[\"pindata-rev1\",{\"status\":\"available\"},[{\"pos\":2,\"ids\":[\"pindata-rev2\",{\"status\":\"available\"},[]]}]]}]}"
+      },
+      {
+        "id": "ppdata",
+        "winningRev": "1-ppdata-rev1",
+        "deletedOrLocal": "0",
+        "seq": 3,
+        "data": "{\"rev_tree\":[{\"pos\":1,\"ids\":[\"ppdata-rev1\",{\"status\":\"available\"},[]]}]}"
+      },
+      {
+        "id": "rpdata",
+        "winningRev": "1-rpdata-rev1",
+        "deletedOrLocal": "0",
+        "seq": 4,
+        "data": "{\"rev_tree\":[{\"pos\":1,\"ids\":[\"rpdata-rev1\",{\"status\":\"available\"},[]]}]}"
+      },
+      {
+        "id": "accounts",
+        "winningRev": "3-accounts-rev3",
+        "deletedOrLocal": "0",
+        "seq": 7,
+        "data": "{\"rev_tree\":[{\"pos\":1,\"ids\":[\"accounts-rev1\",{\"status\":\"available\"},[{\"pos\":2,\"ids\":[\"accounts-rev2\",{\"status\":\"available\"},[{\"pos\":3,\"ids\":[\"accounts-rev3\",{\"status\":\"available\"},[]]}]]}]]}]}"
+      },
+      {
+        "id": "savedgateways",
+        "winningRev": "1-savedgateways-rev1",
+        "deletedOrLocal": "0",
+        "seq": 8,
+        "data": "{\"rev_tree\":[{\"pos\":1,\"ids\":[\"savedgateways-rev1\",{\"status\":\"available\"},[]]}]}"
+      },
+      {
+        "id": "interfacesettings",
+        "winningRev": "2-interfacesettings-rev2",
+        "deletedOrLocal": "0",
+        "seq": 10,
+        "data": "{\"rev_tree\":[{\"pos\":1,\"ids\":[\"interfacesettings-rev1\",{\"status\":\"available\"},[{\"pos\":2,\"ids\":[\"interfacesettings-rev2\",{\"status\":\"available\"},[]]}]]}]}"
+      },
+      {
+        "id": "lastbackupreminder",
+        "winningRev": "1-lastbackupreminder-rev1",
+        "deletedOrLocal": "0",
+        "seq": 11,
+        "data": "{\"rev_tree\":[{\"pos\":1,\"ids\":[\"lastbackupreminder-rev1\",{\"status\":\"available\"},[]]}]}"
+      },
+      {
+        "id": "lastdonated",
+        "winningRev": "1-lastdonated-rev1",
+        "deletedOrLocal": "0",
+        "seq": 12,
+        "data": "{\"rev_tree\":[{\"pos\":1,\"ids\":[\"lastdonated-rev1\",{\"status\":\"available\"},[]]}]}"
+      },
+      {
+        "id": "deleted_sample_doc",
+        "winningRev": "2-deleted-rev2",
+        "deletedOrLocal": "1",
+        "seq": 14,
+        "data": "{\"rev_tree\":[{\"pos\":1,\"ids\":[\"deleted-rev1\",{\"status\":\"available\"},[{\"pos\":2,\"ids\":[\"deleted-rev2\",{\"status\":\"deleted\"},[]]}]]}]}"
+      }
+    ],
+    "by-sequence": [
+      {
+        "seq": 1,
+        "_doc_id_rev": "pindata::1-pindata-rev1",
+        "_id": "pindata",
+        "_rev": "1-pindata-rev1",
+        "data": "{\"salt\":\"old_pindata_salt\",\"hash\":\"old_pindata_hash\"}"
+      },
+      {
+        "seq": 2,
+        "_doc_id_rev": "pindata::2-pindata-rev2",
+        "_id": "pindata",
+        "_rev": "2-pindata-rev2",
+        "data": "{\"salt\":\"123f17cc0146821236803c050f88aae968c76a1322b6521bfbc04c8b9fd0ebd55ae4388b\",\"hash\":\"3e5da33a5a4a5ccdb0fca284c41f251c062e0cd03fd7223ed02e7aa3dbd134d4c37f7aba\"}"
+      },
+      {
+        "seq": 3,
+        "_doc_id_rev": "ppdata::1-ppdata-rev1",
+        "_id": "ppdata",
+        "_rev": "1-ppdata-rev1",
+        "data": "{\"salt1\":\"3286cb4db351dd599be5c17a67d97d604fa25abbd9503cf156886f5704d425e235a91c49\",\"salt2\":\"3bd6fb4713901da7c24f480913fb6091fd4d8e0a7fb04b13c5d86b4b91d3751a52f5c5fc\",\"hash\":\"83298af32b188f2450d4e28a92d1f24fcfaeb196\"}"
+      },
+      {
+        "seq": 4,
+        "_doc_id_rev": "rpdata::1-rpdata-rev1",
+        "_id": "rpdata",
+        "_rev": "1-rpdata-rev1",
+        "data": "{\"salt1\":\"b55328d26a021e798577b9280adee35e0688c179171acedc35c7240a7026ad82e5f8bb42\",\"salt2\":\"65e53a88975ebe08eb3a00cbe6d1aa007fd9758f9695cea769a752c895add8b5feea8b22\",\"hash\":\"75646b113d3316850b72959d37f3dda386d20141\",\"erk\":\"9235b0552c7aae4ef2da1fec77c4abf4f2abc055aa4b28911729bfc287e05455050fa9aee0dbfa15c7cedf5f3aa6a5e7eb66c41eb4252328dcfea767\"}"
+      },
+      {
+        "seq": 5,
+        "_doc_id_rev": "accounts::1-accounts-rev1",
+        "_id": "accounts",
+        "_rev": "1-accounts-rev1",
+        "data": "{\"rMPrYipfRHJryWfwYARAwhsVGvHwpUDjgA\":{\"nickname\":\"Initial\"}}"
+      },
+      {
+        "seq": 6,
+        "_doc_id_rev": "accounts::2-accounts-rev2",
+        "_id": "accounts",
+        "_rev": "2-accounts-rev2",
+        "data": "{\"rMPrYipfRHJryWfwYARAwhsVGvHwpUDjgA\":{\"nickname\":\"Intermediate\"}}"
+      },
+      {
+        "seq": 7,
+        "_doc_id_rev": "accounts::3-accounts-rev3",
+        "_id": "accounts",
+        "_rev": "3-accounts-rev3",
+        "data": "{\"rMPrYipfRHJryWfwYARAwhsVGvHwpUDjgA\":{\"ppsalt\":\"ee2ea64e2aeb5a9221e753296f55760e89fc2a86bf4f32fb5b4b4c58b38b8c7ee9654a34\",\"ppsecret\":\"20f6789349d3851ad7e8336a9aedc6c9f04fbc2d85b6a19a4da6afe12b5334fed8734db1852360f50d5806479d61a73f438324d03b9f7faf4ca67b4cb819a0afef065fa1e122cc0e91\",\"rpsalt\":\"9f5948a58b09e63c46f0c9655a0f6ec996a94a9af5abdd1a2ded55aac3c87d127ed6e663\",\"rpsecret\":\"048844d2a49954b8685c99942ab796d7b3996d5091587f1964becf471f41fd22bc427cd2fbe681a48b0c801378d123719f066e0befefb77a3404ec7cf7962aaeba364b60a34db11374\",\"nickname\":\"Test Secp256k1\"}}"
+      },
+      {
+        "seq": 8,
+        "_doc_id_rev": "savedgateways::1-savedgateways-rev1",
+        "_id": "savedgateways",
+        "_rev": "1-savedgateways-rev1",
+        "data": "{\"gateways\":[\"wss://s1.ripple.com:443\",\"wss://s2.ripple.com:443\"]}"
+      },
+      {
+        "seq": 9,
+        "_doc_id_rev": "interfacesettings::1-interfacesettings-rev1",
+        "_id": "interfacesettings",
+        "_rev": "1-interfacesettings-rev1",
+        "data": "{\"valuation_currency\":\"EUR\"}"
+      },
+      {
+        "seq": 10,
+        "_doc_id_rev": "interfacesettings::2-interfacesettings-rev2",
+        "_id": "interfacesettings",
+        "_rev": "2-interfacesettings-rev2",
+        "data": "{\"valuation_counterparty\":\"rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B\",\"valuation_currency\":\"USD\",\"display_xaddresses\":true}"
+      },
+      {
+        "seq": 11,
+        "_doc_id_rev": "lastbackupreminder::1-lastbackupreminder-rev1",
+        "_id": "lastbackupreminder",
+        "_rev": "1-lastbackupreminder-rev1",
+        "data": "{\"lastreminder\":\"1600000000\"}"
+      },
+      {
+        "seq": 12,
+        "_doc_id_rev": "lastdonated::1-lastdonated-rev1",
+        "_id": "lastdonated",
+        "_rev": "1-lastdonated-rev1",
+        "data": "{\"lastdonated\":\"1500000000\"}"
+      },
+      {
+        "seq": 13,
+        "_doc_id_rev": "deleted_sample_doc::1-deleted-rev1",
+        "_id": "deleted_sample_doc",
+        "_rev": "1-deleted-rev1",
+        "data": "{\"temp\":\"will_be_deleted\"}"
+      },
+      {
+        "seq": 14,
+        "_doc_id_rev": "deleted_sample_doc::2-deleted-rev2",
+        "_id": "deleted_sample_doc",
+        "_rev": "2-deleted-rev2",
+        "_deleted": true,
+        "data": "{}"
+      }
+    ]
+  }
+}

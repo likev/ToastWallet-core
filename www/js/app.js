@@ -1,4 +1,5 @@
 require('./state.js');
+require('./modules/storage.js');
 require('./modules/address.js');
 require('./modules/clipboard.js');
 require('./modules/navigation.js');
