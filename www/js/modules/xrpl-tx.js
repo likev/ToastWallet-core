@@ -1,3 +1,5 @@
+'use strict';
+
 function isValidTag(tag) {
     if (tag === undefined || tag === null || tag === false || tag === '') return false;
     const num = Number(tag);
@@ -292,7 +294,7 @@ function sendOfferCreate(passphrase, fromacc, amount, asset, issuer, price, sell
               },
               totalPrice: {
                     currency: 'XRP',
-                    value:  roundXRP( price * amount )  + ''
+                    value: (typeof BigNumber !== 'undefined') ? new BigNumber(price).multipliedBy(amount).decimalPlaces(6, BigNumber.ROUND_HALF_UP).toFixed() : (roundXRP( price * amount )  + '')
               }
 			};
             if (typeof(expiry) === 'string') order['expirationTime'] = expiry;
@@ -353,7 +355,7 @@ function sendOfferCreateOffline(passphrase, fromacc, amount, asset, issuer, pric
               },
               totalPrice: {
                     currency: 'XRP',
-                    value:  roundXRP( price * amount ) + '' 
+                    value: (typeof BigNumber !== 'undefined') ? new BigNumber(price).multipliedBy(amount).decimalPlaces(6, BigNumber.ROUND_HALF_UP).toFixed() : (roundXRP( price * amount ) + '') 
               }
 			};
             if (typeof(expiry) === 'string') order['expirationTime'] = expiry;

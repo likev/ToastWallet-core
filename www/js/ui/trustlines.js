@@ -303,7 +303,7 @@ function doConfirmTrustline(passphrase) {
                 // we're just going to create the tx as a QR code and display it
 				navigator.notification.alert("A QR code of this signed trustline transaction has been generated. Scan it using your online device to complete the transaction.", 
 					function(){
-                        return sendTrustlineTxOffline(passphrase, confirmtl.atladdress, confirmtl.atlcurrency, confirmtl.atlissueraddr, confirmtl.atllimit, confirmtl.atlrippling, confirmtl.accseqid, confirmtl.ledseqid, confirmtl.fee);
+                        return sendTrustLineTxOffline(passphrase, confirmtl.atladdress, confirmtl.atlissueraddr, confirmtl.atlcurrency, confirmtl.atllimit, confirmtl.atlrippling, confirmtl.accseqid, confirmtl.ledseqid, confirmtl.fee);
                     }, 
 					"Offline Transaction", 
 					"OK"
@@ -312,7 +312,7 @@ function doConfirmTrustline(passphrase) {
             }
 			checkConnection(
 				function(){
-					sendTrustlineTx(passphrase, confirmtl.atladdress, confirmtl.atlcurrency, confirmtl.atlissueraddr, confirmtl.atllimit, confirmtl.atlrippling, 
+					sendTrustLineTx(passphrase, confirmtl.atladdress, confirmtl.atlissueraddr, confirmtl.atlcurrency, confirmtl.atllimit, confirmtl.atlrippling, 
 						function(wasqueued){
 								navigator.notification.alert("Your trustline transaction was submitted successfully.", 
 									function(){
@@ -353,6 +353,25 @@ function doConfirmTrustline(passphrase) {
 			);
 		}
 	);
+}
+
+function parseLimit(val) {
+    if (val === undefined || val === null) return false;
+    val = (val + '').trim();
+    if (val.length === 0) return false;
+    if (!/^[0-9]+(\.[0-9]+)?$/.test(val)) return false;
+    try {
+        if (typeof BigNumber !== 'undefined') {
+            var bn = new BigNumber(val);
+            if (bn.isNaN() || bn.isNegative() || bn.isZero()) return false;
+            return bn.toString(10);
+        }
+        var num = Number(val);
+        if (isNaN(num) || num <= 0) return false;
+        return val;
+    } catch (e) {
+        return false;
+    }
 }
 
 function doModifyTrustline(nonce) {
@@ -637,6 +656,7 @@ if (typeof window !== 'undefined') {
     window.doAddTrustline = doAddTrustline;
     window.validateCurrency = validateCurrency;
     window.onToggleIssueOwnCurrency = onToggleIssueOwnCurrency;
+    window.parseLimit = parseLimit;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
@@ -647,6 +667,7 @@ if (typeof module !== 'undefined' && module.exports) {
         doModifyTrustline,
         doAddTrustline,
         validateCurrency,
-        onToggleIssueOwnCurrency
+        onToggleIssueOwnCurrency,
+        parseLimit
     };
 }

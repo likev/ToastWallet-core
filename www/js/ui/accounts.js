@@ -370,7 +370,7 @@ function doRevealRippleSecret(passphrase, address) {
         function() {
             navigator.notification.alert("Your passphrase was entered incorrectly. Note you cannot use a recovery phrase here.", 
 				function(){
-					var gap = byId("genaccpassword");
+					var gap = byId("rsecaccpassword");
 					if (gap) gap.focus();
 					unblockInput();
 				}, 
@@ -559,68 +559,79 @@ function importAddress(secret, address, nickname, passphrase, successfunc, failu
 		function(doc) {
 			return { data: JSON.stringify({}) }; 
 	});
-	var _import = function(secret, address, nickname, passphrase, successfunc, failurefunc) {
+	var _import = function(secret, address, nickname, passphrase, successfunc, failurefunc, algorithm) {
 	// to proceed to storage we need to generate salts and secrets
 	var ppsalt = sodium.randombytes_buf(sodium.crypto_pwhash_scryptsalsa208sha256_SALTBYTES);
 	var rpsalt = sodium.randombytes_buf(sodium.crypto_pwhash_scryptsalsa208sha256_SALTBYTES);
+    var savedAlgorithm = algorithm || (typeof secret === 'string' && secret.startsWith('sEd') ? 'ed25519' : 'ecdsa-secp256k1');
 	getRpPpData(
 		function(ppdata, rpdata) {
             var ppParams = (typeof getScryptParamsForVersion === 'function')
                 ? getScryptParamsForVersion(ppdata.version)
                 : { opsLimit: (ppdata.version === 2 ? 524288 : 4), memLimit: (ppdata.version === 2 ? 16777216 : 33554432) };
 
-            var secret32key =
-				sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
-					passphrase,
-					fromhex_chksum(ppdata.salt1),
-					ppParams.opsLimit,
-					ppParams.memLimit);
-			// decrypt erk
-			var erk = fromhex_chksum(rpdata.erk);
-			var nonce = erk.slice(0, sodium.crypto_box_NONCEBYTES);
-			erk = erk.slice(sodium.crypto_box_NONCEBYTES);
-			var recoverykey = sodium.crypto_secretbox_open_easy(erk, nonce, secret32key);	
-			// generate regular secret key
-            var secretkey =
-				sodium.crypto_pwhash_scryptsalsa208sha256(16,
-					passphrase,
-					fromhex_chksum(ppdata.salt1),
-					ppParams.opsLimit,
-					ppParams.memLimit);			
-			passphrase = "";
-			// now generate the keys that will be used to lock the ppsecret and rpsecret boxes
-			var ppsecret32key = 
-				sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
-					secretkey,
-					ppsalt,
-					524288,
-					16777216);
-			
-			secretkey = "";
-			var rpsecret32key = 
-				sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
-					recoverykey,
-					rpsalt,
-					524288,
-					16777216);
-			recoverykey = "";
-			// finally lock the true ripple secret into two boxes: rpsecret and ppsecret
-			var ppnonce = sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES);
-			var rpnonce = sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES);
-			var ppsecret = tohex_chksum(sodium.from_hex(sodium.to_hex(ppnonce) + sodium.crypto_secretbox_easy(
-				secret,
-				ppnonce,
-				ppsecret32key,
-			'hex')));
-			
-			ppsecret32key = "";
-			var rpsecret = tohex_chksum(sodium.from_hex(sodium.to_hex(rpnonce) + sodium.crypto_secretbox_easy(
-				secret,
-				rpnonce,
-				rpsecret32key,
-			'hex')));
-			rpsecret32key = "";
-			secret = "";
+            var secret32key = null;
+            var recoverykey = null;
+            var secretkey = null;
+            var ppsecret32key = null;
+            var rpsecret32key = null;
+            var ppsecret = null;
+            var rpsecret = null;
+            try {
+                secret32key =
+				    sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
+					    passphrase,
+					    fromhex_chksum(ppdata.salt1),
+					    ppParams.opsLimit,
+					    ppParams.memLimit);
+			    // decrypt erk
+			    var erk = fromhex_chksum(rpdata.erk);
+			    var nonce = erk.slice(0, sodium.crypto_box_NONCEBYTES);
+			    erk = erk.slice(sodium.crypto_box_NONCEBYTES);
+			    recoverykey = sodium.crypto_secretbox_open_easy(erk, nonce, secret32key);	
+			    // generate regular secret key
+                secretkey =
+				    sodium.crypto_pwhash_scryptsalsa208sha256(16,
+					    passphrase,
+					    fromhex_chksum(ppdata.salt1),
+					    ppParams.opsLimit,
+					    ppParams.memLimit);			
+			    passphrase = "";
+			    // now generate the keys that will be used to lock the ppsecret and rpsecret boxes
+			    ppsecret32key = 
+				    sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
+					    secretkey,
+					    ppsalt,
+					    524288,
+					    16777216);
+			    rpsecret32key = 
+				    sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
+					    recoverykey,
+					    rpsalt,
+					    524288,
+					    16777216);
+			    // finally lock the true ripple secret into two boxes: rpsecret and ppsecret
+			    var ppnonce = sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES);
+			    var rpnonce = sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES);
+			    ppsecret = tohex_chksum(sodium.from_hex(sodium.to_hex(ppnonce) + sodium.crypto_secretbox_easy(
+				    secret,
+				    ppnonce,
+				    ppsecret32key,
+			        'hex')));
+			    rpsecret = tohex_chksum(sodium.from_hex(sodium.to_hex(rpnonce) + sodium.crypto_secretbox_easy(
+				    secret,
+				    rpnonce,
+				    rpsecret32key,
+			        'hex')));
+            } finally {
+                if (secret32key instanceof Uint8Array) secret32key.fill(0);
+                if (recoverykey instanceof Uint8Array) recoverykey.fill(0);
+                if (secretkey instanceof Uint8Array) secretkey.fill(0);
+                if (ppsecret32key instanceof Uint8Array) ppsecret32key.fill(0);
+                if (rpsecret32key instanceof Uint8Array) rpsecret32key.fill(0);
+                passphrase = "";
+                secret = "";
+            }
 			if (nickname == undefined) nickname = "";
 			var f = function(accounts) { try {
 				if (accounts.data == undefined || accounts.data == "") {
@@ -632,9 +643,13 @@ function importAddress(secret, address, nickname, passphrase, successfunc, failu
 					ppsalt: tohex_chksum(ppsalt), ppsecret: ppsecret,
 					rpsalt: tohex_chksum(rpsalt), rpsecret: rpsecret,
 					nickname: nickname,
+					algorithm: savedAlgorithm,
 					version: 2
 				};
 				db.upsert("accounts", function(doc) { return { data: JSON.stringify(accounts)}; }).then(function(x){
+					if (typeof window !== 'undefined' && window.AppState) {
+						window.AppState.accounts = accounts;
+					}
 					navigator.notification.alert("XRP address added successfully.", function(){}, "Success", "OK");
 					successfunc();
 				}).catch(function(x){
@@ -651,9 +666,9 @@ function importAddress(secret, address, nickname, passphrase, successfunc, failu
 		navigator.notification.alert("Invalid secret.", failurefunc, "Error", "OK");
 		return;
 	}
-    var normalImport = function(secret, address, nickname, passphrase, successfunc, failurefunc) {
+    var normalImport = function(secret, address, nickname, passphrase, successfunc, failurefunc, algorithm) {
         // this is an ordinary account
-        if (offlinemode) return _import(secret, address, nickname, passphrase, successfunc, failurefunc);
+        if (offlinemode) return _import(secret, address, nickname, passphrase, successfunc, failurefunc, algorithm);
         // if we are connected then run a check to see if the master key is disabled
         return remote.getSettings(address).then(
         settings => {
@@ -664,34 +679,51 @@ function importAddress(secret, address, nickname, passphrase, successfunc, failu
                 navigator.notification.alert("The secret you are attempting to add has been disabled on the corresponding XRP address, and therefore cannot be used. If this is an account you own then you need to add it using the current regular key.", failurefunc, "Failure", "OK");
             } else {
                 // this is fine, the account already exists but the master key is still valid
-                return _import(secret, address, nickname, passphrase, successfunc, failurefunc);
+                return _import(secret, address, nickname, passphrase, successfunc, failurefunc, algorithm);
             }
         }).catch( 
         e => {
             // if we can't get this data it's probably because the account doesn't exist or we aren't connected / can't get a req out
             // either way just add the account
-            return _import(secret, address, nickname, passphrase, successfunc, failurefunc);
+            return _import(secret, address, nickname, passphrase, successfunc, failurefunc, algorithm);
         });
     };
+
+    var secpAddr = null;
+    var edAddr = null;
+    try {
+        secpAddr = xrpl.deriveAddress(xrpl.deriveKeypair(secret, { algorithm: 'ecdsa-secp256k1' }).publicKey);
+    } catch(e) {}
+    try {
+        edAddr = xrpl.deriveAddress(xrpl.deriveKeypair(secret, { algorithm: 'ed25519' }).publicKey);
+    } catch(e) {}
+    if (!secpAddr && !edAddr) {
+        try { secpAddr = xrpl.deriveAddress(xrpl.deriveKeypair(secret).publicKey); } catch(e) {}
+    }
+
 	if (address == "") {
-		address = generateAddress(secret).address;
-        return normalImport(secret, address, nickname, passphrase, successfunc, failurefunc);
+        var alg = secret.startsWith('sEd') ? 'ed25519' : 'ecdsa-secp256k1';
+        address = (alg === 'ed25519') ? (edAddr || secpAddr) : (secpAddr || edAddr);
+        return normalImport(secret, address, nickname, passphrase, successfunc, failurefunc, alg);
 	} else {
 		// make sure the address is valid, either corresponding to the secret or corresponding to setregular key
-		var pubaddress = xrpl.deriveAddress(xrpl.deriveKeypair(secret).publicKey);
-		if (pubaddress == address) {
-            return normalImport(secret, address, nickname, passphrase, successfunc, failurefunc);
-		} else {
+		if (address == edAddr) {
+            return normalImport(secret, address, nickname, passphrase, successfunc, failurefunc, 'ed25519');
+		} else if (address == secpAddr) {
+            return normalImport(secret, address, nickname, passphrase, successfunc, failurefunc, 'ecdsa-secp256k1');
+        } else {
+            var defaultAlg = secret.startsWith('sEd') ? 'ed25519' : 'ecdsa-secp256k1';
             if (offlinemode) {
-                return navigator.notification.alert("You are adding an account with a regular key in offline mode. Toast Wallet has no way to ensure this regular key corresponds to your XRP address. The account will be added however transactions may fail if the regular key is incorrect.", ()=>{return _import(secret, address, nickname, passphrase, successfunc, failurefunc);}, "Warning", "OK");
+                return navigator.notification.alert("You are adding an account with a regular key in offline mode. Toast Wallet has no way to ensure this regular key corresponds to your XRP address. The account will be added however transactions may fail if the regular key is incorrect.", ()=>{return _import(secret, address, nickname, passphrase, successfunc, failurefunc, defaultAlg);}, "Warning", "OK");
             }
 			// this could be a set regular key account, check the regular key
 			return remote.getSettings(address).then(
 			settings => {
 				if ('regularKey' in settings) {
-                    if (settings['regularKey'] == pubaddress) {
-    					// this is fine, continue
-	    				return _import(secret, address, nickname, passphrase, successfunc, failurefunc);
+                    if (settings['regularKey'] == secpAddr) {
+	    				return _import(secret, address, nickname, passphrase, successfunc, failurefunc, 'ecdsa-secp256k1');
+                    } else if (settings['regularKey'] == edAddr) {
+	    				return _import(secret, address, nickname, passphrase, successfunc, failurefunc, 'ed25519');
                     } else {    
                         return navigator.notification.alert("The address you specified has a regular key set, however that regular key does not correspond to the secret you have provided.", failurefunc, "Failure", "OK");
                     }
@@ -713,9 +745,17 @@ function generateAddress(secret) {
 		if (!validateSecret(secret))
 		 	return;
 	
+		var algorithm = secret.startsWith('sEd') ? 'ed25519' : 'ecdsa-secp256k1';
+		var kp;
+		try {
+			kp = xrpl.deriveKeypair(secret, { algorithm: algorithm });
+		} catch(e) {
+			kp = xrpl.deriveKeypair(secret);
+		}
 		return {
 			secret: secret,
-			address: xrpl.deriveAddress(xrpl.deriveKeypair(secret).publicKey)
+			address: xrpl.deriveAddress(kp.publicKey),
+			algorithm: algorithm
 		};
 	}
 }
@@ -738,30 +778,35 @@ function getSecretForAccount(passphrase, address, successfunc, failurefunc) {
                 ? getScryptParamsForVersion(accounts[address].version)
                 : { opsLimit: (accounts[address].version === 2 ? 524288 : 4), memLimit: (accounts[address].version === 2 ? 16777216 : 33554432) };
 
-			// generate regular secret key
-			var secretkey =
-				sodium.crypto_pwhash_scryptsalsa208sha256(16,
-					passphrase,
-					fromhex_chksum(ppdata.salt1),
-					ppParams.opsLimit,
-					ppParams.memLimit);			
-			passphrase = "";
-			// now generate the keys that will be used to lock the ppsecret and rpsecret boxes
-			var ppsecret32key = 
-				sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
-					secretkey,
-					fromhex_chksum(accounts[address].ppsalt),
-					accParams.opsLimit,
-					accParams.memLimit);
-			
-			secretkey = "";
-		
-			// decrypt ppsecret 
-			var ppsecret = fromhex_chksum(accounts[address].ppsecret);
-			var nonce = ppsecret.slice(0, sodium.crypto_box_NONCEBYTES);
-			ppsecret = ppsecret.slice(sodium.crypto_box_NONCEBYTES);
-			var secret = sodium.crypto_secretbox_open_easy(ppsecret, nonce, ppsecret32key);
-			successfunc(sodium.to_string(secret));
+			var secretkey = null;
+			var ppsecret32key = null;
+			var secret = null;
+			try {
+				secretkey =
+					sodium.crypto_pwhash_scryptsalsa208sha256(16,
+						passphrase,
+						fromhex_chksum(ppdata.salt1),
+						ppParams.opsLimit,
+						ppParams.memLimit);			
+				passphrase = "";
+				// now generate the keys that will be used to lock the ppsecret and rpsecret boxes
+				ppsecret32key = 
+					sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
+						secretkey,
+						fromhex_chksum(accounts[address].ppsalt),
+						accParams.opsLimit,
+						accParams.memLimit);
+				// decrypt ppsecret 
+				var ppsecret = fromhex_chksum(accounts[address].ppsecret);
+				var nonce = ppsecret.slice(0, sodium.crypto_box_NONCEBYTES);
+				ppsecret = ppsecret.slice(sodium.crypto_box_NONCEBYTES);
+				secret = sodium.crypto_secretbox_open_easy(ppsecret, nonce, ppsecret32key);
+				successfunc(sodium.to_string(secret));
+			} finally {
+				if (secretkey instanceof Uint8Array) secretkey.fill(0);
+				if (ppsecret32key instanceof Uint8Array) ppsecret32key.fill(0);
+				if (secret instanceof Uint8Array) secret.fill(0);
+			}
 		} catch(e) {handle_error(e); failurefunc();}});
 	} catch(e) {handle_error(e); failurefunc();}});
 }
@@ -777,6 +822,9 @@ function removeSecret(address, successfunc, failurefunc) {
 			return failurefunc();
 		delete accounts[address];
 		db.upsert("accounts", function(doc) { return { data: JSON.stringify(accounts)}; }).then(function(x){
+			if (typeof window !== 'undefined' && window.AppState && window.AppState.accounts) {
+				delete window.AppState.accounts[address];
+			}
 			successfunc();
 		}).catch(function(x){
 			failurefunc();

@@ -1,3 +1,5 @@
+'use strict';
+
 function renderOrderbookChart(orders, eleid, exchangerate, tlbalance) {
     var o = orders;
     var bids_raw = o.bids;

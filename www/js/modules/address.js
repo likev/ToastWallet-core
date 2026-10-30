@@ -1,3 +1,5 @@
+'use strict';
+
 function xaddr(raddr, tag) {
 	try {
 		return xrpl.classicAddressToXAddress(raddr, tag, false);

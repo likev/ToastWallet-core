@@ -64,7 +64,8 @@ function showAccountFlags(account, dontshow) {
 function doSetAccountFlags(nonce) {
 	if (debug) console.log("doSetAccountFlags");
 	blockInput();
-	var afaddress = getVal("#afaddress").trim();
+	var rawAfAddress = getVal("#afaddress").trim();
+	var afaddress = forceraddr(rawAfAddress) || domData('#afaddress', 'content') || rawAfAddress;
     var defaultRipple = domData('#tglDefaultRipple', 'checked');
     var depositAuth = domData('#tglDepositAuth', 'checked');
     var disableMasterKey = domData('#tglDisableMasterKey', 'checked');
@@ -78,11 +79,13 @@ function doSetAccountFlags(nonce) {
     var ledID = '';
     var fee = '';
     if (offlinemode) {
-        var ofl = validateOfflineCode(offlinecode, '#atlofflinecode');
+        var ofl = validateOfflineCode(offlinecode, '#afofflinecode');
         if (ofl === false) return;
         accID = ofl.accID;
         ledID = ofl.ledID;
         fee = ofl.fee;
+    } else if (accountflags[afaddress] === undefined) {
+        return navigator.notification.alert("Account information is still loading. Please wait a moment and try again.", () => { unblockInput(); }, "Loading", "OK");
     }
     var flag_keys = ['defaultRipple', 'depositAuth', 'disableMasterKey', 'disallowIncomingXRP', 'globalFreeze', 'noFreeze', 'requireAuthorization', 'requireDestinationTag'];  
     // check which flags have changed
@@ -92,7 +95,7 @@ function doSetAccountFlags(nonce) {
     for (var i in flag_keys) old_flags[flag_keys[i]] = (offlinemode ? 'unknown' : (flag_keys[i] in old_flags_orig && old_flags_orig[flag_keys[i]]));
     var nextscreen = function(){ 
         var confirmfl_obj = {
-            afaddress: forceraddr(afaddress),
+            afaddress: afaddress,
             defaultRipple: (defaultRipple == '' + old_flags['defaultRipple'] ? 'unchanged' : defaultRipple),
             depositAuth: (depositAuth == '' + old_flags['depositAuth'] ? 'unchanged' : depositAuth),
             disableMasterKey: (disableMasterKey == '' + old_flags['disableMasterKey'] ? 'unchanged' : disableMasterKey),

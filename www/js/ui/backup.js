@@ -1,3 +1,5 @@
+'use strict';
+
 function showBackupReminderTab(){
 	showTab('#tabbackupreminder');
 }
@@ -158,15 +160,31 @@ function doRestoreBackup() {
 		return;
 	}
     if (getVal('#restorebackup').trim().toLowerCase() == 'delete') {
-        return db.upsert("accounts", function(doc) { return { data: "" }; }).then(function() {
-                        db.upsert("ppdata", function(doc) { return { data: "" }; }).then(function() {
-                        db.upsert("rpdata", function(doc) { return { data: "" }; }).then(function() {
-                        db.upsert("pindata", function(doc) { return { data: "" }; }).then(function() {
-                                unblockInput();
-                                showEl('#btnbootstrapsequence');
-                                showEl('#btnbootstraprestorebackup');
-                                normalboot();
-        })})})});
+        var onComplete = function() {
+            if (typeof wipeSensitiveDom === 'function') wipeSensitiveDom();
+            if (typeof clearClipboard === 'function') clearClipboard();
+            if (typeof window !== 'undefined' && window.AppState) {
+                window.AppState.accounts = {};
+                window.AppState.accountbalances = {};
+                window.AppState.accountbalancestl = {};
+                window.AppState.accountflags = {};
+                window.AppState.walletsalt = null;
+                window.AppState.userkey = "";
+            }
+            unblockInput();
+            showEl('#btnbootstrapsequence');
+            showEl('#btnbootstraprestorebackup');
+            normalboot();
+        };
+        if (db && typeof db.destroy === 'function') {
+            return db.destroy().then(onComplete);
+        } else {
+            return db.upsert("accounts", function(doc) { return { data: "" }; }).then(function() {
+                db.upsert("ppdata", function(doc) { return { data: "" }; }).then(function() {
+                db.upsert("rpdata", function(doc) { return { data: "" }; }).then(function() {
+                db.upsert("pindata", function(doc) { return { data: "" }; }).then(onComplete);
+            })})});
+        }
     }
     importWallet(
         getVal('#restorebackup'),

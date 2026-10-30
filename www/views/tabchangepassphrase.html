@@ -6,17 +6,17 @@
         <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {setVal('#setpassword3', content)})})" type="button"><i class="fa fa-camera"></i></button>
         <button class="btn btn-default" id="setpassword3eyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#setpassword3', '#setpassword3eyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
     </span>
-	<input ontouchend="te(event, quickSelectInput)"  id="setpassword3" type="password" class="form-control" placeholder="">
+	<input ontouchend="te(event, quickSelectInput)"  id="setpassword3" type="password" class="form-control" placeholder="" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
 	<br><label>New Passphrase</label>
 	<span class="pasteqr">
         <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{setVal('#setpassword4', content);setVal('#setpassword5', content);})})"><i class="fa fa-paste"></i></button>
         <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {setVal('#setpassword4', content);setVal('#setpassword5', content);})})" type="button"><i class="fa fa-camera"></i></button>
         <button class="btn btn-default" id="setpassword4eyebtn" ontouchend="te(event, ()=>{toggleShowPassField(['#setpassword4', '#setpassword5'], '#setpassword4eyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
 	</span>
-	<input ontouchend="te(event, quickSelectInput)"  id="setpassword4" type="password" class="form-control" placeholder="">
+	<input ontouchend="te(event, quickSelectInput)"  id="setpassword4" type="password" class="form-control" placeholder="" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
 	<br><label>New Passphrase Again</label>
 	<div>
-		<input ontouchend="te(event, quickSelectInput)"  type="password" id="setpassword5" class="form-control" placeholder="">
+		<input ontouchend="te(event, quickSelectInput)"  type="password" id="setpassword5" class="form-control" placeholder="" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
 	</div>
     <br><br>
 	<center>

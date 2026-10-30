@@ -12,7 +12,7 @@
     		<button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {setVal('#delaccpassword', content)})})" type="button"><i class="fa fa-camera"></i></button>
             <button class="btn btn-default" id="delaccpasswordeyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#delaccpassword', '#delaccpasswordeyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
         </span>
-        <input ontouchend="te(event, quickSelectInput)"  id="delaccpassword" type="password" class="form-control" placeholder="">
+        <input ontouchend="te(event, quickSelectInput)"  id="delaccpassword" type="password" class="form-control" placeholder="" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
         <br>
 	<center><div><button  type="button" class="btn btn-danger btnbig" id="btnimport" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doDeleteAccount(getVal('#delaccpassword'), domData('#accdeleteaddress', 'content'), domData('#tabaccountdelete .toggleswitch', 'checked') == 'true'); })">DELETE ACCOUNT</button></div></center>
 </div>

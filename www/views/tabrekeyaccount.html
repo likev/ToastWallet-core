@@ -11,7 +11,7 @@
             <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {setVal('#rekeypassword', content)})})" type="button"><i class="fa fa-camera"></i></button>
             <button class="btn btn-default" id="rekeypasswordeyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#rekeypassword', '#rekeypasswordeyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
         </span>        
-        <input ontouchend="te(event, quickSelectInput)"  type="password" id="rekeypassword" class="form-control" placeholder=""><!--todo: enable REKEYING!!-->
+        <input ontouchend="te(event, quickSelectInput)"  type="password" id="rekeypassword" class="form-control" placeholder="" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"><!--todo: enable REKEYING!!-->
 	<center><div>
 			<button  type="button" class="btn btn-danger btnbig" id="btndoaccrekey" 
 				ontouchstart="ts(event)" ontouchend="te(event, ()=>{})">Rekey the Account</button></div></center>

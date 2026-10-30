@@ -349,6 +349,10 @@ function doPlaceOrder(nonce) {
 		setText('#confirmorderissuer', dispaddr(issuer));
         setText('#confirmorderamount', amount);
         setText('#confirmorderprice', price);
+        var totalXRP = (typeof BigNumber !== 'undefined')
+            ? new BigNumber(price).multipliedBy(amount).decimalPlaces(6, BigNumber.ROUND_HALF_UP).toFixed()
+            : (roundXRP(Number(price) * Number(amount)) + '');
+        setText('#confirmordertotal', totalXRP + ' XRP');
 		setText('#confirmorderdirection', (sell ? 'SELL' : 'BUY'));
         setText('#confirmorderexpiry', expirydisplay);
         setText('#confirmorderextra', (passive ? 'PASSIVE' : ''));
@@ -387,12 +391,12 @@ function doConfirmCancelOrder(passphrase) {
 				return;
 			}
             if (offlinemode) {
-                // we're just going to create the payment as a QR code and display it
-				navigator.notification.alert("A QR code of this signed transaction has been generated. Scan it using your online device to complete the transaction.", 
+				navigator.notification.alert("Offline order cancellation is not supported.", 
 					function(){
-                        return sendOfferCancelOffline(passphrase, confirmcancelorder.account, confirmcancelorder.seq, confirmcancelorder.accseqid, confirmcancelorder.ledseqid, confirmcancelorder.fee);					
+						unblockInput();
+						showTab(-1);
                     }, 
-					"Offline Transaction", 
+					"Offline Mode", 
 					"OK"
 				);            
                 return;

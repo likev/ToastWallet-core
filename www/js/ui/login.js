@@ -163,12 +163,28 @@ function restart() {
 function __freshinstall() {
                 navigator.notification.alert("Due to corruption the app will re-install. Afterwards restore a backup from the settings menu if you have one.",
                 function() {
-                        db.upsert("accounts", function(doc) { return { data: "" }; }).then(function() {
-                        db.upsert("ppdata", function(doc) { return { data: "" }; }).then(function() {
-                        db.upsert("rpdata", function(doc) { return { data: "" }; }).then(function() {
-                        db.upsert("pindata", function(doc) { return { data: "" }; }).then(function() {
-                                normalboot();
-                        })})})});
+                        var onComplete = function() {
+                            if (typeof wipeSensitiveDom === 'function') wipeSensitiveDom();
+                            if (typeof clearClipboard === 'function') clearClipboard();
+                            if (typeof window !== 'undefined' && window.AppState) {
+                                window.AppState.accounts = {};
+                                window.AppState.accountbalances = {};
+                                window.AppState.accountbalancestl = {};
+                                window.AppState.accountflags = {};
+                                window.AppState.walletsalt = null;
+                                window.AppState.userkey = "";
+                            }
+                            normalboot();
+                        };
+                        if (db && typeof db.destroy === 'function') {
+                            db.destroy().then(onComplete);
+                        } else {
+                            db.upsert("accounts", function(doc) { return { data: "" }; }).then(function() {
+                            db.upsert("ppdata", function(doc) { return { data: "" }; }).then(function() {
+                            db.upsert("rpdata", function(doc) { return { data: "" }; }).then(function() {
+                            db.upsert("pindata", function(doc) { return { data: "" }; }).then(onComplete);
+                            })})});
+                        }
                 }, "Fresh Install", "OK");
         }
 

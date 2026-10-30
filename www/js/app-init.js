@@ -215,6 +215,70 @@ function initAppUI() {
     */
     console.log("User agent: " + navigator.userAgent);
     if (debug) console.log("initAppUI:2");
+    function wipeSensitiveDom() {
+        setVal("#accsecret", "");
+        domData("#accsecret", "content", "");
+        emptyEl("#accsecretqr");
+        setText("#showrecoveryphrase", "");
+        setVal("#walletbackup", "");
+        domData("#walletbackup", "content", "");
+        if (typeof resetPassFields === 'function') {
+            resetPassFields();
+        }
+    }
+
+    function lockWallet() {
+        wipeSensitiveDom();
+        if (typeof clearClipboard === 'function') {
+            clearClipboard();
+        }
+        if (typeof wipeGeneratedAccount === 'function') {
+            wipeGeneratedAccount();
+        }
+        unblockInput();
+        if (typeof doShowLogin === 'function') {
+            doShowLogin();
+        }
+    }
+
+    function shouldLockWallet() {
+        return (
+            currenttab != "#tabpinset1" && 
+            currenttab != "#tabpinset2"  && 
+            currenttab != "#tabsetpassphrase" && 
+            currenttab != "#tabrecovery" && 
+            currenttab != "#tabconnectionselect" && 
+            currenttab != "#tabbackupreminder" && 
+            currenttab != "#tabcorruptionprompt" &&
+            currenttab != "#tablicense" && 
+            currenttab != "#tabqrscan" &&
+            currenttab != "#tabsubmitofflinetx" &&
+            currenttab != "#tabrestore2" &&
+            currenttab != "#tabgreenqr" &&
+            currenttab != "#tablogin" &&
+            Date.now() - timeatlastQR > 30
+        );
+    }
+
+    var IDLE_TIMEOUT_MS = 180000;
+    var idleTimer = null;
+    function resetIdleTimer() {
+        if (idleTimer) clearTimeout(idleTimer);
+        idleTimer = setTimeout(function() {
+            if (shouldLockWallet()) {
+                lockWallet();
+            }
+        }, IDLE_TIMEOUT_MS);
+    }
+    ['pointerdown', 'touchstart', 'keydown', 'scroll'].forEach(function(evt) {
+        document.addEventListener(evt, resetIdleTimer, { passive: true });
+    });
+    resetIdleTimer();
+
+    window.wipeSensitiveDom = wipeSensitiveDom;
+    window.lockWallet = lockWallet;
+    window.resetIdleTimer = resetIdleTimer;
+
     document.addEventListener("pause", function(){
         if (debug) console.log("onPause");
         if (document.activeElement && typeof document.activeElement.blur === 'function') {
@@ -226,27 +290,23 @@ function initAppUI() {
 
     document.addEventListener("resume", function() {
         if (debug) console.log("onResume");
-           
-        if (
-            currenttab != "#tabpinset1" && 
-            currenttab != "#tabpinset2"  && 
-            currenttab != "#tabsetpassphrase" && 
-            currenttab != "#tabrecovery" && 
-            currenttab != "#tabconnectionselect" && 
-            currenttab != "#tabbackupreminder" && 
-            currenttab != "#tabcorruptionprompt" &&
-            currenttab != "#tablicense" && 
-            currenttab != "#tabshowrecovery" &&
-            currenttab != "#tabqrscan" &&
-            currenttab != "#tabsubmitofflinetx" &&
-            currenttab != "#tabrestore2" &&
-            currenttab != "#tabgreenqr" &&
-            Date.now() - timeatlastQR > 30 /* this fixes a bug with android */
-        ) {
-            if (Date.now() - timepaused > 30000) {
-                unblockInput();
-                doShowLogin();
+        if (shouldLockWallet() && (Date.now() - timepaused > 30000)) {
+            lockWallet();
+        }
+        resetIdleTimer();
+    });
+
+    document.addEventListener("visibilitychange", function() {
+        if (document.visibilityState === 'hidden') {
+            timepaused = Date.now();
+            if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
             }
+        } else if (document.visibilityState === 'visible') {
+            if (shouldLockWallet() && (Date.now() - timepaused > 30000)) {
+                lockWallet();
+            }
+            resetIdleTimer();
         }
     });
 
@@ -380,6 +440,8 @@ if (typeof module !== 'undefined' && module.exports) {
         handleOpenURL,
         openExternalUrl,
         find_label,
-        initAppUI
+        initAppUI,
+        wipeSensitiveDom: typeof wipeSensitiveDom !== 'undefined' ? wipeSensitiveDom : undefined,
+        lockWallet: typeof lockWallet !== 'undefined' ? lockWallet : undefined
     };
 }

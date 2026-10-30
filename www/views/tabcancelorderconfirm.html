@@ -18,11 +18,11 @@
     <br>
     <label>Passphrase</label>    
 	<span class="pasteqr">
-        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{ doConfirmCancelOrder(content)})})"><i class="fa fa-paste"></i></button>
-        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => { doConfirmCancelOrder(content)})})" type="button"><i class="fa fa-camera"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{ setVal('#confirmcancelorderpassword', content)})})"><i class="fa fa-paste"></i></button>
+        <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => { setVal('#confirmcancelorderpassword', content)})})" type="button"><i class="fa fa-camera"></i></button>
         <button class="btn btn-default" id="confirmcancelorderpasswordeyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#confirmcancelorderpassword', '#confirmcancelorderpasswordeyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
     </span>
-    <input ontouchend="te(event, quickSelectInput)"  type="password" id="confirmcancelorderpassword" class="form-control" placeholder="">
+    <input ontouchend="te(event, quickSelectInput)"  type="password" id="confirmcancelorderpassword" class="form-control" placeholder="" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
     <br>
 	<center><div><button  type="button" class="btn btn-success btnbig" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doConfirmCancelOrder(getVal('#confirmcancelorderpassword'));})">Confirm Cancel Order</button></div></center>
 </div>

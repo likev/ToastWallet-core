@@ -53,6 +53,7 @@ test('clipboardCopy: falls back to execCommand when navigator.clipboard.writeTex
     let execCommandAction = null;
     let appendedChild = null;
     let removedChild = null;
+    let copiedValue = null;
 
     const mockBody = {
         appendChild: (el) => { appendedChild = el; },
@@ -84,6 +85,7 @@ test('clipboardCopy: falls back to execCommand when navigator.clipboard.writeTex
         },
         execCommand: (cmd) => {
             execCommandAction = cmd;
+            copiedValue = appendedChild ? appendedChild.value : null;
             return true;
         }
     });
@@ -91,7 +93,8 @@ test('clipboardCopy: falls back to execCommand when navigator.clipboard.writeTex
     try {
         await clipboardCopy('fallback test text');
         assert.equal(execCommandAction, 'copy');
-        assert.equal(appendedChild.value, 'fallback test text');
+        assert.equal(copiedValue, 'fallback test text');
+        assert.equal(appendedChild.value, '');
         assert.equal(removedChild, appendedChild);
     } finally {
         restoreDoc();
@@ -103,6 +106,7 @@ test('clipboardCopy: falls back to execCommand when navigator.clipboard.writeTex
 test('clipboardCopy: falls back to execCommand when navigator.clipboard is missing', async () => {
     let execCommandAction = null;
     let appendedChild = null;
+    let copiedValue = null;
 
     const mockBody = {
         appendChild: (el) => { appendedChild = el; },
@@ -125,6 +129,7 @@ test('clipboardCopy: falls back to execCommand when navigator.clipboard is missi
         }),
         execCommand: (cmd) => {
             execCommandAction = cmd;
+            copiedValue = appendedChild ? appendedChild.value : null;
             return true;
         }
     });
@@ -132,7 +137,8 @@ test('clipboardCopy: falls back to execCommand when navigator.clipboard is missi
     try {
         await clipboardCopy('insecure http origin test');
         assert.equal(execCommandAction, 'copy');
-        assert.equal(appendedChild.value, 'insecure http origin test');
+        assert.equal(copiedValue, 'insecure http origin test');
+        assert.equal(appendedChild.value, '');
     } finally {
         restoreDoc();
         restoreNav();

@@ -3,19 +3,20 @@
     <span class="pasteqr">
         <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{decodeSecretAddressURI(content, ()=>{}, '#txtsecret', '#vanityaddr', '#txtsecret')})})"><i class="fa fa-paste"></i></button>
         <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR(decodeSecretAddressURI, ()=>{}, '#txtsecret', '#vanityaddr', '#txtsecret')})" type="button"><i class="fa fa-camera"></i></button>
+        <button class="btn btn-default" id="txtsecreteyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#txtsecret', '#txtsecreteyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
     </span>
-    <input ontouchend="te(event, quickSelectInput)"  class="form-control" type="text" placeholder="E.g shqTNuNzLjjNYH2oKNNrRLSaNK2Wr"  id="txtsecret">
+    <input ontouchend="te(event, quickSelectInput)"  class="form-control" type="password" placeholder="E.g shqTNuNzLjjNYH2oKNNrRLSaNK2Wr"  id="txtsecret" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
 	<br>
 	<label >Account Address</label>
     <span class="pasteqr">
         <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{decodeSecretAddressURI(content, ()=>{}, '#txtsecret', '#vanityaddr', '#vanityaddr')})})"><i class="fa fa-paste"></i></button>
         <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR(decodeSecretAddressURI, ()=>{}, '#txtsecret', '#vanityaddr', '#vanityaddr')})" type="button"><i class="fa fa-camera"></i></button>
     </span>
-    <input data-dispaddr="true" ontouchend="te(event, quickSelectInput)"  class="form-control" type="text" placeholder="Optional unless a vanity address or rekeyed"  id="vanityaddr">
+    <input data-dispaddr="true" ontouchend="te(event, quickSelectInput)"  class="form-control" type="text" placeholder="Optional unless a vanity address or rekeyed"  id="vanityaddr" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
 	<br>
         <label>Nickname</label>
         <div>
-        <input ontouchend="te(event, quickSelectInput)"  type="text" id="extaccnick" class="form-control" placeholder="Optional short name for this address">
+        <input ontouchend="te(event, quickSelectInput)"  type="text" id="extaccnick" class="form-control" placeholder="Optional short name for this address" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
 	</div>
     <br><label>Passphrase</label>
     <span class="pasteqr">
@@ -23,7 +24,7 @@
         <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content, after) => {setVal('#extaccpassword', content)})})" type="button"><i class="fa fa-camera"></i></button>
         <button class="btn btn-default" id="extaccpasswordeyebtn" ontouchend="te(event, ()=>{toggleShowPassField('#extaccpassword', '#extaccpasswordeyebtn')})" type="button" onclick="ts(event)"><i class="fa fa-eye"></i></button>
     </span>
-    <input ontouchend="te(event, quickSelectInput)"  id="extaccpassword" type="password" class="form-control" placeholder="">
+    <input ontouchend="te(event, quickSelectInput)"  id="extaccpassword" type="password" class="form-control" placeholder="" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
     <br>
 	<center><div><button  type="button" class="btn btn-primary btnbig" id="btnimport" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doImportExistingAccount(getVal('#extaccpassword'), getVal('#extaccnick'), getVal('#txtsecret'), getVal('#vanityaddr'));})">Import Account</button></div></center>
 </div>

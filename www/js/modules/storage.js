@@ -87,6 +87,11 @@ class WalletDB {
         });
 
         if (alreadyMigrated) {
+            if (typeof indexedDB !== 'undefined' && indexedDB.deleteDatabase) {
+                try {
+                    indexedDB.deleteDatabase(this.legacyName);
+                } catch (e) {}
+            }
             return;
         }
 
@@ -291,6 +296,13 @@ class WalletDB {
                     reject(e);
                 }
             });
+
+            // Purge legacy PouchDB database after successful migration
+            if (typeof indexedDB !== 'undefined' && indexedDB.deleteDatabase) {
+                try {
+                    indexedDB.deleteDatabase(this.legacyName);
+                } catch (e) {}
+            }
         }
     }
 
@@ -434,6 +446,55 @@ class WalletDB {
             } catch (_) {}
             this._db = null;
         }
+    }
+
+    async destroy() {
+        this.close();
+        if (this._fallbackMem) {
+            this._fallbackMem.clear();
+        }
+        if (typeof localStorage !== 'undefined') {
+            try {
+                const prefix = 'toastwallet_kv:' + this.name + ':';
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (k && (k.startsWith(prefix) || k.startsWith('toastwallet_kv:'))) {
+                        keysToRemove.push(k);
+                    }
+                }
+                for (const k of keysToRemove) {
+                    localStorage.removeItem(k);
+                }
+            } catch (e) {}
+        }
+        if (typeof indexedDB !== 'undefined' && indexedDB.deleteDatabase) {
+            await Promise.all([
+                new Promise((resolve) => {
+                    try {
+                        const req = indexedDB.deleteDatabase(this.name);
+                        req.onsuccess = () => resolve();
+                        req.onerror = () => resolve();
+                        req.onblocked = () => resolve();
+                    } catch (e) {
+                        resolve();
+                    }
+                }),
+                new Promise((resolve) => {
+                    try {
+                        const req = indexedDB.deleteDatabase(this.legacyName);
+                        req.onsuccess = () => resolve();
+                        req.onerror = () => resolve();
+                        req.onblocked = () => resolve();
+                    } catch (e) {
+                        resolve();
+                    }
+                })
+            ]);
+        }
+        this._ready = this._init();
+        await this._ready;
+        return { ok: true };
     }
 }
 

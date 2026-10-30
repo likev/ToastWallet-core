@@ -3,10 +3,10 @@
  	<p style="color:black;">Add a custom gateway you would like Toast Wallet to connect to. A connection will be attempted and if it is successful the gateway will be stored and remembered as your preferred gateway.</p>
 	        	<label style="color:white; text-align:left;">Specify additional gateway server</label>
                 <div class="pasteqr">
-                    <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{doAddGateway(content)})})"><i class="fa fa-paste"></i></button>
-                    <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content)=>{doAddGateway(content)})})" type="button"><i class="fa fa-camera"></i></button>
+                    <button class="btn btn-default " ontouchstart="ts(event)" type="button" ontouchend="te(event, ()=>{clipboardPaste((content)=>{setVal('#txtnewgateway2', content)})})"><i class="fa fa-paste"></i></button>
+                    <button class="btn btn-default " ontouchstart="ts(event)" ontouchend="te(event, ()=>{scanQR((content)=>{setVal('#txtnewgateway2', content)})})" type="button"><i class="fa fa-camera"></i></button>
                 </div>
-                <input ontouchend="te(event, quickSelectInput)" type="text" id="txtnewgateway2" class="form-control" placeholder="wss://">
+                <input ontouchend="te(event, quickSelectInput)" type="text" id="txtnewgateway2" class="form-control" placeholder="wss://" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
     <br />
 		<button class="btn btn-primary btnbig" type="button" id="btnconnect2" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doAddGateway(getVal('#txtnewgateway2'));})">Add Gateway</button><br><br>
     </center>

@@ -1,3 +1,5 @@
+'use strict';
+
 function getSavedGateways(callback) {
 	var f	= function(savedgateways) { try {
 		if (savedgateways.data == undefined) {
@@ -33,6 +35,9 @@ function getAccounts(callback) {
 			secrets = {};
 		} else {
 			secrets = JSON.parse(secrets.data);
+		}
+		if (typeof window !== 'undefined' && window.AppState) {
+			window.AppState.accounts = secrets;
 		}
 		callback(secrets);
 	} catch(e) { handle_error(e); } }
@@ -139,12 +144,12 @@ function validateDataStores(funcok, funcnodata, funcdatacorrupt) {
 					var accountspresent = (accounts.data != undefined && accounts.data != "");
                                         try {
 						accounts = JSON.parse(accounts.data);
-						for (i in accounts) {
+						for (var accKey in accounts) {
 							accountscorrupt = 
-							accounts[i].ppsalt == undefined || (/[^a-fA-F0-9]/.test(accounts[i].ppsalt)) || fromhex_chksum(accounts[i].ppsalt) === false || accounts[i].ppsalt.length != saltlen ||
-							accounts[i].rpsalt == undefined || (/[^a-fA-F0-9]/.test(accounts[i].rpsalt)) || fromhex_chksum(accounts[i].rpsalt) === false || accounts[i].rpsalt.length != saltlen ||
-							accounts[i].ppsecret == undefined || (/[^a-fA-F0-9]/.test(accounts[i].ppsecret)) || fromhex_chksum(accounts[i].ppsecret) === false || 
-							accounts[i].rpsecret == undefined || (/[^a-fA-F0-9]/.test(accounts[i].rpsecret)) || fromhex_chksum(accounts[i].rpsecret) === false;
+							accounts[accKey].ppsalt == undefined || (/[^a-fA-F0-9]/.test(accounts[accKey].ppsalt)) || fromhex_chksum(accounts[accKey].ppsalt) === false || accounts[accKey].ppsalt.length != saltlen ||
+							accounts[accKey].rpsalt == undefined || (/[^a-fA-F0-9]/.test(accounts[accKey].rpsalt)) || fromhex_chksum(accounts[accKey].rpsalt) === false || accounts[accKey].rpsalt.length != saltlen ||
+							accounts[accKey].ppsecret == undefined || (/[^a-fA-F0-9]/.test(accounts[accKey].ppsecret)) || fromhex_chksum(accounts[accKey].ppsecret) === false || 
+							accounts[accKey].rpsecret == undefined || (/[^a-fA-F0-9]/.test(accounts[accKey].rpsecret)) || fromhex_chksum(accounts[accKey].rpsecret) === false;
 							if (accountscorrupt) break;
 						}
                                         } catch(e) { if (accounts.data != "") accountscorrupt = true; handle_error(e); }

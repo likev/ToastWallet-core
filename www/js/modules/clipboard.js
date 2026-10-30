@@ -1,3 +1,7 @@
+'use strict';
+
+let clipboardClearTimeout = null;
+
 function fallbackCopyText(text) {
     if (typeof document === 'undefined') return false;
     let textArea;
@@ -19,14 +23,55 @@ function fallbackCopyText(text) {
     } catch (err) {
         console.warn('fallbackCopyText error:', err);
     } finally {
-        if (textArea && textArea.parentNode) {
-            textArea.parentNode.removeChild(textArea);
+        if (textArea) {
+            try {
+                textArea.value = '';
+            } catch (e) {}
+            if (textArea.parentNode) {
+                textArea.parentNode.removeChild(textArea);
+            }
         }
         if (activeElement && typeof activeElement.focus === 'function') {
             activeElement.focus();
         }
     }
     return succeeded;
+}
+
+function clearClipboard() {
+    if (clipboardClearTimeout) {
+        clearTimeout(clipboardClearTimeout);
+        clipboardClearTimeout = null;
+    }
+    if (typeof navigator !== 'undefined' && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        const isSecure = typeof window !== 'undefined' ? (window.isSecureContext ?? true) : true;
+        if (isSecure) {
+            return navigator.clipboard.writeText('').catch(function() {
+                fallbackCopyText('');
+            });
+        }
+    }
+    fallbackCopyText('');
+    return Promise.resolve();
+}
+
+function copySecretWithWarning(secret, warningMessage, autoClearSeconds) {
+    if (autoClearSeconds === undefined || autoClearSeconds === null) autoClearSeconds = 30;
+    const msg = warningMessage || "Account secret copied to clipboard.\n\nWARNING: Copied secrets are accessible to clipboard managers and sync services. Toast Wallet will automatically attempt to clear your clipboard in " + autoClearSeconds + " seconds.";
+
+    return clipboardCopy(secret).then(function() {
+        if (typeof navigator !== 'undefined' && navigator.notification && typeof navigator.notification.alert === 'function') {
+            navigator.notification.alert(msg, function() {}, "Copied (Security Warning)", "OK");
+        } else if (typeof alert === 'function') {
+            alert(msg);
+        }
+        if (clipboardClearTimeout) clearTimeout(clipboardClearTimeout);
+        if (autoClearSeconds > 0) {
+            clipboardClearTimeout = setTimeout(function() {
+                clearClipboard();
+            }, autoClearSeconds * 1000);
+        }
+    });
 }
 
 function clipboardCopy(data) {
@@ -63,8 +108,10 @@ function clipboardPaste(f) {
 if (typeof window !== 'undefined') {
     window.clipboardCopy = clipboardCopy;
     window.clipboardPaste = clipboardPaste;
+    window.clearClipboard = clearClipboard;
+    window.copySecretWithWarning = copySecretWithWarning;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { clipboardCopy, clipboardPaste, fallbackCopyText };
+    module.exports = { clipboardCopy, clipboardPaste, fallbackCopyText, clearClipboard, copySecretWithWarning };
 }

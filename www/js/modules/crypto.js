@@ -1,3 +1,5 @@
+'use strict';
+
 function getScryptParamsForVersion(version) {
     if (version === 2) {
         return { opsLimit: 524288, memLimit: 16777216 };

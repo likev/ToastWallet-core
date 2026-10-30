@@ -1,4 +1,4 @@
-
+'use strict';
 
 function select2EventProxy() {}
 function formatSelect2(state) {
@@ -47,17 +47,39 @@ function toggleShowPassField(field, eyebutton)
 {
         if (typeof field === 'string') field = [ field ];
         var firstEl = resolveElement(field[0]);
-        var colour = (firstEl && firstEl.getAttribute('type') != 'text') ? '#fcf8e3' : '#fff';
+        var isCurrentlyText = firstEl && firstEl.getAttribute('type') === 'text';
+        var colour = !isCurrentlyText ? '#fcf8e3' : '#fff';
         var eye = resolveElement(eyebutton);
-        if (eye) eye.style.backgroundColor = colour;
+        if (eye) eye.style.backgroundColor = (colour !== '#fff' ? colour : '');
         
         for (var i = 0; i < field.length; ++i) {
             var el = resolveElement(field[i]);
             if (el) {
-                el.setAttribute('type', (colour != '#fff' ? 'text' : 'password'));
-                el.style.backgroundColor = colour;
+                if (!isCurrentlyText) {
+                    el.setAttribute('type', 'text');
+                    el.setAttribute('data-was-password', 'true');
+                    el.style.backgroundColor = colour;
+                } else {
+                    el.setAttribute('type', 'password');
+                    el.removeAttribute('data-was-password');
+                    el.style.backgroundColor = '';
+                }
             }
         }
+}
+
+function resetPassFields() {
+    if (typeof document === 'undefined') return;
+    var inputs = document.querySelectorAll("input[data-was-password='true']");
+    for (var i = 0; i < inputs.length; i++) {
+        inputs[i].setAttribute('type', 'password');
+        inputs[i].removeAttribute('data-was-password');
+        inputs[i].style.backgroundColor = '';
+    }
+    var eyeBtns = document.querySelectorAll("[id$='eyebtn']");
+    for (var j = 0; j < eyeBtns.length; j++) {
+        eyeBtns[j].style.backgroundColor = '';
+    }
 }
 function doToggleInvoiceId() {
     toggleEl('#invoiceiddiv');
@@ -544,12 +566,7 @@ app.initialize();
 /* Assumes passphrase has already been validated!!!!*/
 
 
-/* Passphrase validation is used only to test if a passphrase is correct or incorrect primarily as a guard
-** for real encryption/decryption routines running elsewhere. It also provides the ability to reset PIN
-** and in general guard against unwanted manipulation of data. To speed up the validation routine the first
-** successful validation will cache as a lightweight hash which will thereafter be used for validation.
-*/
-validatePassphraseCache = {};
+
 
 
 /** Updates the ppdata/rpdata key-value store to reflect a new passphrase.
@@ -575,18 +592,56 @@ validatePassphraseCache = {};
 
 
 
-/** rounds up an XRP value to the nearest drop to prevent ripplelib complaining about long/irrational xrp fractions */
+/** rounds an XRP value using BigNumber to prevent long/irrational xrp fractions */
 function roundXRP(x) {
-    return (Math.ceil(x * 1000000.0)/1000000.0);
+    if (typeof BigNumber !== 'undefined') {
+        return new BigNumber(x).decimalPlaces(6, BigNumber.ROUND_HALF_UP).toString(10);
+    }
+    return (Math.round(Number(x) * 1000000.0)/1000000.0).toFixed(6);
 }
 
+// Expose functions globally
+if (typeof window !== 'undefined') {
+    window.select2EventProxy = select2EventProxy;
+    window.formatSelect2 = formatSelect2;
+    window.showDonationTab = showDonationTab;
+    window.toggleShowPassField = toggleShowPassField;
+    window.resetPassFields = resetPassFields;
+    window.doToggleInvoiceId = doToggleInvoiceId;
+    window.setToggleSwitch = setToggleSwitch;
+    window.scanQR = scanQR;
+    window.display_currency_amount = display_currency_amount;
+    window.doPopulateDonation = doPopulateDonation;
+    window.ts = ts;
+    window.te = te;
+    window.clickProxy = clickProxy;
+    window.dbgdumpdata = dbgdumpdata;
+    window.handle_error = handle_error;
+    window.doDataCorruptionRecovery = doDataCorruptionRecovery;
+    window.roundXRP = roundXRP;
+}
 
-////
-
-
-/* This function actually executes the XRP send on the XRP Ledger. You must ensure the passphrase is valid
-** before calling.
-*/
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        select2EventProxy,
+        formatSelect2,
+        showDonationTab,
+        toggleShowPassField,
+        resetPassFields,
+        doToggleInvoiceId,
+        setToggleSwitch,
+        scanQR,
+        display_currency_amount,
+        doPopulateDonation,
+        ts,
+        te,
+        clickProxy,
+        dbgdumpdata,
+        handle_error,
+        doDataCorruptionRecovery,
+        roundXRP
+    };
+}
 
 
 

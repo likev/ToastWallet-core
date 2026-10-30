@@ -1,3 +1,5 @@
+'use strict';
+
 function setRemoteGateway(server) {
 	currentServer = server;
 	remote = new xrpl.Client(server, { connectionTimeout: 10000, maxFeeXRP: '0.01' });
@@ -213,12 +215,12 @@ function injectCompatibilityLayer(client) {
             return (res.result.offers || []).map(offer => {
                 var pays = parseAmount(offer.taker_pays);
                 var gets = parseAmount(offer.taker_gets);
-                var isSell = (offer.flags & 0x00010000) !== 0;
+                var isSell = (offer.flags & 0x00020000) !== 0;
                 return {
                     specification: {
                         direction: isSell ? 'sell' : 'buy',
-                        quantity: gets,
-                        totalPrice: pays
+                        quantity: isSell ? gets : pays,
+                        totalPrice: isSell ? pays : gets
                     },
                     properties: {
                         sequence: offer.seq
@@ -510,13 +512,21 @@ function injectCompatibilityLayer(client) {
         };
         return finalizeTx(tx, instructions);
     };
-    client.sign = function(txJSON, secret) {
+    client.sign = function(txJSON, secret, options) {
         var tx = JSON.parse(txJSON);
         var signFee = tx.Fee ? parseInt(tx.Fee, 10) : NaN;
         if (isNaN(signFee) || signFee <= 0 || signFee > MAX_FEE_DROPS) {
             throw new Error("Transaction fee exceeds maximum allowed limit of 0.01 XRP: " + tx.Fee + " drops");
         }
-        var wallet = xrpl.Wallet.fromSeed(secret, { algorithm: secret.startsWith('sEd') ? 'ed25519' : 'ecdsa-secp256k1' });
+        var alg;
+        if (options && options.algorithm) {
+            alg = options.algorithm;
+        } else if (tx.Account && typeof window !== 'undefined' && window.AppState && window.AppState.accounts && window.AppState.accounts[tx.Account] && window.AppState.accounts[tx.Account].algorithm) {
+            alg = window.AppState.accounts[tx.Account].algorithm;
+        } else {
+            alg = secret.startsWith('sEd') ? 'ed25519' : 'ecdsa-secp256k1';
+        }
+        var wallet = xrpl.Wallet.fromSeed(secret, { algorithm: alg });
         var signed = wallet.sign(tx);
         return {
             signedTransaction: signed.tx_blob,

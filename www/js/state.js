@@ -1,3 +1,5 @@
+'use strict';
+
 window.AppState = {
     debug: true,
     ontestnet: false,
@@ -32,6 +34,7 @@ window.AppState = {
     screentabpaddingbottom: 0,
     generatedAccount: null,
     lasttrustlinenonce: 0,
+    lastsettlnonce: 0,
     confirmtl: null,
     confirmtlhash: null,
     lastsetflagsnonce: 0,
@@ -54,7 +57,6 @@ window.AppState = {
     db: null,
     walletsalt: null,
     corruptionstate: null,
-    validatePassphraseCache: {},
     accounts: {}
 };
 

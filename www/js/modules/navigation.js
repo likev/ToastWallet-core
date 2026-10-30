@@ -66,6 +66,21 @@ function showTab(tab, dontClearText) {
     domData("#accsecret", 'content', '');
     emptyEl("#accsecretqr");
     hideEl("#accsecret");
+    setText("#showrecoveryphrase", "");
+    setVal("#walletbackup", "");
+    domData("#walletbackup", "content", "");
+    if (currenttab && typeof document !== 'undefined') {
+        var departingTabEl = byId(currenttab.replace('#', ''));
+        if (departingTabEl) {
+            var passInputs = departingTabEl.querySelectorAll("input[type='password'], input[data-was-password='true'], .passphraseinput");
+            for (var pi = 0; pi < passInputs.length; pi++) {
+                passInputs[pi].value = "";
+            }
+        }
+    }
+    if (typeof resetPassFields === 'function') {
+        resetPassFields();
+    }
     if (tab === -1 || (tab !== '#tabgenaccount' && tab !== '#tabaddexistingaccount')) {
         if (typeof wipeGeneratedAccount === 'function') {
             wipeGeneratedAccount();

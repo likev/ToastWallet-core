@@ -1,3 +1,5 @@
+'use strict';
+
 function showPaymentTab(account, currency, issuer, balance) {
     if (debug) console.log("showPaymentTab - account: " + account + ", currency: " + currency + ", issuer: " + issuer + ", balance: " + balance); 
     clearPaymentScreen();
@@ -24,7 +26,7 @@ function doPay(nonce) {
 	var payFromSel = byId('payfromaccount');
 	var payFromOpt = payFromSel && (payFromSel.selectedOptions ? payFromSel.selectedOptions[0] : qs('#payfromaccount option:checked'));
 	var payfrom = payFromOpt ? domData(payFromOpt, 'account') : undefined;
-	var payto = getVal("#toaddress").trim();
+	var payto = getVal("#toaddress").trim().replace(/^ripple:/i, '');
 	var dest = getVal("#desttag").trim();
 	var invid = (getVal("#invoiceid").trim() + "").toUpperCase();
 	var amount = getVal("#payamount").trim();
@@ -42,23 +44,34 @@ function doPay(nonce) {
     var ledID = '';
     var fee = '';
 	if (amount != undefined && (amount+"").charAt(0) == '.') amount = "0" + amount;
-	if (/^(.*)[?&][^=]*=(.*)$/m.test(payto)) {
-		var oldpayto = payto;
-		var newdest = oldpayto.replace(/^(.*)[?&][^=]*=(.*)$/mg, "$2");
-		if (dest !== "" && dest !== null && dest !== undefined && String(dest).trim() != String(newdest).trim()) {
-			navigator.notification.alert("Destination tag specified twice. You specified a destination tag at the end of your send-to address then again in the destination box. Please remove one.", 
-				function(){
-					var dt = byId("desttag");
-					if (dt && dt.focus) dt.focus();
-					unblockInput();
-				}, 
-				"Destination tag duplicate", 
-				"OK"
-			);
-			return;					
+	if (payto.indexOf('?') !== -1) {
+		var parts = payto.split('?');
+		var addrPart = parts[0];
+		var queryPart = parts.slice(1).join('?');
+		var extractedTag = null;
+		try {
+			var params = new URLSearchParams(queryPart);
+			extractedTag = params.get('dt') || params.get('destination_tag') || params.get('destinationTag') || params.get('tag');
+		} catch (e) {
+			var dtMatch = queryPart.match(/(?:^|[&?])(?:dt|destination_tag|destinationTag|tag)=([^&#]*)/i);
+			if (dtMatch) extractedTag = decodeURIComponent(dtMatch[1]);
 		}
-		dest = newdest;
-		payto = oldpayto.replace(/^(.*)[?&][^=]*=(.*)$/mg, "$1");
+		if (extractedTag !== null && extractedTag !== undefined && extractedTag !== '') {
+			if (dest !== "" && dest !== null && dest !== undefined && String(dest).trim() != String(extractedTag).trim()) {
+				navigator.notification.alert("Destination tag specified twice. You specified a destination tag at the end of your send-to address then again in the destination box. Please remove one.", 
+					function(){
+						var dt = byId("desttag");
+						if (dt && dt.focus) dt.focus();
+						unblockInput();
+					}, 
+					"Destination tag duplicate", 
+					"OK"
+				);
+				return;					
+			}
+			dest = extractedTag;
+		}
+		payto = addrPart;
 	}
 	function parseDestinationTag(value) {
 		if (value === undefined || value === null || value === false || value === '') return null;
@@ -101,7 +114,7 @@ function doPay(nonce) {
 		return;
 	}
     if (offlinemode) {
-        ofl = validateOfflineCode(offlinecode, '#payofflinecode');
+        var ofl = validateOfflineCode(offlinecode, '#payofflinecode');
         if (ofl === false) return;
         accID = ofl.accID;
         ledID = ofl.ledID;
@@ -146,7 +159,7 @@ function doPay(nonce) {
 		return;
 	}
 	if (!validateAddress(payto)) {
-		navigator.notification.alert("The destination address you have entered does not appear to be a valid XRP address. You can still attempt to send but the XRP Ledger will charge a fee on failure.", 
+		navigator.notification.alert("The destination address you have entered does not appear to be a valid XRP address.", 
 			function(){
 				var to = byId("toaddress");
 				if (to && to.focus) to.focus();
@@ -155,6 +168,7 @@ function doPay(nonce) {
 			"Unusual address format", 
 			"OK"
 		);
+		return;
 	}
 	if (payto == payfrom) {
 		navigator.notification.alert("A XRP address cannot pay XRP from itself to itself.", 
@@ -186,7 +200,17 @@ function doPay(nonce) {
 		return;
     }
     if ( asset == 'XRP' ) issuer = '';
-	if (amount == "" || !/^[0-9]+(\.[0-9]+)?$/.test(amount) || parseFloat(amount) <= 0) {
+	var bnAmount;
+	try {
+		if (typeof BigNumber !== 'undefined') {
+			bnAmount = new BigNumber(amount);
+		} else {
+			bnAmount = { isNaN: () => isNaN(Number(amount)), isNegative: () => Number(amount) < 0, isZero: () => Number(amount) === 0 };
+		}
+	} catch (e) {
+		bnAmount = null;
+	}
+	if (!bnAmount || bnAmount.isNaN() || bnAmount.isNegative() || bnAmount.isZero() || !/^[0-9]+(\.[0-9]+)?$/.test(amount)) {
 		navigator.notification.alert("You must select a valid amount to send", 
 			function(){
 				var pa = byId("payamount");
@@ -290,7 +314,7 @@ function doConfirmPay(passphrase) {
                 // we're just going to create the payment as a QR code and display it
 				navigator.notification.alert("A QR code of this signed transaction has been generated. Scan it using your online device to complete the transaction.", 
 					function(){
-                        return sendPaymentOffline(passphrase, confirmpay.payfrom, parseFloat(confirmpay.amount), confirmpay.payto, confirmpay.sourcetag, confirmpay.dest, confirmpay.invid, confirmpay.asset, confirmpay.issuer, confirmpay.accseqid, confirmpay.ledseqid, confirmpay.fee);					
+                        return sendPaymentOffline(passphrase, confirmpay.payfrom, String(confirmpay.amount), confirmpay.payto, confirmpay.sourcetag, confirmpay.dest, confirmpay.invid, confirmpay.asset, confirmpay.issuer, confirmpay.accseqid, confirmpay.ledseqid, confirmpay.fee);					
                     }, 
 					"Offline Transaction", 
 					"OK"
@@ -299,7 +323,7 @@ function doConfirmPay(passphrase) {
             }
 			checkConnection(
 				function(){
-					sendPayment(passphrase, confirmpay.payfrom, parseFloat(confirmpay.amount), confirmpay.payto, confirmpay.sourcetag, confirmpay.dest, confirmpay.invid, confirmpay.asset, confirmpay.issuer, 
+					sendPayment(passphrase, confirmpay.payfrom, String(confirmpay.amount), confirmpay.payto, confirmpay.sourcetag, confirmpay.dest, confirmpay.invid, confirmpay.asset, confirmpay.issuer, 
 						function(wasqueued){
 							if (confirmpay.payto == 'rToastMYRQh8boeo5Ys1CnPySmt3c9x3Y') {
 								getLastDonation(function(donation) {
@@ -502,6 +526,7 @@ function checkPayToAddressForCommonErrors() {
 }
 
 function populatePaymentTabFromURI(uri, targetfield) {
+	if (!targetfield) targetfield = '#toaddress';
 	// apply the draft standard
 	var parsed = xls2d(uri)
     var xto = false
@@ -926,7 +951,10 @@ function checkAccountIsFunded(payfrom, amount, asset, issuer, failurefunc, silen
 }
 
 function validateOfflineCode(offlinecode, offlinecodefield) {
-        var codevalid = /^[A-F0-9]+$/m.test(offlinecode);        
+        var codevalid = /^[A-F0-9]+$/m.test(offlinecode);
+        var accID = '';
+        var ledID = '';
+        var fee = '';
         if (codevalid) {
             // grab the checksum from the front
             var checksum = offlinecode.slice(0,2);
