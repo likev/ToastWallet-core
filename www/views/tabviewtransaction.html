@@ -3,7 +3,7 @@
 		<div class="input-group">
 			<input ontouchend="te(event, quickSelectInput)" class="form-control" readonly="readonly" type="text" oninput="$(this).val($(this).data('content'));" id="vtxhash" style="color:black">
 			<span class="input-group-btn">
-				<button type="button" id="btncopyvtxhash" class="btn copybtn copybtnaction" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxhash').val())})" data-clipboard-target="#vtxhash"><i class="far fa-copy" aria-hidden="true"></i></button>
+				<button type="button" id="btncopyvtxhash" class="btn copybtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxhash').val())})"><i class="far fa-copy" aria-hidden="true"></i></button>
 			</span>
 		</div>        
     <br>
@@ -19,7 +19,7 @@
             </span>
 			<input data-dispaddr="true" ontouchend="te(event, quickSelectInput)" class="form-control" readonly="readonly" type="text" oninput="$(this).val($(this).data('content'));" id="vtxfrom" style="color:black">
 			<span class="input-group-btn">
-				<button type="button" id="btncopyvtxfrom" class="btn copybtn copybtnaction" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxfrom').val())})" data-clipboard-target="#vtxfrom"><i class="far fa-copy" aria-hidden="true"></i></button>
+				<button type="button" id="btncopyvtxfrom" class="btn copybtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxfrom').val())})"><i class="far fa-copy" aria-hidden="true"></i></button>
 			</span>
 		</div> 
     <br>
@@ -31,7 +31,7 @@
             </span>
 			<input data-dispaddr="true" ontouchend="te(event, quickSelectInput)" class="form-control" readonly="readonly" type="text" oninput="$(this).val($(this).data('content'));" id="vtxto" style="color:black">
 			<span class="input-group-btn">
-				<button type="button" id="btncopyvtxto" class="btn copybtn copybtnaction" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxto').val())})" data-clipboard-target="#vtxto"><i class="far fa-copy" aria-hidden="true"></i></button>
+				<button type="button" id="btncopyvtxto" class="btn copybtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxto').val())})"><i class="far fa-copy" aria-hidden="true"></i></button>
 			</span>
 		</div> 
     <br>
@@ -40,7 +40,7 @@
 		<div class="input-group">
 			<input ontouchend="te(event, quickSelectInput)" class="form-control" readonly="readonly" type="text" oninput="$(this).val($(this).data('content'));" id="vtxdtag" style="color:black">
 			<span class="input-group-btn">
-				<button type="button" id="btncopyvtxdtag" class="btn copybtn copybtnaction" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxdtag').val())})" data-clipboard-target="#vtxdtag"><i class="far fa-copy" aria-hidden="true"></i></button>
+				<button type="button" id="btncopyvtxdtag" class="btn copybtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxdtag').val())})"><i class="far fa-copy" aria-hidden="true"></i></button>
 			</span>
 		</div> 
     <br>

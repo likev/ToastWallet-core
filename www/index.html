@@ -44,7 +44,7 @@
         <h3 style="color:black; text-align:center;">The data below is your encrypted wallet backup</h3>
         <p style="color:black;">You should make a new backup whenever you add a new account to your wallet, change your passphrase or change your pin. Toast Wallet will prompt you when a new backup is required.</p>
     	<center>
-		    <button  id="btncopywallet" data-clipboard-target="#walletbackup" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#walletbackup').val())})" type="button" class="btn btn-primary copybtnaction btnbig">Copy</button>
+		    <button  id="btncopywallet" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#walletbackup').val())})" type="button" class="btn btn-primary btnbig">Copy</button>
 	    </center>
     	<label>Your backup</label>
 	    <textarea oninput="$(this).val($(this).data('content'));" style="color:black;" id="walletbackup"></textarea>
@@ -148,7 +148,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 		<label id="lblaccsecret">Account Secret</label>
 		<input ontouchend="te(event, quickSelectInput)" type="text" id="accsecret" style="color:blue" oninput="$(this).val($(this).data('content'));" >
 	</center>
-	<button  style="display:none;" type="button" id="btncopysecret" class="btn copybtn copybtnaction" data-clipboard-target="#accsecret" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#accsecret').val())})"><i class="far fa-copy" aria-hidden="true"></i></button>
+	<button  style="display:none;" type="button" id="btncopysecret" class="btn copybtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#accsecret').val())})"><i class="far fa-copy" aria-hidden="true"></i></button>
 	<br>
 	<br>
 	<center><div id="accsecretqr"></div></center>
@@ -315,7 +315,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 		<div class="input-group">
 			<input ontouchend="te(event, quickSelectInput)" class="form-control" readonly="readonly" type="text" oninput="$(this).val($(this).data('content'));" id="vtxhash" style="color:black">
 			<span class="input-group-btn">
-				<button type="button" id="btncopyvtxhash" class="btn copybtn copybtnaction" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxhash').val())})" data-clipboard-target="#vtxhash"><i class="far fa-copy" aria-hidden="true"></i></button>
+				<button type="button" id="btncopyvtxhash" class="btn copybtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxhash').val())})"><i class="far fa-copy" aria-hidden="true"></i></button>
 			</span>
 		</div>        
     <br>
@@ -331,7 +331,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
             </span>
 			<input data-dispaddr="true" ontouchend="te(event, quickSelectInput)" class="form-control" readonly="readonly" type="text" oninput="$(this).val($(this).data('content'));" id="vtxfrom" style="color:black">
 			<span class="input-group-btn">
-				<button type="button" id="btncopyvtxfrom" class="btn copybtn copybtnaction" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxfrom').val())})" data-clipboard-target="#vtxfrom"><i class="far fa-copy" aria-hidden="true"></i></button>
+				<button type="button" id="btncopyvtxfrom" class="btn copybtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxfrom').val())})"><i class="far fa-copy" aria-hidden="true"></i></button>
 			</span>
 		</div> 
     <br>
@@ -343,7 +343,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
             </span>
 			<input data-dispaddr="true" ontouchend="te(event, quickSelectInput)" class="form-control" readonly="readonly" type="text" oninput="$(this).val($(this).data('content'));" id="vtxto" style="color:black">
 			<span class="input-group-btn">
-				<button type="button" id="btncopyvtxto" class="btn copybtn copybtnaction" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxto').val())})" data-clipboard-target="#vtxto"><i class="far fa-copy" aria-hidden="true"></i></button>
+				<button type="button" id="btncopyvtxto" class="btn copybtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxto').val())})"><i class="far fa-copy" aria-hidden="true"></i></button>
 			</span>
 		</div> 
     <br>
@@ -352,7 +352,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 		<div class="input-group">
 			<input ontouchend="te(event, quickSelectInput)" class="form-control" readonly="readonly" type="text" oninput="$(this).val($(this).data('content'));" id="vtxdtag" style="color:black">
 			<span class="input-group-btn">
-				<button type="button" id="btncopyvtxdtag" class="btn copybtn copybtnaction" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxdtag').val())})" data-clipboard-target="#vtxdtag"><i class="far fa-copy" aria-hidden="true"></i></button>
+				<button type="button" id="btncopyvtxdtag" class="btn copybtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#vtxdtag').val())})"><i class="far fa-copy" aria-hidden="true"></i></button>
 			</span>
 		</div> 
     <br>
@@ -540,7 +540,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 			</span>
 			<input ontouchend="te(event, quickSelectInput)" type="text" data-dispaddr=true readonly="readonly" id="accdetailsaddress" style="color:black">
 			<span class="input-group-btn">
-				<button type="button" id="btncopyaddress" class="btn copybtn copybtnaction" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#accdetailsaddress').val())})" data-clipboard-target="#accdetailsaddress"><i class="far fa-copy" aria-hidden="true"></i></button>
+				<button type="button" id="btncopyaddress" class="btn copybtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#accdetailsaddress').val())})"><i class="far fa-copy" aria-hidden="true"></i></button>
 			</span>
 		</div>
 		<center><div id="accdetailsqr"></div></center>
@@ -1032,7 +1032,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
         <button class="btn btn-default  btnqrpay" id="btnqrpay2" ontouchstart="ts(event)" type="button"><i class="fa fa-paste"></i></button>
         <button class="btn btn-default  btnqrpay" id="btnqrpay1" ontouchstart="ts(event)" type="button"><i class="fa fa-camera"></i></button>
     </span>
-    <input ontouchend="te(event, quickSelectInput)" type="text" id="toaddress" class="form-control" placeholder="" style="border-radius: 0.25em 0 0.25em 0.25em;" onpaste="(e)=>{populatePaymentTabFromURI(e.originalEvent.clipboardData.getData('Text'));}" onchange="checkPayToAddressForCommonErrors(); return true">
+    <input ontouchend="te(event, quickSelectInput)" type="text" id="toaddress" class="form-control" placeholder="" style="border-radius: 0.25em 0 0.25em 0.25em;" onpaste="populatePaymentTabFromURI((event.clipboardData || window.clipboardData).getData('text'))" onchange="checkPayToAddressForCommonErrors(); return true">
 	<br />
 	<label id='lblpaytodesttag'>Destination Tag</label>
     <span class="pasteqr">

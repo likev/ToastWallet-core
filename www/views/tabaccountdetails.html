@@ -13,7 +13,7 @@
 			</span>
 			<input ontouchend="te(event, quickSelectInput)" type="text" data-dispaddr=true readonly="readonly" id="accdetailsaddress" style="color:black">
 			<span class="input-group-btn">
-				<button type="button" id="btncopyaddress" class="btn copybtn copybtnaction" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#accdetailsaddress').val())})" data-clipboard-target="#accdetailsaddress"><i class="far fa-copy" aria-hidden="true"></i></button>
+				<button type="button" id="btncopyaddress" class="btn copybtn" ontouchstart="ts(event)" ontouchend="te(event, ()=>{clipboardCopy($('#accdetailsaddress').val())})"><i class="far fa-copy" aria-hidden="true"></i></button>
 			</span>
 		</div>
 		<center><div id="accdetailsqr"></div></center>
