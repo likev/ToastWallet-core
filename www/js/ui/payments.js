@@ -376,7 +376,7 @@ function onPaymentSelectFromAccount() {
     //clean up stray dropdown
     if (offlinemode) 
         try {
-            $("#payasset").select2('destroy')
+            if (typeof destroySelect === 'function') destroySelect('#payasset');
         } catch (e) {}
     if ($("#payfromaccount").find(":selected") == undefined) {
         if (activeaccount == undefined) return;
@@ -391,7 +391,7 @@ function onPaymentSelectFromAccount() {
         $("#paytabredqr").append(kjua({text: account, fill:"#ff0000"}));    
         $("#payasset").hide();
         try {
-            $("#payasset").select2('destroy')
+            if (typeof destroySelect === 'function') destroySelect('#payasset');
         } catch (e) {}
         $('#oflcurrencydiv').show();
         
@@ -409,9 +409,11 @@ function onPaymentSelectFromAccount() {
             $('#payasset').html(xrpoption);
         }
         try {
-            $('#payasset').select2()
+            if (typeof enhanceSelect === 'function') {
+                enhanceSelect('#payasset');
+                refreshSelect('#payasset');
+            }
         } catch(e) {}
-        select2EventProxy()
     }
 }
 

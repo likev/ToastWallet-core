@@ -43,7 +43,7 @@ function showTab(tab, dontClearText) {
     
 	if (tab == currenttab) return;
     try {
-        $('select').select2('close')
+        if (typeof closeAllCustomSelects === 'function') closeAllCustomSelects();
     } catch(e) {}
     if (dontClearText == undefined) dontClearText = false;
 	blockInput(true);
@@ -193,13 +193,14 @@ function showTab(tab, dontClearText) {
 	var tabs = $(".screentab");
 	for (var i = 0; i < tabs.length; i++) $("#" + tabs[i].id).hide();
     try {
-        $(tab + ' select').select2({templateResult:formatSelect2, templateSelection:formatSelect2})
+        if (typeof enhanceSelect === 'function') {
+            document.querySelectorAll(tab + ' select').forEach((el) => enhanceSelect(el));
+        }
     } catch(e) {}
-    select2EventProxy()
     //clean up stray dropdown
     if (offlinemode) 
         try {
-            $("#payasset").select2('destroy')
+            if (typeof destroySelect === 'function') destroySelect('#payasset');
         } catch (e) {}
     $(tab).show();
     if (tab != '#tabaccounts') $(tab).scrollTop(0);

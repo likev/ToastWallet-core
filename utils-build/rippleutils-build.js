@@ -1,4 +1,109 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+'use strict';
+const { keccak_256 } = require('@noble/hashes/sha3');
+
+const figures = [[0,8,9,9,9,9,0,8,8,0,0,0,9,9,8,8,0,0,0,9,9,0,8,9,9,9,9,0],[0,0,0,0,0,0,0,0,0,8,9,9,0,0,0,0,8,9,9,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,9,8,0,8,9,0,0,0,0,8,0,0,0,0,0,0,9,0,0,0],[0,0,0,9,0,0,0,0,0,0,8,0,0,0,0,9,8,0,8,9,0,0,0,0,0,0,0,0],[0,0,0,9,0,0,0,0,0,0,8,0,0,0,0,0,0,8,0,0,0,0,0,0,9,0,0,0],[0,0,0,0,0,9,0,0,0,0,0,0,8,0,0,0,0,0,0,8,0,0,0,0,0,0,9,0],[0,9,0,0,0,0,0,0,8,0,0,0,0,0,0,8,0,0,0,0,0,0,9,0,0,0,0,0],[0,8,9,9,0,0,0,0,8,9,9,0,0,0,0,0,0,8,9,9,0,0,0,0,8,9,9,0],[0,0,0,8,9,9,0,0,0,0,8,9,9,0,0,8,9,9,0,0,0,0,8,9,9,0,0,0],[0,0,0,0,0,0,0,8,9,9,0,0,9,8,8,9,9,0,0,9,8,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,9,8,0,0,0,0,0,9,8,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,9,8,0,0,0,0,0,9,8,0,0,0,0,0,0,0,0,0],[0,9,9,9,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,9,9,9,9,9,0,9,0,0,0,0,0,9,9,9,0,0,0,9,9,0,9,9,0,9,9,0],[0,9,9,0,9,9,0,9,9,0,0,0,9,9,9,0,0,0,0,0,9,0,9,9,9,9,9,0],[0,9,0,0,0,9,0,0,0,0,9,0,0,0,0,0,0,9,0,0,0,0,9,0,0,0,9,0],[0,8,8,0,9,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,9,0,8,8,0],[0,0,8,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,9,0,0],[0,9,8,0,9,8,0,8,0,0,0,0,0,9,9,0,0,0,0,0,8,0,8,9,0,8,9,0],[0,9,9,0,9,9,0,9,0,8,9,9,0,9,9,0,8,9,9,0,9,0,9,9,0,9,9,0],[0,9,0,0,9,0,0,0,0,8,9,9,0,9,9,0,8,9,9,0,0,0,0,9,0,0,9,0],[0,0,0,0,0,0,0,0,9,8,0,0,0,0,0,9,8,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,9,0,0,0,8,0,0,9,0,0,0,8,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,9,9,9,9,9,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,9,0,9,0,0,0,9,9,9,9,0,0,0,9,9,9,0,0,0,0,0,9,0],[0,9,0,0,0,0,0,9,9,9,0,0,0,9,9,9,9,0,0,0,9,0,9,0,0,0,0,0],[0,9,0,0,9,9,0,9,9,9,0,0,9,9,9,9,9,0,0,9,9,0,9,0,0,9,9,0],[0,9,9,0,9,9,0,9,0,0,0,0,0,9,0,9,8,8,8,9,0,0,9,0,9,0,9,0],[0,9,0,9,0,9,0,0,9,8,8,8,9,0,9,0,0,0,0,0,9,0,9,9,0,9,9,0],[0,8,0,0,9,0,0,0,0,0,0,0,0,8,9,0,0,0,0,0,0,0,0,8,0,0,9,0],[0,0,9,0,0,8,0,8,0,0,0,0,0,0,0,0,0,0,0,0,9,0,9,0,0,8,0,0],[0,0,9,0,0,9,0,9,0,8,9,9,0,0,0,0,8,9,9,0,9,0,9,0,0,9,0,0],[0,0,0,0,0,0,0,0,9,0,0,0,0,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,8,0,0,0,0,0,0,9,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,9,9,9,9,8,8,0,0,0,0,0,0,0],[0,0,0,9,0,0,0,9,0,9,9,9,0,9,9,0,9,9,9,0,9,0,0,0,9,0,0,0],[0,0,0,9,0,0,0,9,0,0,9,0,0,9,9,0,0,9,0,0,9,0,0,0,9,0,0,0],[0,9,9,9,9,9,0,9,9,9,9,9,9,9,9,9,9,0,9,9,9,0,9,0,0,0,9,0],[0,9,0,0,0,9,0,9,9,9,0,9,9,9,9,9,9,9,9,9,9,0,9,9,9,9,9,0],[0,0,0,0,0,0,0,0,0,9,9,9,0,0,0,0,9,0,9,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,9,9,9,0,0,0,0,9,9,9,0,0,0,0,0,0,0,0,0],[0,0,9,8,0,0,0,0,0,0,0,0,9,8,9,8,0,0,0,0,0,0,0,0,9,8,0,0],[0,0,0,0,0,0,0,0,9,8,0,0,0,0,0,0,0,0,9,8,0,0,0,0,0,0,0,0],[0,0,9,8,0,0,0,0,9,8,0,0,9,8,9,8,0,0,9,8,0,0,0,0,9,8,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,9,9,8,8,0],[0,0,0,0,0,0,0,0,0,0,9,0,0,0,0,0,0,8,0,0,0,0,0,0,0,0,0,0],[0,0,9,9,9,9,0,0,0,0,9,9,9,9,9,9,9,9,0,0,0,0,9,9,9,9,0,0],[0,9,0,0,9,0,0,9,9,9,0,0,0,0,0,0,0,0,9,9,9,0,0,0,0,0,9,0],[0,9,0,0,0,9,0,0,9,9,0,9,9,0,0,9,9,0,9,9,0,0,9,0,0,0,9,0],[0,0,9,9,0,0,0,0,9,9,9,9,9,9,9,9,9,9,9,9,0,0,0,0,9,9,0,0],[0,0,0,9,9,0,0,9,9,9,9,9,9,0,0,9,9,9,9,9,9,0,0,9,9,0,0,0],[0,9,0,9,0,9,0,0,9,9,9,9,9,0,0,9,9,9,9,9,0,0,9,0,9,0,9,0],[0,0,0,9,8,0,0,9,8,0,0,0,0,0,0,0,0,0,0,9,8,0,0,9,8,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,9,8,0,0,9,8,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,9,8,0,0,9,8,0,0,9,8,0,0,9,8,0,0,9,8,0,0,9,8,0,0,0],[0,8,8,0,0,9,0,8,8,0,0,9,9,0,8,0,0,9,9,0,0,0,0,9,9,0,0,0],[0,0,0,0,0,0,0,8,8,0,0,9,9,0,0,0,0,9,9,0,0,0,0,9,9,0,0,0],[0,8,8,9,9,0,0,8,8,9,9,0,0,0,0,0,0,8,8,9,9,0,0,8,8,9,9,0],[0,0,0,0,0,9,0,0,0,0,0,8,9,9,9,9,8,0,0,0,0,0,9,0,0,0,0,0],[0,9,9,0,9,9,0,9,9,0,8,0,9,9,9,0,8,0,8,0,9,0,9,9,9,9,9,0],[0,0,9,0,9,0,0,0,9,0,8,0,9,0,9,0,8,0,8,0,9,0,9,0,9,0,9,0],[0,9,0,9,0,9,0,9,0,8,0,8,0,9,0,9,0,8,0,9,0,0,0,9,0,9,0,0],[0,0,9,0,9,9,0,8,9,0,8,0,0,9,8,9,0,8,0,0,9,0,0,9,0,9,9,0],[0,9,9,0,9,9,0,8,9,0,8,0,0,9,8,9,0,8,0,0,9,0,9,9,0,9,9,0],[0,0,0,9,9,0,0,0,0,8,9,0,9,9,0,0,8,9,0,9,9,0,0,0,9,9,0,0],[0,0,0,0,0,0,0,9,9,9,8,8,8,0,0,0,0,9,8,0,0,0,0,9,9,0,0,0],[0,0,0,9,9,0,0,0,0,9,9,0,0,8,0,9,9,0,0,8,8,0,9,0,0,8,8,0],[0,0,0,0,0,0,0,9,9,9,9,9,8,8,0,0,0,0,0,9,8,0,0,0,0,9,9,0],[0,8,0,0,9,9,0,0,8,0,0,0,9,9,0,8,0,0,0,9,9,0,8,0,0,9,9,0],[0,8,0,0,0,9,0,0,0,0,0,0,9,9,0,0,0,0,0,9,9,0,8,0,0,0,9,0],[0,0,0,9,9,0,0,8,8,8,8,0,0,0,0,0,0,9,9,9,9,0,0,8,8,0,0,0],[0,0,0,9,0,0,0,0,0,0,8,8,8,8,9,9,9,9,0,0,0,0,0,0,8,0,0,0],[0,0,0,9,9,0,0,0,8,8,8,0,0,0,0,0,0,9,9,9,9,0,0,8,8,0,0,0],[0,9,9,9,9,0,0,0,0,8,8,0,0,0,0,0,0,9,9,0,0,0,0,8,8,8,8,0],[0,9,9,9,9,0,0,0,0,0,0,8,8,8,9,9,9,0,0,0,0,0,0,8,8,8,8,0],[0,0,9,9,0,0,0,8,9,0,9,8,0,0,8,9,0,9,8,0,0,0,0,9,9,0,0,0],[0,0,9,9,0,0,0,0,0,0,9,8,0,0,9,9,9,8,8,0,0,0,0,0,0,0,0,0],[0,8,8,0,0,0,0,8,8,0,0,0,0,9,8,0,0,0,0,9,9,0,0,0,0,9,9,0],[0,0,0,0,9,9,0,0,0,0,0,0,9,8,9,9,9,9,9,8,8,0,0,0,0,0,0,0],[0,0,8,0,9,0,0,0,0,8,0,9,0,0,0,0,8,0,9,0,0,0,0,8,0,9,0,0],[0,0,9,0,9,9,0,0,9,9,0,8,9,9,0,9,9,0,8,9,9,0,0,9,0,9,9,0],[0,8,9,0,9,9,0,0,8,9,0,9,9,0,0,8,9,0,9,9,0,0,8,9,0,9,9,0],[0,0,0,0,0,0,0,0,9,0,9,0,9,0,0,8,8,0,8,8,0,0,0,0,0,0,0,0],[0,0,0,9,0,9,0,8,9,0,9,0,9,8,8,9,0,9,0,9,8,0,0,0,9,0,9,0],[0,0,9,9,8,0,0,0,0,0,9,9,8,0,0,8,9,9,0,0,0,0,0,8,9,9,0,0],[0,8,9,9,9,9,0,8,8,8,0,0,0,0,0,0,0,0,8,8,8,0,9,9,9,9,8,0],[0,9,9,9,9,8,0,0,0,0,0,0,8,0,0,8,0,0,0,0,0,0,8,9,9,9,9,0],[0,0,0,0,0,0,0,9,9,0,0,0,0,0,0,0,0,0,0,8,8,0,0,0,0,0,0,0],[0,8,9,9,0,0,0,0,8,8,9,9,0,0,0,0,8,8,9,9,0,0,0,0,8,9,9,0],[0,0,0,0,0,0,0,0,9,9,9,0,0,0,0,0,0,8,8,8,0,0,0,0,0,0,0,0],[0,0,9,9,8,8,0,0,9,0,0,0,8,8,8,8,0,0,0,9,0,0,8,8,9,9,0,0],[0,0,0,8,9,9,0,0,0,0,8,0,9,9,9,9,0,8,0,0,0,0,9,9,8,0,0,0],[0,9,8,0,0,0,0,0,0,0,0,0,9,8,8,9,0,0,0,0,0,0,0,0,0,8,9,0],[0,0,0,0,9,8,0,9,8,0,0,0,0,0,0,0,0,0,0,9,8,0,9,8,0,0,0,0],[0,9,0,9,9,0,0,0,9,9,9,0,0,8,0,0,9,0,0,8,8,0,0,0,0,8,8,0],[0,0,8,9,9,0,0,0,8,9,9,0,0,0,0,0,0,9,9,8,0,0,0,9,9,8,0,0],[0,9,9,9,9,9,0,0,0,0,0,8,8,8,8,8,8,0,0,0,0,0,9,9,9,9,9,0],[0,8,9,9,9,9,0,0,8,0,0,0,0,0,0,0,0,0,0,8,0,0,9,9,9,9,8,0],[0,0,0,0,0,0,0,0,0,8,9,0,0,0,0,0,0,9,8,0,0,0,0,0,0,0,0,0],[0,8,9,0,9,8,0,9,8,0,0,0,8,9,9,8,0,0,0,8,9,0,8,9,0,9,8,0],[0,0,0,8,9,0,0,0,0,0,8,9,0,0,0,0,0,8,9,0,0,0,0,0,8,9,0,0],[0,0,8,9,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,9,9,0,0],[0,0,8,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,9,0,0],[0,9,0,8,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,8,0,9,0],[0,9,0,8,0,0,0,0,0,0,0,0,9,0,0,0,0,0,0,9,0,0,9,0,8,0,0,0],[0,8,0,9,9,0,0,0,8,9,9,0,9,9,9,9,0,9,8,8,0,0,0,9,9,0,9,0],[0,0,9,9,9,0,0,8,9,9,0,8,0,9,8,9,9,0,8,0,9,0,0,9,9,9,0,0],[0,0,9,9,0,9,0,8,0,9,0,8,9,0,8,0,9,0,8,9,0,0,0,9,9,0,9,0],[0,0,0,9,9,0,0,9,0,8,9,0,9,8,9,0,8,9,0,9,8,0,0,0,9,9,0,0],[0,0,0,9,9,0,0,9,0,8,9,8,9,0,9,0,8,9,8,9,0,0,0,0,9,9,0,0],[0,9,9,9,9,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,8,8,8,8,0],[0,0,0,9,0,0,0,0,0,8,9,8,0,0,0,0,8,9,8,0,0,0,0,0,9,0,0,0],[0,0,9,8,9,0,0,0,0,8,0,9,0,0,0,0,8,0,9,0,0,0,0,9,8,9,0,0],[0,8,8,9,9,9,0,8,8,0,0,0,0,0,8,9,0,0,0,0,0,0,9,9,0,0,0,0],[0,9,9,0,0,0,0,8,9,0,0,0,0,0,8,8,0,0,0,0,0,0,8,8,9,9,9,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,9,9,0,0,8,8,0,9,0,0,8,8,0],[0,9,0,0,8,8,0,9,9,9,0,0,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,9,0,0,8,0,0,9,9,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,9,0,8,9,9,0,0,0,0,8,9,9,0,9,0,0,0,0,0,0,0],[0,8,8,0,9,9,0,8,0,0,9,0,0,9,9,0,0,9,0,0,8,0,9,9,0,8,8,0],[0,0,9,0,9,0,0,0,8,0,0,0,8,0,0,8,0,0,0,8,0,0,0,9,0,9,0,0],[0,9,0,0,0,8,0,8,9,0,0,0,8,8,8,8,0,0,0,9,8,0,8,0,0,0,9,0],[0,9,9,0,0,0,0,8,9,0,0,0,0,0,8,9,0,0,0,0,0,0,9,9,0,0,0,0],[0,8,8,0,9,9,0,0,8,0,0,0,9,0,0,9,0,0,0,8,0,0,9,9,0,8,8,0],[0,0,9,9,0,0,0,0,0,0,9,9,0,0,0,0,0,0,9,9,0,0,8,8,8,8,8,0],[0,8,8,8,8,8,0,0,0,0,0,9,9,0,0,0,0,9,9,0,0,0,0,9,9,0,0,0],[0,0,0,0,9,9,0,0,0,0,0,0,9,9,8,8,9,0,0,0,9,0,8,0,0,0,0,0],[0,8,0,0,9,9,0,9,8,8,0,0,9,9,0,0,0,0,0,0,9,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,8,9,0,0,0,0,0,9,0,0,9,0,0],[0,0,0,0,0,0,0,0,0,8,9,9,0,9,9,0,8,9,9,0,0,0,0,0,0,0,0,0],[0,0,9,0,9,0,0,9,0,0,0,0,0,9,8,0,0,0,0,0,8,0,0,8,0,8,0,0],[0,9,0,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,0,0,0,9,0],[0,0,9,0,9,0,0,8,0,0,0,0,0,9,8,0,0,0,0,0,9,0,0,9,0,9,0,0],[0,0,0,9,9,0,0,0,0,8,9,0,0,0,0,0,8,9,0,0,0,0,0,0,9,9,0,0],[0,0,9,0,9,0,0,0,0,0,0,0,8,0,0,0,0,0,0,8,0,0,0,9,0,9,0,0],[0,0,0,0,0,8,0,8,9,9,9,9,8,8,8,8,9,9,9,9,8,0,8,0,0,0,0,0],[0,0,0,0,0,9,0,0,0,8,8,8,8,8,9,8,8,9,9,0,0,0,8,0,0,0,0,0],[0,0,0,0,0,9,0,0,0,0,0,8,0,9,9,0,8,0,0,0,0,0,9,0,0,0,0,0],[0,0,0,8,8,8,0,0,0,0,0,0,9,9,9,9,0,0,0,0,0,0,8,8,8,0,0,0],[0,0,9,9,8,8,0,9,8,8,0,0,0,0,0,0,0,0,9,9,8,0,9,9,8,8,0,0],[0,0,9,9,9,9,0,8,8,0,0,0,0,0,0,0,0,0,0,8,8,0,9,9,9,9,0,0],[0,0,0,8,8,0,0,0,9,9,9,9,0,0,0,0,9,9,9,9,0,0,0,8,8,0,0,0],[0,0,0,8,9,9,0,0,9,9,8,0,0,0,0,0,0,8,9,9,0,0,9,9,8,0,0,0],[0,0,0,0,8,8,0,0,0,9,9,9,9,0,0,9,9,9,9,0,0,0,8,8,0,0,0,0],[0,0,0,0,0,9,0,0,0,0,0,8,9,0,0,0,0,0,8,9,0,0,0,0,0,0,9,0],[0,9,9,9,8,8,0,0,0,9,0,0,8,8,8,8,0,0,9,0,0,0,8,8,9,9,9,0],[0,8,0,0,0,0,0,8,8,9,9,9,9,9,8,9,9,9,9,9,9,0,0,0,0,0,8,0],[0,8,0,0,0,0,0,9,8,8,9,9,0,0,0,0,8,8,9,9,8,0,0,0,0,0,9,0],[0,9,0,0,0,0,0,9,0,8,0,0,0,0,0,0,0,0,8,0,9,0,0,0,0,0,9,0],[0,8,8,9,9,0,0,8,8,0,0,0,0,0,0,0,0,0,0,8,8,0,9,9,9,8,8,0],[0,9,9,9,9,0,0,0,0,0,0,8,9,9,9,8,8,0,0,0,0,0,0,9,9,9,9,0],[0,9,9,9,9,0,0,0,0,0,0,0,8,8,8,8,0,0,0,0,0,0,0,9,9,9,9,0],[0,0,8,8,0,0,0,0,0,9,9,9,9,0,0,9,9,9,9,0,0,0,0,0,8,8,0,0],[0,9,9,8,0,0,0,0,0,0,8,9,9,0,0,9,9,8,0,0,0,0,0,0,8,9,9,0],[0,9,9,0,0,0,0,0,9,8,9,9,0,0,0,0,8,9,9,8,0,0,0,0,0,8,8,0],[0,9,9,0,0,8,0,9,9,0,0,8,8,0,9,9,0,0,8,8,0,0,9,9,0,0,8,0],[0,8,9,9,9,9,0,8,8,0,0,9,0,0,0,0,9,0,0,8,8,0,9,9,9,8,8,0],[0,0,0,9,0,0,0,0,9,9,0,8,9,0,0,9,9,0,8,9,0,0,0,0,9,0,0,0],[0,0,0,0,0,0,0,8,8,0,9,0,9,0,0,9,0,9,0,8,8,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,9,0,9,0,8,8,8,8,0,9,0,9,0,0,0,0,0,0,0,0],[0,0,0,0,0,9,0,0,0,9,9,0,0,8,9,0,0,8,8,0,0,0,8,0,0,0,0,0],[0,8,0,0,0,0,0,9,0,0,8,8,0,0,0,0,9,9,0,0,8,0,0,0,0,0,9,0],[0,0,0,8,8,0,0,0,9,9,0,0,0,0,0,0,0,0,8,8,0,0,0,9,9,0,0,0],[0,0,8,8,0,0,0,0,0,0,0,9,9,0,0,8,8,0,0,0,0,0,0,0,9,9,0,0],[0,0,9,0,9,0,0,0,0,0,0,0,0,0,9,8,8,0,9,8,8,0,8,0,0,0,8,0],[0,8,0,0,0,8,0,9,8,8,0,9,8,8,0,0,0,0,0,0,0,0,0,9,0,9,0,0],[0,0,8,9,9,0,0,8,9,0,9,0,9,9,8,9,0,9,0,9,9,0,0,8,9,9,0,0],[0,0,0,0,0,9,0,0,9,8,0,0,9,8,0,9,8,0,0,9,8,0,0,0,0,0,9,0],[0,9,0,8,0,9,0,8,0,0,0,0,0,8,0,9,0,0,0,9,0,0,0,8,0,9,0,0],[0,0,9,0,9,0,0,0,8,0,0,0,8,0,9,0,0,0,0,0,9,0,9,0,8,0,9,0],[0,0,0,9,0,8,0,0,0,0,0,0,0,9,9,0,0,0,0,0,0,0,8,0,9,0,0,0],[0,0,0,0,0,0,0,9,0,0,0,0,0,9,0,8,0,0,0,8,0,0,0,9,0,9,0,0],[0,0,9,0,9,0,0,0,8,0,0,0,8,0,9,0,0,0,0,0,9,0,0,0,0,0,0,0],[0,0,8,9,9,0,0,8,9,9,0,8,9,9,8,9,9,0,8,9,9,0,0,8,9,9,0,0],[0,0,8,9,9,0,0,8,9,0,0,0,9,9,8,9,0,0,0,9,9,0,0,8,9,9,0,0],[0,0,9,0,9,0,0,8,9,9,0,8,9,9,8,9,9,0,8,9,9,0,0,9,0,9,0,0],[0,0,8,8,8,0,0,0,0,0,8,0,0,0,0,0,0,9,0,0,0,0,0,9,9,9,0,0],[0,0,0,0,0,0,0,8,9,9,0,8,9,9,8,9,9,0,8,9,9,0,0,0,0,0,0,0],[0,0,8,8,8,0,0,0,0,0,8,0,0,0,9,9,9,9,9,9,9,0,0,0,0,0,0,0],[0,0,0,0,9,9,0,0,0,0,0,0,9,8,0,0,0,0,0,9,8,0,0,0,0,9,9,0],[0,0,9,9,0,0,0,0,0,0,9,8,0,0,0,0,0,9,8,0,0,0,0,9,9,0,0,0],[0,9,0,0,0,0,0,0,9,8,0,0,0,0,0,9,8,0,0,0,0,0,9,0,0,0,0,0],[0,8,0,0,9,9,0,0,8,8,0,0,9,9,0,8,8,0,0,9,9,0,8,0,0,9,9,0],[0,0,0,0,9,9,0,0,9,9,0,8,9,9,0,9,9,0,8,9,9,0,0,0,0,9,9,0],[0,0,9,9,9,0,0,8,0,0,9,0,0,8,8,0,0,9,0,0,8,0,0,9,9,9,0,0],[0,0,9,0,9,0,0,0,9,9,0,8,9,0,0,9,9,0,8,9,0,0,0,9,0,9,0,0],[0,0,9,0,9,0,0,8,9,0,0,0,9,9,8,9,0,0,0,9,9,0,0,9,0,9,0,0],[0,0,9,9,9,0,0,0,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,9,8,9,9,9,8,9,0,0,0,0,0,0,0,0,8,8,8,8,8,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,0,0,0,0,0,9,9,9,0,0],[0,0,0,0,0,0,0,9,0,0,0,0,0,0,9,9,0,0,0,0,0,0,8,8,9,9,9,0],[0,9,0,0,0,0,0,0,9,9,0,0,0,0,0,0,8,8,9,9,9,0,0,0,0,0,0,0],[0,0,9,9,0,0,0,0,0,0,8,8,9,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,9,9,0,0,0,9,0,0,8,8,9,9,9,9,0,0,0,0,0,0,9,9,9,9,9,0],[0,0,9,9,9,0,0,0,8,8,9,8,8,0,0,8,8,9,8,8,0,0,0,9,9,9,0,0],[0,0,9,9,9,0,0,8,9,9,9,8,9,9,8,9,9,9,8,9,9,0,0,9,9,9,0,0],[0,8,9,0,9,9,0,0,8,9,0,0,9,8,0,0,9,9,0,9,8,0,0,0,9,9,9,0],[0,0,0,9,9,9,0,0,0,9,9,0,9,8,0,8,9,0,0,9,8,0,8,9,0,9,9,0],[0,0,9,9,9,0,0,0,0,0,9,0,0,0,8,8,8,0,9,9,9,0,8,0,0,0,9,0],[0,8,8,8,8,8,0,0,0,0,0,0,0,0,9,9,9,9,9,9,9,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,9,9,9,9,9,9,9,0,0,0,8,0,0,0,0,0,8,8,8,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,0,0,0,0,9,9,0,9,9,9,9,9,0],[0,0,0,0,0,9,0,0,0,0,0,9,9,0,9,9,9,8,8,0,0,0,0,0,0,0,0,0],[0,0,0,9,9,0,0,9,9,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,9,9,0,0,9,9,8,8,0,0,9,0,0,0,0,0,9,9,0,9,9,9,8,8,0],[0,0,0,0,0,0,0,9,8,9,0,0,0,0,0,0,9,9,0,0,0,0,0,0,8,9,9,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,8,0,9,9,0,0,0,8,9,9,0],[0,0,0,8,9,9,0,0,0,9,8,0,9,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,9,9,9,0,0,0,9,9,0,9,8,0,9,9,0,0,9,8,0,9,0,0,9,9,0],[0,9,0,0,0,8,0,9,9,9,0,8,8,8,0,0,0,9,0,0,0,0,0,9,9,9,0,0],[0,8,0,0,0,9,0,8,8,0,0,9,9,0,8,0,0,9,9,0,0,0,0,0,9,0,0,0],[0,0,8,8,8,0,0,9,0,0,8,0,0,9,9,9,0,0,0,9,9,0,9,9,0,9,9,0],[0,9,9,9,9,9,0,0,0,0,0,0,9,9,0,0,0,0,0,0,9,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,9,9,9,8,8,0,0,0,0,0,0,9,9,0,0,0,0,0,0,9,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,9,8,8,0,0,0,0,0,0,9,9,0,0],[0,9,9,9,8,8,0,0,0,0,0,0,9,9,9,9,8,8,0,0,9,0,0,0,9,9,0,0],[0,9,0,8,0,9,0,0,9,0,8,0,9,0,0,8,0,9,0,8,0,0,8,0,9,0,8,0],[0,9,8,9,8,9,0,0,9,0,9,0,9,0,0,9,0,9,0,9,0,0,9,8,9,8,9,0],[0,8,0,8,0,8,0,9,0,9,0,9,0,9,9,0,9,0,9,0,9,0,8,0,8,0,8,0],[0,9,9,0,9,9,0,9,9,0,8,0,9,9,9,9,0,8,0,9,9,0,9,9,0,9,9,0],[0,8,8,9,9,0,0,9,9,0,0,9,0,0,9,9,0,0,9,0,0,0,8,8,9,9,0,0],[0,0,0,9,0,0,0,0,0,9,9,0,0,8,0,9,9,0,0,8,8,0,9,0,0,0,8,0],[0,9,9,0,9,9,0,9,9,0,0,0,9,9,9,0,0,8,0,0,9,0,0,8,8,8,0,0],[0,8,8,9,9,9,0,9,9,0,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,8,8,9,9,9,0,9,9,0,0,0,0,0,9,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,8,9,9,0,0,9,9,0,0,0],[0,8,8,9,9,9,0,9,9,0,0,0,0,0,9,0,0,8,8,9,9,0,0,9,9,0,0,0],[0,9,9,8,9,9,0,0,9,0,0,0,9,0,0,9,0,0,0,9,0,0,9,9,8,9,9,0],[0,8,9,9,0,0,0,0,8,8,9,9,0,0,0,8,8,9,9,0,0,0,8,9,9,0,0,0],[0,0,0,8,9,9,0,0,0,0,8,8,9,9,0,0,0,8,8,9,9,0,0,0,8,9,9,0],[0,9,9,8,9,9,0,0,0,0,8,0,0,0,0,0,0,8,0,0,0,0,9,9,8,9,9,0],[0,9,9,9,9,8,0,0,0,0,0,0,8,8,0,0,0,0,0,8,8,0,9,9,9,9,8,0],[0,0,0,8,9,9,0,0,0,8,8,9,9,0,0,8,8,9,9,0,0,0,8,9,9,0,0,0],[0,8,9,9,9,9,0,8,8,0,0,0,0,0,8,8,0,0,0,0,0,0,8,9,9,9,9,0],[0,8,9,9,0,0,0,0,8,9,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,8,9,9,0,0,0,0,8,9,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,8,9,9,0,0,0,0,8,9,9,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,8,9,9,9,9,0,0,8,9,9,9,9,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,8,9,9,9,9,0,0,8,9,9,9,9,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,8,9,9,0,8,9,9,8,9,9,0,8,9,9,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,8,9,0,9,8,0,0,8,9,0,9,8,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,8,9,0,9,8,0,0,8,9,0,9,8,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,9,9,9,9,9,8,0,9,9,9,9,9,8,0,0,0,0,0,0,0],[0,9,8,8,8,9,0,9,9,0,0,0,9,9,9,9,0,0,0,9,9,0,9,8,8,8,9,0],[0,0,0,0,0,0,0,8,9,9,9,9,9,0,8,9,9,9,9,9,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,9,9,0,0,0,0,8,9,9,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,9,9,0,0,0,0,8,9,9,0],[0,0,0,0,0,0,0,0,0,8,9,9,0,0,0,0,8,9,9,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,8,9,9,0,0,0,0,8,9,9,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,8,9,0,9,0,9,8,8,9,0,9,0,9,8,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,8,0,9,0,8,0,9,8,0,9,0,8,0,9,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,8,9,0,0,0,9,8,8,9,0,0,0,9,8,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,8,9,0,0,8,9,9,8,9,0,0,8,9,9,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,9,9,9,8,0,0,0,9,9,9,8,0,0,0,0,0,0,0]];
+const cells = [{x:0,y:0,shape:1,hidden:!0},{x:0,y:0,shape:0,light:"top"},{x:0,y:.25,shape:1,light:"left"},{x:0,y:.25,shape:0,light:"left"},{x:0,y:.5,shape:1,light:"left"},{x:0,y:.5,shape:0,light:"left"},{x:0,y:.75,shape:1,hidden:!0},{x:.25,y:-.125,shape:0,light:"top"},{x:.25,y:.125,shape:1,light:"top"},{x:.25,y:.125,shape:0,light:"top"},{x:.25,y:.375,shape:1,light:"left"},{x:.25,y:.375,shape:0,light:"left"},{x:.25,y:.625,shape:1,light:"left"},{x:.25,y:.625,shape:0,light:"left"},{x:.5,y:0,shape:1,light:"top"},{x:.5,y:0,shape:0,light:"top"},{x:.5,y:.25,shape:1,light:"top"},{x:.5,y:.25,shape:0,light:"right"},{x:.5,y:.5,shape:1,light:"right"},{x:.5,y:.5,shape:0,light:"right"},{x:.5,y:.75,shape:1,light:"right"},{x:.75,y:-.125,shape:0,hidden:!0},{x:.75,y:.125,shape:1,light:"top"},{x:.75,y:.125,shape:0,light:"right"},{x:.75,y:.375,shape:1,light:"right"},{x:.75,y:.375,shape:0,light:"right"},{x:.75,y:.625,shape:1,light:"right"},{x:.75,y:.625,shape:0,hidden:!0}];
+const shapes = [{x1:0,y1:.25,x2:.25,y2:.125,x3:.25,y3:.375},{x1:0,y1:0,x2:.25,y2:.125,x3:0,y3:.25}];
+
+function modRange(range, val) {
+    return range.min + (val % (range.max - range.min));
+}
+
+function mergeOpts(...args) {
+    const isObj = (o) => o && typeof o === 'object' && !Array.isArray(o);
+    return args.reduce((acc, curr) => {
+        if (!curr) return acc;
+        Object.keys(curr).forEach((key) => {
+            const a = acc[key];
+            const b = curr[key];
+            if (isObj(a) && isObj(b)) {
+                acc[key] = mergeOpts(a, b);
+            } else {
+                acc[key] = b;
+            }
+        });
+        return acc;
+    }, {});
+}
+
+const defaultOpts = {
+    hue: { min: 0, max: 360 },
+    saturation: { min: 70, max: 100 },
+    lightness: { min: 45, max: 65 },
+    variation: { min: 5, max: 20, enabled: true },
+    shift: { min: 60, max: 300 },
+    figurealpha: { min: 0.7, max: 1.2 },
+    light: { top: 10, right: -8, left: -4, enabled: true },
+    createCanvas: (w, h) => {
+        if (typeof document !== 'undefined') {
+            const canvas = document.createElement('canvas');
+            canvas.style.width = w + 'px';
+            canvas.style.height = h + 'px';
+            const ratio = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+            canvas.width = w * ratio;
+            canvas.height = h * ratio;
+            const ctx = canvas.getContext('2d');
+            if (ctx && typeof ctx.scale === 'function') {
+                ctx.scale(ratio, ratio);
+            }
+            return canvas;
+        }
+        return null;
+    }
+};
+
+function hashicon(str, sizeOrOpts = {}) {
+    const userOpts = typeof sizeOrOpts === 'number' ? { size: sizeOrOpts } : sizeOrOpts;
+    const opts = mergeOpts(defaultOpts, userOpts);
+
+    const hashBytes = keccak_256(String(str ?? ''));
+    const n = new Uint16Array(hashBytes.buffer, hashBytes.byteOffset, 16);
+
+    const hue = modRange(opts.hue, n[0]);
+    const sat = modRange(opts.saturation, n[1]);
+    const light = modRange(opts.lightness, n[2]);
+    const shift = modRange(opts.shift, n[3]);
+    const figurealpha = modRange(opts.figurealpha, n[4]);
+    const figureIdx = n[5] % figures.length;
+
+    const size = opts.size || 100;
+    const canvas = opts.createCanvas(size, size);
+    if (!canvas) return null;
+    const ctx = canvas.getContext('2d');
+
+    cells.forEach((cell, idx) => {
+        const lightOffset = opts.light.enabled ? (opts.light[cell.light]) : 1;
+        const g = Math.round(n[6] / (idx + 1));
+        const variation = opts.variation.enabled ? modRange(opts.variation, g) : 0;
+
+        ctx.beginPath();
+        if (!cell.hidden) {
+            const shape = shapes[cell.shape];
+            ctx.moveTo(size * (shape.x1 + cell.x), size * (shape.y1 + cell.y));
+            ctx.lineTo(size * (shape.x2 + cell.x), size * (shape.y2 + cell.y));
+            ctx.lineTo(size * (shape.x3 + cell.x), size * (shape.y3 + cell.y));
+        }
+        ctx.fillStyle = `hsla(${hue + variation}, ${sat}%, ${light + lightOffset}%, 1)`;
+        ctx.fill();
+
+        if (figures[figureIdx][idx] > 0) {
+            const alpha = figures[figureIdx][idx] * figurealpha / 10;
+            ctx.fillStyle = `hsla(${hue + shift + variation}, ${sat}%, ${light + lightOffset}%, ${alpha})`;
+            ctx.fill();
+        }
+    });
+
+    return canvas;
+}
+
+if (typeof window !== 'undefined') {
+    window.hashicon = hashicon;
+}
+
+module.exports = hashicon;
+
+},{"@noble/hashes/sha3":30}],2:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.rotl = rotl;
@@ -174,7 +279,7 @@ function createCipher(core, opts) {
     };
 }
 
-},{"./utils.js":4}],2:[function(require,module,exports){
+},{"./utils.js":5}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.poly1305 = void 0;
@@ -456,7 +561,7 @@ function wrapConstructorWithKey(hashCons) {
 /** Poly1305 MAC from RFC 8439. */
 exports.poly1305 = wrapConstructorWithKey((key) => new Poly1305(key));
 
-},{"./utils.js":4}],3:[function(require,module,exports){
+},{"./utils.js":5}],4:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.xsalsa20poly1305 = exports.xsalsa20 = exports.salsa20 = void 0;
@@ -663,7 +768,7 @@ function secretbox(key, nonce) {
     return { seal: xs.encrypt, open: xs.decrypt };
 }
 
-},{"./_arx.js":1,"./_poly1305.js":2,"./utils.js":4}],4:[function(require,module,exports){
+},{"./_arx.js":2,"./_poly1305.js":3,"./utils.js":5}],5:[function(require,module,exports){
 "use strict";
 /**
  * Utilities for hex, bytes, CSPRNG.
@@ -1038,7 +1143,7 @@ function copyBytes(bytes) {
     return Uint8Array.from(bytes);
 }
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getHash = getHash;
@@ -1059,7 +1164,7 @@ function createCurve(curveDef, defHash) {
     return { ...create(defHash), create };
 }
 
-},{"./abstract/weierstrass.js":12}],6:[function(require,module,exports){
+},{"./abstract/weierstrass.js":13}],7:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.wNAF = void 0;
@@ -1536,7 +1641,7 @@ function _createCurveFields(type, CURVE, curveOpts = {}, FpFnLE) {
     return { CURVE, Fp, Fn };
 }
 
-},{"../utils.js":15,"./modular.js":9}],7:[function(require,module,exports){
+},{"../utils.js":16,"./modular.js":10}],8:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PrimeEdwardsPoint = void 0;
@@ -2171,7 +2276,7 @@ function twistedEdwards(c) {
     return _eddsa_new_output_to_legacy(c, EDDSA);
 }
 
-},{"../utils.js":15,"./curve.js":6,"./modular.js":9}],8:[function(require,module,exports){
+},{"../utils.js":16,"./curve.js":7,"./modular.js":10}],9:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports._DST_scalar = void 0;
@@ -2383,7 +2488,7 @@ function createHasher(Point, mapToCurve, defaults) {
     };
 }
 
-},{"../utils.js":15,"./modular.js":9}],9:[function(require,module,exports){
+},{"../utils.js":16,"./modular.js":10}],10:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isNegativeLE = void 0;
@@ -2938,7 +3043,7 @@ function mapHashToField(key, fieldOrder, isLE = false) {
     return isLE ? (0, utils_ts_1.numberToBytesLE)(reduced, fieldLen) : (0, utils_ts_1.numberToBytesBE)(reduced, fieldLen);
 }
 
-},{"../utils.js":15}],10:[function(require,module,exports){
+},{"../utils.js":16}],11:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.montgomery = montgomery;
@@ -3099,7 +3204,7 @@ function montgomery(curveDef) {
     };
 }
 
-},{"../utils.js":15,"./modular.js":9}],11:[function(require,module,exports){
+},{"../utils.js":16,"./modular.js":10}],12:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isHash = exports.validateObject = exports.memoized = exports.notImplemented = exports.createHmacDrbg = exports.bitMask = exports.bitSet = exports.bitGet = exports.bitLen = exports.aInRange = exports.inRange = exports.asciiToBytes = exports.copyBytes = exports.equalBytes = exports.ensureBytes = exports.numberToVarBytesBE = exports.numberToBytesLE = exports.numberToBytesBE = exports.bytesToNumberLE = exports.bytesToNumberBE = exports.hexToNumber = exports.numberToHexUnpadded = exports.abool = exports.utf8ToBytes = exports.randomBytes = exports.isBytes = exports.hexToBytes = exports.concatBytes = exports.bytesToUtf8 = exports.bytesToHex = exports.anumber = exports.abytes = void 0;
@@ -3173,7 +3278,7 @@ exports.validateObject = u.validateObject;
 /** @deprecated moved to `@noble/curves/utils.js` */
 exports.isHash = u.isHash;
 
-},{"../utils.js":15}],12:[function(require,module,exports){
+},{"../utils.js":16}],13:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DER = exports.DERErr = void 0;
@@ -4601,7 +4706,7 @@ function weierstrass(c) {
     return _ecdsa_new_output_to_legacy(c, signs);
 }
 
-},{"../utils.js":15,"./curve.js":6,"./modular.js":9,"@noble/hashes/hmac.js":22,"@noble/hashes/utils":30}],13:[function(require,module,exports){
+},{"../utils.js":16,"./curve.js":7,"./modular.js":10,"@noble/hashes/hmac.js":23,"@noble/hashes/utils":32}],14:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hash_to_ristretto255 = exports.hashToRistretto255 = exports.encodeToCurve = exports.hashToCurve = exports.RistrettoPoint = exports.edwardsToMontgomery = exports.ED25519_TORSION_SUBGROUP = exports.ristretto255_hasher = exports.ristretto255 = exports.ed25519_hasher = exports.x25519 = exports.ed25519ph = exports.ed25519ctx = exports.ed25519 = void 0;
@@ -5074,7 +5179,7 @@ exports.hashToRistretto255 = (() => exports.ristretto255_hasher.hashToCurve)();
 /** @deprecated use `import { ristretto255_hasher } from '@noble/curves/ed25519.js';` */
 exports.hash_to_ristretto255 = (() => exports.ristretto255_hasher.hashToCurve)();
 
-},{"./abstract/curve.js":6,"./abstract/edwards.js":7,"./abstract/hash-to-curve.js":8,"./abstract/modular.js":9,"./abstract/montgomery.js":10,"./utils.js":15,"@noble/hashes/sha2.js":27,"@noble/hashes/utils.js":30}],14:[function(require,module,exports){
+},{"./abstract/curve.js":7,"./abstract/edwards.js":8,"./abstract/hash-to-curve.js":9,"./abstract/modular.js":10,"./abstract/montgomery.js":11,"./utils.js":16,"@noble/hashes/sha2.js":28,"@noble/hashes/utils.js":32}],15:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.encodeToCurve = exports.hashToCurve = exports.secp256k1_hasher = exports.schnorr = exports.secp256k1 = void 0;
@@ -5372,7 +5477,7 @@ exports.hashToCurve = (() => exports.secp256k1_hasher.hashToCurve)();
 /** @deprecated use `import { secp256k1_hasher } from '@noble/curves/secp256k1.js';` */
 exports.encodeToCurve = (() => exports.secp256k1_hasher.encodeToCurve)();
 
-},{"./_shortw_utils.js":5,"./abstract/hash-to-curve.js":8,"./abstract/modular.js":9,"./abstract/weierstrass.js":12,"./utils.js":15,"@noble/hashes/sha2.js":27,"@noble/hashes/utils.js":30}],15:[function(require,module,exports){
+},{"./_shortw_utils.js":6,"./abstract/hash-to-curve.js":9,"./abstract/modular.js":10,"./abstract/weierstrass.js":13,"./utils.js":16,"@noble/hashes/sha2.js":28,"@noble/hashes/utils.js":32}],16:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.notImplemented = exports.bitMask = exports.utf8ToBytes = exports.randomBytes = exports.isBytes = exports.hexToBytes = exports.concatBytes = exports.bytesToUtf8 = exports.bytesToHex = exports.anumber = exports.abytes = void 0;
@@ -5733,7 +5838,7 @@ function memoized(fn) {
     };
 }
 
-},{"@noble/hashes/utils.js":30}],16:[function(require,module,exports){
+},{"@noble/hashes/utils.js":32}],17:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BSIGMA = void 0;
@@ -5784,7 +5889,7 @@ function G2s(a, b, c, d, x) {
     return { a, b, c, d };
 }
 
-},{"./utils.js":30}],17:[function(require,module,exports){
+},{"./utils.js":32}],18:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SHA512_IV = exports.SHA384_IV = exports.SHA224_IV = exports.SHA256_IV = exports.HashMD = void 0;
@@ -5947,7 +6052,7 @@ exports.SHA512_IV = Uint32Array.from([
     0x510e527f, 0xade682d1, 0x9b05688c, 0x2b3e6c1f, 0x1f83d9ab, 0xfb41bd6b, 0x5be0cd19, 0x137e2179,
 ]);
 
-},{"./utils.js":30}],18:[function(require,module,exports){
+},{"./utils.js":32}],19:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.toBig = exports.shrSL = exports.shrSH = exports.rotrSL = exports.rotrSH = exports.rotrBL = exports.rotrBH = exports.rotr32L = exports.rotr32H = exports.rotlSL = exports.rotlSH = exports.rotlBL = exports.rotlBH = exports.add5L = exports.add5H = exports.add4L = exports.add4H = exports.add3L = exports.add3H = void 0;
@@ -6038,7 +6143,7 @@ const u64 = {
 };
 exports.default = u64;
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.blake2s = exports.BLAKE2s = exports.blake2b = exports.BLAKE2b = exports.BLAKE2 = void 0;
@@ -6459,7 +6564,7 @@ exports.BLAKE2s = BLAKE2s;
  */
 exports.blake2s = (0, utils_ts_1.createOptHasher)((opts) => new BLAKE2s(opts));
 
-},{"./_blake.js":16,"./_md.js":17,"./_u64.js":18,"./utils.js":30}],20:[function(require,module,exports){
+},{"./_blake.js":17,"./_md.js":18,"./_u64.js":19,"./utils.js":32}],21:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.blake2b = exports.BLAKE2b = void 0;
@@ -6474,13 +6579,13 @@ exports.BLAKE2b = blake2_ts_1.BLAKE2b;
 /** @deprecated Use import from `noble/hashes/blake2` module */
 exports.blake2b = blake2_ts_1.blake2b;
 
-},{"./blake2.js":19}],21:[function(require,module,exports){
+},{"./blake2.js":20}],22:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.crypto = void 0;
 exports.crypto = typeof globalThis === 'object' && 'crypto' in globalThis ? globalThis.crypto : undefined;
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hmac = exports.HMAC = void 0;
@@ -6572,7 +6677,7 @@ const hmac = (hash, key, message) => new HMAC(hash, key).update(message).digest(
 exports.hmac = hmac;
 exports.hmac.create = (hash, key) => new HMAC(hash, key);
 
-},{"./utils.js":30}],23:[function(require,module,exports){
+},{"./utils.js":32}],24:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ripemd160 = exports.RIPEMD160 = exports.md5 = exports.MD5 = exports.sha1 = exports.SHA1 = void 0;
@@ -6860,7 +6965,7 @@ exports.RIPEMD160 = RIPEMD160;
  */
 exports.ripemd160 = (0, utils_ts_1.createHasher)(() => new RIPEMD160());
 
-},{"./_md.js":17,"./utils.js":30}],24:[function(require,module,exports){
+},{"./_md.js":18,"./utils.js":32}],25:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.pbkdf2 = pbkdf2;
@@ -6962,7 +7067,7 @@ async function pbkdf2Async(hash, password, salt, opts) {
     return pbkdf2Output(PRF, PRFSalt, DK, prfW, u);
 }
 
-},{"./hmac.js":22,"./utils.js":30}],25:[function(require,module,exports){
+},{"./hmac.js":23,"./utils.js":32}],26:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ripemd160 = exports.RIPEMD160 = void 0;
@@ -6979,7 +7084,7 @@ exports.RIPEMD160 = legacy_ts_1.RIPEMD160;
 /** @deprecated Use import from `noble/hashes/legacy` module */
 exports.ripemd160 = legacy_ts_1.ripemd160;
 
-},{"./legacy.js":23}],26:[function(require,module,exports){
+},{"./legacy.js":24}],27:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.scrypt = scrypt;
@@ -7212,7 +7317,7 @@ async function scryptAsync(password, salt, opts) {
     return scryptOutput(password, dkLen, B, V, tmp);
 }
 
-},{"./pbkdf2.js":24,"./sha2.js":27,"./utils.js":30}],27:[function(require,module,exports){
+},{"./pbkdf2.js":25,"./sha2.js":28,"./utils.js":32}],28:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sha512_224 = exports.sha512_256 = exports.sha384 = exports.sha512 = exports.sha224 = exports.sha256 = exports.SHA512_256 = exports.SHA512_224 = exports.SHA384 = exports.SHA512 = exports.SHA224 = exports.SHA256 = void 0;
@@ -7597,7 +7702,7 @@ exports.sha512_256 = (0, utils_ts_1.createHasher)(() => new SHA512_256());
  */
 exports.sha512_224 = (0, utils_ts_1.createHasher)(() => new SHA512_224());
 
-},{"./_md.js":17,"./_u64.js":18,"./utils.js":30}],28:[function(require,module,exports){
+},{"./_md.js":18,"./_u64.js":19,"./utils.js":32}],29:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sha224 = exports.SHA224 = exports.sha256 = exports.SHA256 = void 0;
@@ -7621,7 +7726,247 @@ exports.SHA224 = sha2_ts_1.SHA224;
 /** @deprecated Use import from `noble/hashes/sha2` module */
 exports.sha224 = sha2_ts_1.sha224;
 
-},{"./sha2.js":27}],29:[function(require,module,exports){
+},{"./sha2.js":28}],30:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.shake256 = exports.shake128 = exports.keccak_512 = exports.keccak_384 = exports.keccak_256 = exports.keccak_224 = exports.sha3_512 = exports.sha3_384 = exports.sha3_256 = exports.sha3_224 = exports.Keccak = void 0;
+exports.keccakP = keccakP;
+/**
+ * SHA3 (keccak) hash function, based on a new "Sponge function" design.
+ * Different from older hashes, the internal state is bigger than output size.
+ *
+ * Check out [FIPS-202](https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.202.pdf),
+ * [Website](https://keccak.team/keccak.html),
+ * [the differences between SHA-3 and Keccak](https://crypto.stackexchange.com/questions/15727/what-are-the-key-differences-between-the-draft-sha-3-standard-and-the-keccak-sub).
+ *
+ * Check out `sha3-addons` module for cSHAKE, k12, and others.
+ * @module
+ */
+const _u64_ts_1 = require("./_u64.js");
+// prettier-ignore
+const utils_ts_1 = require("./utils.js");
+// No __PURE__ annotations in sha3 header:
+// EVERYTHING is in fact used on every export.
+// Various per round constants calculations
+const _0n = BigInt(0);
+const _1n = BigInt(1);
+const _2n = BigInt(2);
+const _7n = BigInt(7);
+const _256n = BigInt(256);
+const _0x71n = BigInt(0x71);
+const SHA3_PI = [];
+const SHA3_ROTL = [];
+const _SHA3_IOTA = [];
+for (let round = 0, R = _1n, x = 1, y = 0; round < 24; round++) {
+    // Pi
+    [x, y] = [y, (2 * x + 3 * y) % 5];
+    SHA3_PI.push(2 * (5 * y + x));
+    // Rotational
+    SHA3_ROTL.push((((round + 1) * (round + 2)) / 2) % 64);
+    // Iota
+    let t = _0n;
+    for (let j = 0; j < 7; j++) {
+        R = ((R << _1n) ^ ((R >> _7n) * _0x71n)) % _256n;
+        if (R & _2n)
+            t ^= _1n << ((_1n << /* @__PURE__ */ BigInt(j)) - _1n);
+    }
+    _SHA3_IOTA.push(t);
+}
+const IOTAS = (0, _u64_ts_1.split)(_SHA3_IOTA, true);
+const SHA3_IOTA_H = IOTAS[0];
+const SHA3_IOTA_L = IOTAS[1];
+// Left rotation (without 0, 32, 64)
+const rotlH = (h, l, s) => (s > 32 ? (0, _u64_ts_1.rotlBH)(h, l, s) : (0, _u64_ts_1.rotlSH)(h, l, s));
+const rotlL = (h, l, s) => (s > 32 ? (0, _u64_ts_1.rotlBL)(h, l, s) : (0, _u64_ts_1.rotlSL)(h, l, s));
+/** `keccakf1600` internal function, additionally allows to adjust round count. */
+function keccakP(s, rounds = 24) {
+    const B = new Uint32Array(5 * 2);
+    // NOTE: all indices are x2 since we store state as u32 instead of u64 (bigints to slow in js)
+    for (let round = 24 - rounds; round < 24; round++) {
+        // Theta θ
+        for (let x = 0; x < 10; x++)
+            B[x] = s[x] ^ s[x + 10] ^ s[x + 20] ^ s[x + 30] ^ s[x + 40];
+        for (let x = 0; x < 10; x += 2) {
+            const idx1 = (x + 8) % 10;
+            const idx0 = (x + 2) % 10;
+            const B0 = B[idx0];
+            const B1 = B[idx0 + 1];
+            const Th = rotlH(B0, B1, 1) ^ B[idx1];
+            const Tl = rotlL(B0, B1, 1) ^ B[idx1 + 1];
+            for (let y = 0; y < 50; y += 10) {
+                s[x + y] ^= Th;
+                s[x + y + 1] ^= Tl;
+            }
+        }
+        // Rho (ρ) and Pi (π)
+        let curH = s[2];
+        let curL = s[3];
+        for (let t = 0; t < 24; t++) {
+            const shift = SHA3_ROTL[t];
+            const Th = rotlH(curH, curL, shift);
+            const Tl = rotlL(curH, curL, shift);
+            const PI = SHA3_PI[t];
+            curH = s[PI];
+            curL = s[PI + 1];
+            s[PI] = Th;
+            s[PI + 1] = Tl;
+        }
+        // Chi (χ)
+        for (let y = 0; y < 50; y += 10) {
+            for (let x = 0; x < 10; x++)
+                B[x] = s[y + x];
+            for (let x = 0; x < 10; x++)
+                s[y + x] ^= ~B[(x + 2) % 10] & B[(x + 4) % 10];
+        }
+        // Iota (ι)
+        s[0] ^= SHA3_IOTA_H[round];
+        s[1] ^= SHA3_IOTA_L[round];
+    }
+    (0, utils_ts_1.clean)(B);
+}
+/** Keccak sponge function. */
+class Keccak extends utils_ts_1.Hash {
+    // NOTE: we accept arguments in bytes instead of bits here.
+    constructor(blockLen, suffix, outputLen, enableXOF = false, rounds = 24) {
+        super();
+        this.pos = 0;
+        this.posOut = 0;
+        this.finished = false;
+        this.destroyed = false;
+        this.enableXOF = false;
+        this.blockLen = blockLen;
+        this.suffix = suffix;
+        this.outputLen = outputLen;
+        this.enableXOF = enableXOF;
+        this.rounds = rounds;
+        // Can be passed from user as dkLen
+        (0, utils_ts_1.anumber)(outputLen);
+        // 1600 = 5x5 matrix of 64bit.  1600 bits === 200 bytes
+        // 0 < blockLen < 200
+        if (!(0 < blockLen && blockLen < 200))
+            throw new Error('only keccak-f1600 function is supported');
+        this.state = new Uint8Array(200);
+        this.state32 = (0, utils_ts_1.u32)(this.state);
+    }
+    clone() {
+        return this._cloneInto();
+    }
+    keccak() {
+        (0, utils_ts_1.swap32IfBE)(this.state32);
+        keccakP(this.state32, this.rounds);
+        (0, utils_ts_1.swap32IfBE)(this.state32);
+        this.posOut = 0;
+        this.pos = 0;
+    }
+    update(data) {
+        (0, utils_ts_1.aexists)(this);
+        data = (0, utils_ts_1.toBytes)(data);
+        (0, utils_ts_1.abytes)(data);
+        const { blockLen, state } = this;
+        const len = data.length;
+        for (let pos = 0; pos < len;) {
+            const take = Math.min(blockLen - this.pos, len - pos);
+            for (let i = 0; i < take; i++)
+                state[this.pos++] ^= data[pos++];
+            if (this.pos === blockLen)
+                this.keccak();
+        }
+        return this;
+    }
+    finish() {
+        if (this.finished)
+            return;
+        this.finished = true;
+        const { state, suffix, pos, blockLen } = this;
+        // Do the padding
+        state[pos] ^= suffix;
+        if ((suffix & 0x80) !== 0 && pos === blockLen - 1)
+            this.keccak();
+        state[blockLen - 1] ^= 0x80;
+        this.keccak();
+    }
+    writeInto(out) {
+        (0, utils_ts_1.aexists)(this, false);
+        (0, utils_ts_1.abytes)(out);
+        this.finish();
+        const bufferOut = this.state;
+        const { blockLen } = this;
+        for (let pos = 0, len = out.length; pos < len;) {
+            if (this.posOut >= blockLen)
+                this.keccak();
+            const take = Math.min(blockLen - this.posOut, len - pos);
+            out.set(bufferOut.subarray(this.posOut, this.posOut + take), pos);
+            this.posOut += take;
+            pos += take;
+        }
+        return out;
+    }
+    xofInto(out) {
+        // Sha3/Keccak usage with XOF is probably mistake, only SHAKE instances can do XOF
+        if (!this.enableXOF)
+            throw new Error('XOF is not possible for this instance');
+        return this.writeInto(out);
+    }
+    xof(bytes) {
+        (0, utils_ts_1.anumber)(bytes);
+        return this.xofInto(new Uint8Array(bytes));
+    }
+    digestInto(out) {
+        (0, utils_ts_1.aoutput)(out, this);
+        if (this.finished)
+            throw new Error('digest() was already called');
+        this.writeInto(out);
+        this.destroy();
+        return out;
+    }
+    digest() {
+        return this.digestInto(new Uint8Array(this.outputLen));
+    }
+    destroy() {
+        this.destroyed = true;
+        (0, utils_ts_1.clean)(this.state);
+    }
+    _cloneInto(to) {
+        const { blockLen, suffix, outputLen, rounds, enableXOF } = this;
+        to || (to = new Keccak(blockLen, suffix, outputLen, enableXOF, rounds));
+        to.state32.set(this.state32);
+        to.pos = this.pos;
+        to.posOut = this.posOut;
+        to.finished = this.finished;
+        to.rounds = rounds;
+        // Suffix can change in cSHAKE
+        to.suffix = suffix;
+        to.outputLen = outputLen;
+        to.enableXOF = enableXOF;
+        to.destroyed = this.destroyed;
+        return to;
+    }
+}
+exports.Keccak = Keccak;
+const gen = (suffix, blockLen, outputLen) => (0, utils_ts_1.createHasher)(() => new Keccak(blockLen, suffix, outputLen));
+/** SHA3-224 hash function. */
+exports.sha3_224 = (() => gen(0x06, 144, 224 / 8))();
+/** SHA3-256 hash function. Different from keccak-256. */
+exports.sha3_256 = (() => gen(0x06, 136, 256 / 8))();
+/** SHA3-384 hash function. */
+exports.sha3_384 = (() => gen(0x06, 104, 384 / 8))();
+/** SHA3-512 hash function. */
+exports.sha3_512 = (() => gen(0x06, 72, 512 / 8))();
+/** keccak-224 hash function. */
+exports.keccak_224 = (() => gen(0x01, 144, 224 / 8))();
+/** keccak-256 hash function. Different from SHA3-256. */
+exports.keccak_256 = (() => gen(0x01, 136, 256 / 8))();
+/** keccak-384 hash function. */
+exports.keccak_384 = (() => gen(0x01, 104, 384 / 8))();
+/** keccak-512 hash function. */
+exports.keccak_512 = (() => gen(0x01, 72, 512 / 8))();
+const genShake = (suffix, blockLen, outputLen) => (0, utils_ts_1.createXOFer)((opts = {}) => new Keccak(blockLen, suffix, opts.dkLen === undefined ? outputLen : opts.dkLen, true));
+/** SHAKE128 XOF with 128-bit security. */
+exports.shake128 = (() => genShake(0x1f, 168, 128 / 8))();
+/** SHAKE256 XOF with 256-bit security. */
+exports.shake256 = (() => genShake(0x1f, 136, 256 / 8))();
+
+},{"./_u64.js":19,"./utils.js":32}],31:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sha512_256 = exports.SHA512_256 = exports.sha512_224 = exports.SHA512_224 = exports.sha384 = exports.SHA384 = exports.sha512 = exports.SHA512 = void 0;
@@ -7651,7 +7996,7 @@ exports.SHA512_256 = sha2_ts_1.SHA512_256;
 /** @deprecated Use import from `noble/hashes/sha2` module */
 exports.sha512_256 = sha2_ts_1.sha512_256;
 
-},{"./sha2.js":27}],30:[function(require,module,exports){
+},{"./sha2.js":28}],32:[function(require,module,exports){
 "use strict";
 /**
  * Utilities for hex, bytes, CSPRNG.
@@ -7965,7 +8310,7 @@ function randomBytes(bytesLength = 32) {
     throw new Error('crypto.getRandomValues must be defined');
 }
 
-},{"@noble/hashes/crypto":21}],31:[function(require,module,exports){
+},{"@noble/hashes/crypto":22}],33:[function(require,module,exports){
 "use strict";
 /*! scure-base - MIT License (c) 2022 Paul Miller (paulmillr.com) */
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -8679,7 +9024,7 @@ exports.stringToBytes = stringToBytes;
 /** @deprecated */
 exports.bytes = exports.stringToBytes;
 
-},{}],32:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HDKey = exports.HARDENED_OFFSET = void 0;
@@ -8972,7 +9317,7 @@ class HDKey {
 }
 exports.HDKey = HDKey;
 
-},{"@noble/curves/abstract/modular":9,"@noble/curves/secp256k1":14,"@noble/hashes/hmac":22,"@noble/hashes/legacy":23,"@noble/hashes/sha2":27,"@noble/hashes/utils":30,"@scure/base":31}],33:[function(require,module,exports){
+},{"@noble/curves/abstract/modular":10,"@noble/curves/secp256k1":15,"@noble/hashes/hmac":23,"@noble/hashes/legacy":24,"@noble/hashes/sha2":28,"@noble/hashes/utils":32,"@scure/base":33}],35:[function(require,module,exports){
 "use strict";
 /**
  * Audited & minimal JS implementation of
@@ -9143,7 +9488,7 @@ function mnemonicToSeedSync(mnemonic, passphrase = '') {
     return (0, pbkdf2_1.pbkdf2)(sha2_1.sha512, normalize(mnemonic).nfkd, psalt(passphrase), { c: 2048, dkLen: 64 });
 }
 
-},{"@noble/hashes/pbkdf2":24,"@noble/hashes/sha2":27,"@noble/hashes/utils":30,"@scure/base":31}],34:[function(require,module,exports){
+},{"@noble/hashes/pbkdf2":25,"@noble/hashes/sha2":28,"@noble/hashes/utils":32,"@scure/base":33}],36:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.wordlist = void 0;
@@ -11196,7 +11541,7 @@ zero
 zone
 zoo`.split('\n');
 
-},{}],35:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -11210,7 +11555,7 @@ function normalizeInput(input) {
 }
 exports.default = normalizeInput;
 
-},{}],36:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -11242,7 +11587,7 @@ function wrapNoble(chash) {
 }
 exports.default = wrapNoble;
 
-},{"./normalizeInput":35}],37:[function(require,module,exports){
+},{"./normalizeInput":37}],39:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -11256,7 +11601,7 @@ const wrapNoble_1 = __importDefault(require("../internal/wrapNoble"));
  */
 exports.ripemd160 = (0, wrapNoble_1.default)(ripemd160_1.ripemd160);
 
-},{"../internal/wrapNoble":36,"@noble/hashes/ripemd160":25}],38:[function(require,module,exports){
+},{"../internal/wrapNoble":38,"@noble/hashes/ripemd160":26}],40:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -11270,7 +11615,7 @@ const wrapNoble_1 = __importDefault(require("../internal/wrapNoble"));
  */
 exports.sha256 = (0, wrapNoble_1.default)(sha256_1.sha256);
 
-},{"../internal/wrapNoble":36,"@noble/hashes/sha256":28}],39:[function(require,module,exports){
+},{"../internal/wrapNoble":38,"@noble/hashes/sha256":29}],41:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -11284,7 +11629,7 @@ const wrapNoble_1 = __importDefault(require("../internal/wrapNoble"));
  */
 exports.sha512 = (0, wrapNoble_1.default)(sha512_1.sha512);
 
-},{"../internal/wrapNoble":36,"@noble/hashes/sha512":29}],40:[function(require,module,exports){
+},{"../internal/wrapNoble":38,"@noble/hashes/sha512":31}],42:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -11341,7 +11686,7 @@ exports.stringToHex = stringToHex;
 exports.randomBytes = utils_1.randomBytes;
 __exportStar(require("./shared"), exports);
 
-},{"./shared":41,"@noble/hashes/utils":30}],41:[function(require,module,exports){
+},{"./shared":43,"@noble/hashes/utils":32}],43:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.equal = exports.concat = exports.HEX_REGEX = void 0;
@@ -11366,7 +11711,7 @@ function equal(buf1, buf2) {
 }
 exports.equal = equal;
 
-},{"@noble/hashes/utils":30}],42:[function(require,module,exports){
+},{"@noble/hashes/utils":32}],44:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 /* eslint-disable max-classes-per-file -- Needs to be a wrapper for ws */
@@ -11438,7 +11783,7 @@ WSWrapper.CLOSING = 2;
 WSWrapper.CLOSED = 3;
 exports.default = WSWrapper;
 
-},{"eventemitter3":43}],43:[function(require,module,exports){
+},{"eventemitter3":45}],45:[function(require,module,exports){
 'use strict';
 
 var has = Object.prototype.hasOwnProperty
@@ -11776,7 +12121,7 @@ if ('undefined' !== typeof module) {
   module.exports = EventEmitter;
 }
 
-},{}],44:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -11796,7 +12141,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./schema/Account"), exports);
 __exportStar(require("./utils"), exports);
 
-},{"./schema/Account":45,"./utils":46}],45:[function(require,module,exports){
+},{"./schema/Account":47,"./utils":48}],47:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Account = void 0;
@@ -11873,7 +12218,7 @@ function validateLengths(secretNumbers) {
     });
 }
 
-},{"../utils":46,"ripple-keypairs":52}],46:[function(require,module,exports){
+},{"../utils":48,"ripple-keypairs":54}],48:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parseSecretString = exports.checkChecksum = exports.calculateChecksum = exports.secretToEntropy = exports.entropyToSecret = exports.randomSecret = exports.randomEntropy = void 0;
@@ -11950,9 +12295,9 @@ function parseSecretString(secret) {
 }
 exports.parseSecretString = parseSecretString;
 
-},{"@xrplf/isomorphic/utils":40}],47:[function(require,module,exports){
-arguments[4][43][0].apply(exports,arguments)
-},{"dup":43}],48:[function(require,module,exports){
+},{"@xrplf/isomorphic/utils":42}],49:[function(require,module,exports){
+arguments[4][45][0].apply(exports,arguments)
+},{"dup":45}],50:[function(require,module,exports){
 'use strict';
 
 module.exports = function (data, opts) {
@@ -12013,7 +12358,7 @@ module.exports = function (data, opts) {
     })(data);
 };
 
-},{}],49:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isValidXAddress = exports.decodeXAddress = exports.xAddressToClassicAddress = exports.encodeXAddress = exports.classicAddressToXAddress = exports.isValidClassicAddress = exports.decodeAccountPublic = exports.encodeAccountPublic = exports.decodeNodePublic = exports.encodeNodePublic = exports.decodeAccountID = exports.encodeAccountID = exports.decodeSeed = exports.encodeSeed = exports.codec = void 0;
@@ -12148,7 +12493,7 @@ function isValidXAddress(xAddress) {
 }
 exports.isValidXAddress = isValidXAddress;
 
-},{"./xrp-codec":51,"@xrplf/isomorphic/utils":40}],50:[function(require,module,exports){
+},{"./xrp-codec":53,"@xrplf/isomorphic/utils":42}],52:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.concatArgs = exports.arrayEqual = void 0;
@@ -12191,7 +12536,7 @@ function concatArgs(...args) {
 }
 exports.concatArgs = concatArgs;
 
-},{}],51:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 "use strict";
 /**
  * Codec class
@@ -12385,7 +12730,7 @@ function checkByteLength(bytes, expectedLength) {
         : bytes.length === expectedLength;
 }
 
-},{"./utils":50,"@scure/base":31,"@xrplf/isomorphic/sha256":38}],52:[function(require,module,exports){
+},{"./utils":52,"@scure/base":33,"@xrplf/isomorphic/sha256":40}],54:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -12459,7 +12804,7 @@ function deriveNodeAddress(publicKey) {
 }
 exports.deriveNodeAddress = deriveNodeAddress;
 
-},{"./signing-schemes/ed25519":53,"./signing-schemes/secp256k1":54,"./signing-schemes/secp256k1/utils":55,"./utils/Sha512":56,"./utils/assert":57,"./utils/getAlgorithmFromKey":58,"@xrplf/isomorphic/ripemd160":37,"@xrplf/isomorphic/sha256":38,"@xrplf/isomorphic/utils":40,"ripple-address-codec":49}],53:[function(require,module,exports){
+},{"./signing-schemes/ed25519":55,"./signing-schemes/secp256k1":56,"./signing-schemes/secp256k1/utils":57,"./utils/Sha512":58,"./utils/assert":59,"./utils/getAlgorithmFromKey":60,"@xrplf/isomorphic/ripemd160":39,"@xrplf/isomorphic/sha256":40,"@xrplf/isomorphic/utils":42,"ripple-address-codec":51}],55:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -12498,7 +12843,7 @@ const ed25519 = {
 };
 exports.default = ed25519;
 
-},{"../../utils/Sha512":56,"../../utils/assert":57,"@noble/curves/ed25519":13,"@xrplf/isomorphic/utils":40}],54:[function(require,module,exports){
+},{"../../utils/Sha512":58,"../../utils/assert":59,"@noble/curves/ed25519":14,"@xrplf/isomorphic/utils":42}],56:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -12542,7 +12887,7 @@ const secp256k1 = {
 };
 exports.default = secp256k1;
 
-},{"../../utils/Sha512":56,"../../utils/assert":57,"./utils":55,"@noble/curves/abstract/utils":11,"@noble/curves/secp256k1":14,"@xrplf/isomorphic/utils":40}],55:[function(require,module,exports){
+},{"../../utils/Sha512":58,"../../utils/assert":59,"./utils":57,"@noble/curves/abstract/utils":12,"@noble/curves/secp256k1":15,"@xrplf/isomorphic/utils":42}],57:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -12615,7 +12960,7 @@ function accountPublicFromPublicGenerator(publicGenBytes) {
 }
 exports.accountPublicFromPublicGenerator = accountPublicFromPublicGenerator;
 
-},{"../../utils/Sha512":56,"@noble/curves/secp256k1":14}],56:[function(require,module,exports){
+},{"../../utils/Sha512":58,"@noble/curves/secp256k1":15}],58:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const sha512_1 = require("@xrplf/isomorphic/sha512");
@@ -12649,7 +12994,7 @@ class Sha512 {
 }
 exports.default = Sha512;
 
-},{"@noble/curves/abstract/utils":11,"@xrplf/isomorphic/sha512":39}],57:[function(require,module,exports){
+},{"@noble/curves/abstract/utils":12,"@xrplf/isomorphic/sha512":41}],59:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const assertHelper = {
@@ -12661,7 +13006,7 @@ const assertHelper = {
 };
 exports.default = assertHelper;
 
-},{}],58:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAlgorithmFromPrivateKey = exports.getAlgorithmFromPublicKey = exports.getAlgorithmFromKey = void 0;
@@ -12766,7 +13111,7 @@ function getAlgorithmFromPrivateKey(key) {
 }
 exports.getAlgorithmFromPrivateKey = getAlgorithmFromPrivateKey;
 
-},{}],59:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ECDSA;
@@ -12776,7 +13121,7 @@ var ECDSA;
 })(ECDSA || (ECDSA = {}));
 exports.default = ECDSA;
 
-},{}],60:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authorizeChannel = void 0;
@@ -12791,7 +13136,7 @@ function authorizeChannel(wallet, channelId, amount) {
 }
 exports.authorizeChannel = authorizeChannel;
 
-},{"ripple-binary-codec":212,"ripple-keypairs":52}],61:[function(require,module,exports){
+},{"ripple-binary-codec":214,"ripple-keypairs":54}],63:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.combineBatchSigners = exports.signMultiBatch = void 0;
@@ -12903,7 +13248,7 @@ function getTransactionWithAllBatchSigners(transactions) {
     return Object.assign(Object.assign({}, transactions[0]), { BatchSigners: sortedSigners });
 }
 
-},{"../errors":77,"../models":80,"../models/transactions/batch":124,"../utils/hashes":189,"./utils":69,"ripple-binary-codec":212,"ripple-keypairs":52}],62:[function(require,module,exports){
+},{"../errors":79,"../models":82,"../models/transactions/batch":126,"../utils/hashes":191,"./utils":71,"ripple-binary-codec":214,"ripple-keypairs":54}],64:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -13005,7 +13350,7 @@ function getTransactionWithAllLoanSetCounterpartySigners(transactions) {
     return Object.assign(Object.assign({}, transactions[0]), { CounterpartySignature: { Signers: sortedSigners } });
 }
 
-},{"../errors":77,"../models":80,"../utils/hashes":189,"./utils":69,"fast-json-stable-stringify":48,"ripple-binary-codec":212}],63:[function(require,module,exports){
+},{"../errors":79,"../models":82,"../utils/hashes":191,"./utils":71,"fast-json-stable-stringify":50,"ripple-binary-codec":214}],65:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getFaucetPath = exports.getFaucetHost = exports.faucetNetworkIDs = exports.faucetNetworkPaths = exports.FaucetNetwork = void 0;
@@ -13044,7 +13389,7 @@ function getFaucetPath(hostname) {
 }
 exports.getFaucetPath = getFaucetPath;
 
-},{"../errors":77}],64:[function(require,module,exports){
+},{"../errors":79}],66:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -13177,7 +13522,7 @@ function getUpdatedBalance(client, address, originalBalance) {
     });
 }
 
-},{".":65,"../errors":77,"./defaultFaucets":63,"ripple-address-codec":49}],65:[function(require,module,exports){
+},{".":67,"../errors":79,"./defaultFaucets":65,"ripple-address-codec":51}],67:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -13364,7 +13709,7 @@ var counterpartySigner_1 = require("./counterpartySigner");
 Object.defineProperty(exports, "signLoanSetByCounterparty", { enumerable: true, get: function () { return counterpartySigner_1.signLoanSetByCounterparty; } });
 Object.defineProperty(exports, "combineLoanSetCounterpartySigners", { enumerable: true, get: function () { return counterpartySigner_1.combineLoanSetCounterpartySigners; } });
 
-},{"../ECDSA":59,"../errors":77,"../models/transactions":136,"../models/transactions/common":129,"../models/utils":169,"../sugar/utils":177,"../utils/collections":178,"../utils/hashes/hashLedger":188,"./authorizeChannel":60,"./batchSigner":61,"./counterpartySigner":62,"./rfc1751":66,"./signer":68,"./utils":69,"@scure/bip32":32,"@scure/bip39":33,"@scure/bip39/wordlists/english":34,"@xrplf/isomorphic/utils":40,"bignumber.js":200,"ripple-address-codec":49,"ripple-binary-codec":212,"ripple-keypairs":52}],66:[function(require,module,exports){
+},{"../ECDSA":61,"../errors":79,"../models/transactions":138,"../models/transactions/common":131,"../models/utils":171,"../sugar/utils":179,"../utils/collections":180,"../utils/hashes/hashLedger":190,"./authorizeChannel":62,"./batchSigner":63,"./counterpartySigner":64,"./rfc1751":68,"./signer":70,"./utils":71,"@scure/bip32":34,"@scure/bip39":35,"@scure/bip39/wordlists/english":36,"@xrplf/isomorphic/utils":42,"bignumber.js":202,"ripple-address-codec":51,"ripple-binary-codec":214,"ripple-keypairs":54}],68:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -13494,7 +13839,7 @@ function swap128(arr) {
     return (0, utils_1.concat)([reversedBytes.slice(8, 16), reversedBytes.slice(0, 8)]);
 }
 
-},{"./rfc1751Words.json":67,"@xrplf/isomorphic/utils":40}],67:[function(require,module,exports){
+},{"./rfc1751Words.json":69,"@xrplf/isomorphic/utils":42}],69:[function(require,module,exports){
 module.exports=["A", "ABE", "ACE", "ACT", "AD", "ADA", "ADD",
     "AGO", "AID", "AIM", "AIR", "ALL", "ALP", "AM", "AMY", "AN", "ANA",
     "AND", "ANN", "ANT", "ANY", "APE", "APS", "APT", "ARC", "ARE", "ARK",
@@ -13739,7 +14084,7 @@ module.exports=["A", "ABE", "ACE", "ACT", "AD", "ADA", "ADD",
     "YANG", "YANK", "YARD", "YARN", "YAWL", "YAWN", "YEAH", "YEAR",
     "YELL", "YOGA", "YOKE"]
 
-},{}],68:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.multisign = exports.verifySignature = void 0;
@@ -13799,7 +14144,7 @@ function getTransactionWithAllSigners(transactions) {
     return Object.assign(Object.assign({}, transactions[0]), { Signers: sortedSigners });
 }
 
-},{"../errors":77,"../models/transactions":136,"./utils":69,"ripple-binary-codec":212,"ripple-keypairs":52}],69:[function(require,module,exports){
+},{"../errors":79,"../models/transactions":138,"./utils":71,"ripple-binary-codec":214,"ripple-keypairs":54}],71:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -13846,7 +14191,7 @@ function computeSignature(tx, privateKey, signAs) {
 }
 exports.computeSignature = computeSignature;
 
-},{"@xrplf/isomorphic/utils":40,"bignumber.js":200,"ripple-address-codec":49,"ripple-binary-codec":212,"ripple-keypairs":52}],70:[function(require,module,exports){
+},{"@xrplf/isomorphic/utils":42,"bignumber.js":202,"ripple-address-codec":51,"ripple-binary-codec":214,"ripple-keypairs":54}],72:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -13874,7 +14219,7 @@ function walletFromSecretNumbers(secretNumbers, opts) {
 }
 exports.walletFromSecretNumbers = walletFromSecretNumbers;
 
-},{".":65,"../ECDSA":59,"@xrplf/secret-numbers":44}],71:[function(require,module,exports){
+},{".":67,"../ECDSA":61,"@xrplf/secret-numbers":46}],73:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -13908,7 +14253,7 @@ class ConnectionManager {
 }
 exports.default = ConnectionManager;
 
-},{}],72:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const DEFAULT_MIN = 100;
@@ -13935,7 +14280,7 @@ class ExponentialBackoff {
 }
 exports.default = ExponentialBackoff;
 
-},{}],73:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -14057,7 +14402,7 @@ class RequestManager {
 }
 exports.default = RequestManager;
 
-},{"../errors":77}],74:[function(require,module,exports){
+},{"../errors":79}],76:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -14364,7 +14709,7 @@ class Connection extends eventemitter3_1.EventEmitter {
 }
 exports.Connection = Connection;
 
-},{"../errors":77,"./ConnectionManager":71,"./ExponentialBackoff":72,"./RequestManager":73,"@xrplf/isomorphic/utils":40,"@xrplf/isomorphic/ws":42,"eventemitter3":47}],75:[function(require,module,exports){
+},{"../errors":79,"./ConnectionManager":73,"./ExponentialBackoff":74,"./RequestManager":75,"@xrplf/isomorphic/utils":42,"@xrplf/isomorphic/ws":44,"eventemitter3":49}],77:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -14715,7 +15060,7 @@ class Client extends eventemitter3_1.EventEmitter {
 }
 exports.Client = Client;
 
-},{"../Wallet":65,"../Wallet/fundWallet":64,"../errors":77,"../models/common":79,"../models/utils/flags":168,"../sugar":175,"../sugar/autofill":171,"../sugar/balances":172,"../sugar/getOrderbook":174,"../utils":192,"./connection":74,"./partialPayment":76,"eventemitter3":47}],76:[function(require,module,exports){
+},{"../Wallet":67,"../Wallet/fundWallet":66,"../errors":79,"../models/common":81,"../models/utils/flags":170,"../sugar":177,"../sugar/autofill":173,"../sugar/balances":174,"../sugar/getOrderbook":176,"../utils":194,"./connection":76,"./partialPayment":78,"eventemitter3":49}],78:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -14831,7 +15176,7 @@ function handleStreamPartialPayment(stream, log) {
 }
 exports.handleStreamPartialPayment = handleStreamPartialPayment;
 
-},{"../models/transactions":136,"../models/utils":169,"bignumber.js":200,"ripple-binary-codec":212}],77:[function(require,module,exports){
+},{"../models/transactions":138,"../models/utils":171,"bignumber.js":202,"ripple-binary-codec":214}],79:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.XRPLFaucetError = exports.NotFoundError = exports.ValidationError = exports.ResponseFormatError = exports.TimeoutError = exports.RippledNotInitializedError = exports.DisconnectedError = exports.NotConnectedError = exports.RippledError = exports.ConnectionError = exports.UnexpectedError = exports.XrplError = void 0;
@@ -14895,7 +15240,7 @@ class NotFoundError extends XrplError {
 }
 exports.NotFoundError = NotFoundError;
 
-},{}],78:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -14930,7 +15275,7 @@ var rfc1751_1 = require("./Wallet/rfc1751");
 Object.defineProperty(exports, "keyToRFC1751Mnemonic", { enumerable: true, get: function () { return rfc1751_1.keyToRFC1751Mnemonic; } });
 Object.defineProperty(exports, "rfc1751MnemonicToKey", { enumerable: true, get: function () { return rfc1751_1.rfc1751MnemonicToKey; } });
 
-},{"./ECDSA":59,"./Wallet":65,"./Wallet/rfc1751":66,"./Wallet/walletFromSecretNumbers":70,"./client":75,"./errors":77,"./models":80,"./utils":192}],79:[function(require,module,exports){
+},{"./ECDSA":61,"./Wallet":67,"./Wallet/rfc1751":68,"./Wallet/walletFromSecretNumbers":72,"./client":77,"./errors":79,"./models":82,"./utils":194}],81:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DEFAULT_API_VERSION = exports.RIPPLED_API_V2 = exports.RIPPLED_API_V1 = void 0;
@@ -14938,7 +15283,7 @@ exports.RIPPLED_API_V1 = 1;
 exports.RIPPLED_API_V2 = 2;
 exports.DEFAULT_API_VERSION = exports.RIPPLED_API_V2;
 
-},{}],80:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -14982,7 +15327,7 @@ __exportStar(require("./methods"), exports);
 __exportStar(require("./transactions"), exports);
 __exportStar(require("./common"), exports);
 
-},{"./common":79,"./ledger":90,"./methods":91,"./transactions":136,"./utils/flags":168,"./utils/mptokenMetadata":170}],81:[function(require,module,exports){
+},{"./common":81,"./ledger":92,"./methods":93,"./transactions":138,"./utils/flags":170,"./utils/mptokenMetadata":172}],83:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AccountRootFlags = void 0;
@@ -15006,19 +15351,19 @@ var AccountRootFlags;
     AccountRootFlags[AccountRootFlags["lsfAllowTrustLineLocking"] = 1073741824] = "lsfAllowTrustLineLocking";
 })(AccountRootFlags || (exports.AccountRootFlags = AccountRootFlags = {}));
 
-},{}],82:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AMENDMENTS_ID = void 0;
 exports.AMENDMENTS_ID = '7DB0788C020F02780A673DC74757F23823FA3014C1866E72CC4CD8B226CD6EF4';
 
-},{}],83:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FEE_SETTINGS_ID = void 0;
 exports.FEE_SETTINGS_ID = '4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A651';
 
-},{}],84:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LoanFlags = void 0;
@@ -15029,13 +15374,13 @@ var LoanFlags;
     LoanFlags[LoanFlags["lsfLoanOverpayment"] = 262144] = "lsfLoanOverpayment";
 })(LoanFlags || (exports.LoanFlags = LoanFlags = {}));
 
-},{}],85:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NEGATIVE_UNL_ID = void 0;
 exports.NEGATIVE_UNL_ID = '2E8A59AA9D3B5B186B0B9E0F62E6C02587CA74A4D778938E957B6357D364B244';
 
-},{}],86:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OfferFlags = void 0;
@@ -15046,7 +15391,7 @@ var OfferFlags;
     OfferFlags[OfferFlags["lsfHybrid"] = 262144] = "lsfHybrid";
 })(OfferFlags || (exports.OfferFlags = OfferFlags = {}));
 
-},{}],87:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RippleStateFlags = void 0;
@@ -15065,7 +15410,7 @@ var RippleStateFlags;
     RippleStateFlags[RippleStateFlags["lsfHighDeepFreeze"] = 67108864] = "lsfHighDeepFreeze";
 })(RippleStateFlags || (exports.RippleStateFlags = RippleStateFlags = {}));
 
-},{}],88:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SignerListFlags = void 0;
@@ -15074,7 +15419,7 @@ var SignerListFlags;
     SignerListFlags[SignerListFlags["lsfOneOwnerCount"] = 65536] = "lsfOneOwnerCount";
 })(SignerListFlags || (exports.SignerListFlags = SignerListFlags = {}));
 
-},{}],89:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VaultFlags = void 0;
@@ -15083,7 +15428,7 @@ var VaultFlags;
     VaultFlags[VaultFlags["lsfVaultPrivate"] = 65536] = "lsfVaultPrivate";
 })(VaultFlags || (exports.VaultFlags = VaultFlags = {}));
 
-},{}],90:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VaultFlags = exports.SignerListFlags = exports.RippleStateFlags = exports.OfferFlags = exports.NEGATIVE_UNL_ID = exports.LoanFlags = exports.FEE_SETTINGS_ID = exports.AMENDMENTS_ID = exports.AccountRootFlags = void 0;
@@ -15106,11 +15451,11 @@ Object.defineProperty(exports, "SignerListFlags", { enumerable: true, get: funct
 const Vault_1 = require("./Vault");
 Object.defineProperty(exports, "VaultFlags", { enumerable: true, get: function () { return Vault_1.VaultFlags; } });
 
-},{"./AccountRoot":81,"./Amendments":82,"./FeeSettings":83,"./Loan":84,"./NegativeUNL":85,"./Offer":86,"./RippleState":87,"./SignerList":88,"./Vault":89}],91:[function(require,module,exports){
+},{"./AccountRoot":83,"./Amendments":84,"./FeeSettings":85,"./Loan":86,"./NegativeUNL":87,"./Offer":88,"./RippleState":89,"./SignerList":90,"./Vault":91}],93:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 
-},{}],92:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateAMMBid = void 0;
@@ -15169,7 +15514,7 @@ function validateAuthAccounts(senderAddress, authAccounts) {
     return true;
 }
 
-},{"../../errors":77,"./common":129}],93:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],95:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateAMMClawback = exports.AMMClawbackFlags = void 0;
@@ -15203,7 +15548,7 @@ function validateAMMClawback(tx) {
 }
 exports.validateAMMClawback = validateAMMClawback;
 
-},{"../../errors":77,"./common":129}],94:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],96:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateAMMCreate = exports.AMM_MAX_TRADING_FEE = void 0;
@@ -15236,7 +15581,7 @@ function validateAMMCreate(tx) {
 }
 exports.validateAMMCreate = validateAMMCreate;
 
-},{"../../errors":77,"./common":129}],95:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],97:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateAMMDelete = void 0;
@@ -15259,7 +15604,7 @@ function validateAMMDelete(tx) {
 }
 exports.validateAMMDelete = validateAMMDelete;
 
-},{"../../errors":77,"./common":129}],96:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],98:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateAMMDeposit = exports.AMMDepositFlags = void 0;
@@ -15312,7 +15657,7 @@ function validateAMMDeposit(tx) {
 }
 exports.validateAMMDeposit = validateAMMDeposit;
 
-},{"../../errors":77,"./common":129}],97:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],99:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateAMMVote = void 0;
@@ -15345,7 +15690,7 @@ function validateAMMVote(tx) {
 }
 exports.validateAMMVote = validateAMMVote;
 
-},{"../../errors":77,"./AMMCreate":94,"./common":129}],98:[function(require,module,exports){
+},{"../../errors":79,"./AMMCreate":96,"./common":131}],100:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateAMMWithdraw = exports.AMMWithdrawFlags = void 0;
@@ -15396,7 +15741,7 @@ function validateAMMWithdraw(tx) {
 }
 exports.validateAMMWithdraw = validateAMMWithdraw;
 
-},{"../../errors":77,"./common":129}],99:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],101:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateCredentialAccept = void 0;
@@ -15409,7 +15754,7 @@ function validateCredentialAccept(tx) {
 }
 exports.validateCredentialAccept = validateCredentialAccept;
 
-},{"./common":129}],100:[function(require,module,exports){
+},{"./common":131}],102:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateCredentialCreate = void 0;
@@ -15444,7 +15789,7 @@ function validateURI(URI) {
     }
 }
 
-},{"../../errors":77,"./common":129,"@xrplf/isomorphic/utils":40}],101:[function(require,module,exports){
+},{"../../errors":79,"./common":131,"@xrplf/isomorphic/utils":42}],103:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateCredentialDelete = void 0;
@@ -15462,7 +15807,7 @@ function validateCredentialDelete(tx) {
 }
 exports.validateCredentialDelete = validateCredentialDelete;
 
-},{"../../errors":77,"./common":129}],102:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],104:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateDIDDelete = void 0;
@@ -15472,7 +15817,7 @@ function validateDIDDelete(tx) {
 }
 exports.validateDIDDelete = validateDIDDelete;
 
-},{"./common":129}],103:[function(require,module,exports){
+},{"./common":131}],105:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateDIDSet = void 0;
@@ -15491,7 +15836,7 @@ function validateDIDSet(tx) {
 }
 exports.validateDIDSet = validateDIDSet;
 
-},{"../../errors":77,"./common":129}],104:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],106:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateMPTokenAuthorize = exports.MPTokenAuthorizeFlags = void 0;
@@ -15507,7 +15852,7 @@ function validateMPTokenAuthorize(tx) {
 }
 exports.validateMPTokenAuthorize = validateMPTokenAuthorize;
 
-},{"./common":129}],105:[function(require,module,exports){
+},{"./common":131}],107:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateMPTokenIssuanceCreate = exports.MPTokenIssuanceCreateFlags = void 0;
@@ -15572,7 +15917,7 @@ function validateMPTokenIssuanceCreate(tx) {
 }
 exports.validateMPTokenIssuanceCreate = validateMPTokenIssuanceCreate;
 
-},{"../../errors":77,"../utils":169,"../utils/mptokenMetadata":170,"./common":129}],106:[function(require,module,exports){
+},{"../../errors":79,"../utils":171,"../utils/mptokenMetadata":172,"./common":131}],108:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateMPTokenIssuanceDestroy = void 0;
@@ -15583,7 +15928,7 @@ function validateMPTokenIssuanceDestroy(tx) {
 }
 exports.validateMPTokenIssuanceDestroy = validateMPTokenIssuanceDestroy;
 
-},{"./common":129}],107:[function(require,module,exports){
+},{"./common":131}],109:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateMPTokenIssuanceSet = exports.MPTokenIssuanceSetFlags = void 0;
@@ -15613,7 +15958,7 @@ function validateMPTokenIssuanceSet(tx) {
 }
 exports.validateMPTokenIssuanceSet = validateMPTokenIssuanceSet;
 
-},{"../../errors":77,"../utils":169,"./common":129}],108:[function(require,module,exports){
+},{"../../errors":79,"../utils":171,"./common":131}],110:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateNFTokenAcceptOffer = void 0;
@@ -15642,7 +15987,7 @@ function validateNFTokenAcceptOffer(tx) {
 }
 exports.validateNFTokenAcceptOffer = validateNFTokenAcceptOffer;
 
-},{"../../errors":77,"./common":129}],109:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],111:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateNFTokenBurn = void 0;
@@ -15654,7 +15999,7 @@ function validateNFTokenBurn(tx) {
 }
 exports.validateNFTokenBurn = validateNFTokenBurn;
 
-},{"./common":129}],110:[function(require,module,exports){
+},{"./common":131}],112:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateNFTokenCancelOffer = void 0;
@@ -15671,7 +16016,7 @@ function validateNFTokenCancelOffer(tx) {
 }
 exports.validateNFTokenCancelOffer = validateNFTokenCancelOffer;
 
-},{"../../errors":77,"./common":129}],111:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],113:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateNFTokenCreateOffer = exports.NFTokenCreateOfferFlags = void 0;
@@ -15725,7 +16070,7 @@ function validateNFTokenCreateOffer(tx) {
 }
 exports.validateNFTokenCreateOffer = validateNFTokenCreateOffer;
 
-},{"../../errors":77,"../utils":169,"./common":129}],112:[function(require,module,exports){
+},{"../../errors":79,"../utils":171,"./common":131}],114:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateNFTokenMint = exports.NFTokenMintFlags = void 0;
@@ -15766,7 +16111,7 @@ function validateNFTokenMint(tx) {
 }
 exports.validateNFTokenMint = validateNFTokenMint;
 
-},{"../../errors":77,"../utils":169,"./common":129}],113:[function(require,module,exports){
+},{"../../errors":79,"../utils":171,"./common":131}],115:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateNFTokenModify = void 0;
@@ -15789,7 +16134,7 @@ function validateNFTokenModify(tx) {
 }
 exports.validateNFTokenModify = validateNFTokenModify;
 
-},{"../../errors":77,"../utils":169,"./common":129}],114:[function(require,module,exports){
+},{"../../errors":79,"../utils":171,"./common":131}],116:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateXChainAccountCreateCommit = void 0;
@@ -15803,7 +16148,7 @@ function validateXChainAccountCreateCommit(tx) {
 }
 exports.validateXChainAccountCreateCommit = validateXChainAccountCreateCommit;
 
-},{"./common":129}],115:[function(require,module,exports){
+},{"./common":131}],117:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateXChainAddAccountCreateAttestation = void 0;
@@ -15824,7 +16169,7 @@ function validateXChainAddAccountCreateAttestation(tx) {
 }
 exports.validateXChainAddAccountCreateAttestation = validateXChainAddAccountCreateAttestation;
 
-},{"./common":129}],116:[function(require,module,exports){
+},{"./common":131}],118:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateXChainAddClaimAttestation = void 0;
@@ -15844,7 +16189,7 @@ function validateXChainAddClaimAttestation(tx) {
 }
 exports.validateXChainAddClaimAttestation = validateXChainAddClaimAttestation;
 
-},{"./common":129}],117:[function(require,module,exports){
+},{"./common":131}],119:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateXChainClaim = void 0;
@@ -15859,7 +16204,7 @@ function validateXChainClaim(tx) {
 }
 exports.validateXChainClaim = validateXChainClaim;
 
-},{"./common":129}],118:[function(require,module,exports){
+},{"./common":131}],120:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateXChainCommit = void 0;
@@ -15873,7 +16218,7 @@ function validateXChainCommit(tx) {
 }
 exports.validateXChainCommit = validateXChainCommit;
 
-},{"./common":129}],119:[function(require,module,exports){
+},{"./common":131}],121:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateXChainCreateBridge = void 0;
@@ -15886,7 +16231,7 @@ function validateXChainCreateBridge(tx) {
 }
 exports.validateXChainCreateBridge = validateXChainCreateBridge;
 
-},{"./common":129}],120:[function(require,module,exports){
+},{"./common":131}],122:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateXChainCreateClaimID = void 0;
@@ -15899,7 +16244,7 @@ function validateXChainCreateClaimID(tx) {
 }
 exports.validateXChainCreateClaimID = validateXChainCreateClaimID;
 
-},{"./common":129}],121:[function(require,module,exports){
+},{"./common":131}],123:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateXChainModifyBridge = exports.XChainModifyBridgeFlags = void 0;
@@ -15916,7 +16261,7 @@ function validateXChainModifyBridge(tx) {
 }
 exports.validateXChainModifyBridge = validateXChainModifyBridge;
 
-},{"./common":129}],122:[function(require,module,exports){
+},{"./common":131}],124:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateAccountDelete = void 0;
@@ -15929,7 +16274,7 @@ function validateAccountDelete(tx) {
 }
 exports.validateAccountDelete = validateAccountDelete;
 
-},{"./common":129}],123:[function(require,module,exports){
+},{"./common":131}],125:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateAccountSet = exports.AccountSetTfFlags = exports.AccountSetAsfFlags = void 0;
@@ -16008,7 +16353,7 @@ function validateAccountSet(tx) {
 }
 exports.validateAccountSet = validateAccountSet;
 
-},{"../../errors":77,"./common":129}],124:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],126:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateBatch = exports.BatchFlags = void 0;
@@ -16096,7 +16441,7 @@ function validateBatch(tx) {
 }
 exports.validateBatch = validateBatch;
 
-},{"../../errors":77,"../utils":169,"./common":129}],125:[function(require,module,exports){
+},{"../../errors":79,"../utils":171,"./common":131}],127:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateCheckCancel = void 0;
@@ -16110,7 +16455,7 @@ function validateCheckCancel(tx) {
 }
 exports.validateCheckCancel = validateCheckCancel;
 
-},{"../../errors":77,"./common":129}],126:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],128:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateCheckCash = void 0;
@@ -16138,7 +16483,7 @@ function validateCheckCash(tx) {
 }
 exports.validateCheckCash = validateCheckCash;
 
-},{"../../errors":77,"./common":129}],127:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],129:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateCheckCreate = void 0;
@@ -16163,7 +16508,7 @@ function validateCheckCreate(tx) {
 }
 exports.validateCheckCreate = validateCheckCreate;
 
-},{"../../errors":77,"./common":129}],128:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],130:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateClawback = void 0;
@@ -16191,7 +16536,7 @@ function validateClawback(tx) {
 }
 exports.validateClawback = validateClawback;
 
-},{"../../errors":77,"./common":129}],129:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],131:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isDomainID = exports.containsDuplicates = exports.validateCredentialsList = exports.validateCredentialType = exports.parseAmountValue = exports.validateBaseTransaction = exports.GlobalFlags = exports.validateOptionalField = exports.validateRequiredField = exports.validateHexMetadata = exports.isLedgerEntryId = exports.isArray = exports.isXChainBridge = exports.isTokenAmount = exports.isAmount = exports.isAccount = exports.isClawbackAmount = exports.isMPTAmount = exports.isAuthorizeCredential = exports.isIssuedCurrencyAmount = exports.isIssuedCurrency = exports.isCurrency = exports.isXRPLNumber = exports.isValue = exports.isNull = exports.isNumber = exports.isString = exports.isRecord = exports.VAULT_DATA_MAX_BYTE_LENGTH = exports.MAX_AUTHORIZED_CREDENTIALS = void 0;
@@ -16511,7 +16856,7 @@ function isDomainID(domainID) {
 }
 exports.isDomainID = isDomainID;
 
-},{"../../errors":77,"../utils":169,"@xrplf/isomorphic/utils":40,"ripple-address-codec":49,"ripple-binary-codec":212}],130:[function(require,module,exports){
+},{"../../errors":79,"../utils":171,"@xrplf/isomorphic/utils":42,"ripple-address-codec":51,"ripple-binary-codec":214}],132:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateDelegateSet = void 0;
@@ -16566,7 +16911,7 @@ function validateDelegateSet(tx) {
 }
 exports.validateDelegateSet = validateDelegateSet;
 
-},{"../../errors":77,"./common":129}],131:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],133:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateDepositPreauth = void 0;
@@ -16612,7 +16957,7 @@ function validateSingleAuthorizationFieldProvided(tx) {
     }
 }
 
-},{"../../errors":77,"./common":129}],132:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],134:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EnableAmendmentFlags = void 0;
@@ -16622,7 +16967,7 @@ var EnableAmendmentFlags;
     EnableAmendmentFlags[EnableAmendmentFlags["tfLostMajority"] = 131072] = "tfLostMajority";
 })(EnableAmendmentFlags || (exports.EnableAmendmentFlags = EnableAmendmentFlags = {}));
 
-},{}],133:[function(require,module,exports){
+},{}],135:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateEscrowCancel = void 0;
@@ -16642,7 +16987,7 @@ function validateEscrowCancel(tx) {
 }
 exports.validateEscrowCancel = validateEscrowCancel;
 
-},{"../../errors":77,"./common":129}],134:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],136:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateEscrowCreate = void 0;
@@ -16671,7 +17016,7 @@ function validateEscrowCreate(tx) {
 }
 exports.validateEscrowCreate = validateEscrowCreate;
 
-},{"../../errors":77,"./common":129}],135:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],137:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateEscrowFinish = void 0;
@@ -16698,7 +17043,7 @@ function validateEscrowFinish(tx) {
 }
 exports.validateEscrowFinish = validateEscrowFinish;
 
-},{"../../errors":77,"./common":129}],136:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],138:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -16767,7 +17112,7 @@ Object.defineProperty(exports, "VaultWithdrawalPolicy", { enumerable: true, get:
 var XChainModifyBridge_1 = require("./XChainModifyBridge");
 Object.defineProperty(exports, "XChainModifyBridgeFlags", { enumerable: true, get: function () { return XChainModifyBridge_1.XChainModifyBridgeFlags; } });
 
-},{"./AMMClawback":93,"./AMMDeposit":96,"./AMMWithdraw":98,"./MPTokenAuthorize":104,"./MPTokenIssuanceCreate":105,"./MPTokenIssuanceSet":107,"./NFTokenCreateOffer":111,"./NFTokenMint":112,"./NFTokenModify":113,"./XChainModifyBridge":121,"./accountSet":123,"./batch":124,"./common":129,"./enableAmendment":132,"./loanManage":143,"./loanPay":144,"./loanSet":145,"./metadata":146,"./offerCreate":148,"./payment":151,"./paymentChannelClaim":152,"./transaction":160,"./trustSet":161,"./vaultCreate":163}],137:[function(require,module,exports){
+},{"./AMMClawback":95,"./AMMDeposit":98,"./AMMWithdraw":100,"./MPTokenAuthorize":106,"./MPTokenIssuanceCreate":107,"./MPTokenIssuanceSet":109,"./NFTokenCreateOffer":113,"./NFTokenMint":114,"./NFTokenModify":115,"./XChainModifyBridge":123,"./accountSet":125,"./batch":126,"./common":131,"./enableAmendment":134,"./loanManage":145,"./loanPay":146,"./loanSet":147,"./metadata":148,"./offerCreate":150,"./payment":153,"./paymentChannelClaim":154,"./transaction":162,"./trustSet":163,"./vaultCreate":165}],139:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -16793,7 +17138,7 @@ function validateLoanBrokerCoverClawback(tx) {
 }
 exports.validateLoanBrokerCoverClawback = validateLoanBrokerCoverClawback;
 
-},{"../../errors":77,"./common":129,"bignumber.js":200}],138:[function(require,module,exports){
+},{"../../errors":79,"./common":131,"bignumber.js":202}],140:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateLoanBrokerCoverDeposit = void 0;
@@ -16809,7 +17154,7 @@ function validateLoanBrokerCoverDeposit(tx) {
 }
 exports.validateLoanBrokerCoverDeposit = validateLoanBrokerCoverDeposit;
 
-},{"../../errors":77,"./common":129}],139:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],141:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateLoanBrokerCoverWithdraw = void 0;
@@ -16827,7 +17172,7 @@ function validateLoanBrokerCoverWithdraw(tx) {
 }
 exports.validateLoanBrokerCoverWithdraw = validateLoanBrokerCoverWithdraw;
 
-},{"../../errors":77,"./common":129}],140:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],142:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateLoanBrokerDelete = void 0;
@@ -16842,7 +17187,7 @@ function validateLoanBrokerDelete(tx) {
 }
 exports.validateLoanBrokerDelete = validateLoanBrokerDelete;
 
-},{"../../errors":77,"./common":129}],141:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],143:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -16900,7 +17245,7 @@ function validateLoanBrokerSet(tx) {
 }
 exports.validateLoanBrokerSet = validateLoanBrokerSet;
 
-},{"../../errors":77,"./common":129,"bignumber.js":200}],142:[function(require,module,exports){
+},{"../../errors":79,"./common":131,"bignumber.js":202}],144:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateLoanDelete = void 0;
@@ -16915,7 +17260,7 @@ function validateLoanDelete(tx) {
 }
 exports.validateLoanDelete = validateLoanDelete;
 
-},{"../../errors":77,"./common":129}],143:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],145:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateLoanManage = exports.LoanManageFlags = void 0;
@@ -16956,7 +17301,7 @@ function validateLoanManage(tx) {
 }
 exports.validateLoanManage = validateLoanManage;
 
-},{"../../errors":77,"./common":129}],144:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],146:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateLoanPay = exports.LoanPayFlags = void 0;
@@ -17000,7 +17345,7 @@ function validateLoanPay(tx) {
 }
 exports.validateLoanPay = validateLoanPay;
 
-},{"../../errors":77,"../utils":169,"./common":129}],145:[function(require,module,exports){
+},{"../../errors":79,"../utils":171,"./common":131}],147:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateLoanSet = exports.LoanSetFlags = void 0;
@@ -17074,7 +17419,7 @@ function validateLoanSet(tx) {
 }
 exports.validateLoanSet = validateLoanSet;
 
-},{"../../errors":77,"./common":129}],146:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],148:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isDeletedNode = exports.isModifiedNode = exports.isCreatedNode = void 0;
@@ -17091,7 +17436,7 @@ function isDeletedNode(node) {
 }
 exports.isDeletedNode = isDeletedNode;
 
-},{}],147:[function(require,module,exports){
+},{}],149:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateOfferCancel = void 0;
@@ -17108,7 +17453,7 @@ function validateOfferCancel(tx) {
 }
 exports.validateOfferCancel = validateOfferCancel;
 
-},{"../../errors":77,"./common":129}],148:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],150:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateOfferCreate = exports.OfferCreateFlags = void 0;
@@ -17154,7 +17499,7 @@ function validateOfferCreate(tx) {
 }
 exports.validateOfferCreate = validateOfferCreate;
 
-},{"../../errors":77,"../utils":169,"./common":129}],149:[function(require,module,exports){
+},{"../../errors":79,"../utils":171,"./common":131}],151:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateOracleDelete = void 0;
@@ -17165,7 +17510,7 @@ function validateOracleDelete(tx) {
 }
 exports.validateOracleDelete = validateOracleDelete;
 
-},{"./common":129}],150:[function(require,module,exports){
+},{"./common":131}],152:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateOracleSet = void 0;
@@ -17240,7 +17585,7 @@ function validateOracleSet(tx) {
 }
 exports.validateOracleSet = validateOracleSet;
 
-},{"../../errors":77,"../utils":169,"./common":129}],151:[function(require,module,exports){
+},{"../../errors":79,"../utils":171,"./common":131}],153:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validatePayment = exports.PaymentFlags = void 0;
@@ -17345,7 +17690,7 @@ function isPaths(paths) {
     return true;
 }
 
-},{"../../errors":77,"../utils":169,"./common":129}],152:[function(require,module,exports){
+},{"../../errors":79,"../utils":171,"./common":131}],154:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validatePaymentChannelClaim = exports.PaymentChannelClaimFlags = void 0;
@@ -17380,7 +17725,7 @@ function validatePaymentChannelClaim(tx) {
 }
 exports.validatePaymentChannelClaim = validatePaymentChannelClaim;
 
-},{"../../errors":77,"./common":129}],153:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],155:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validatePaymentChannelCreate = void 0;
@@ -17414,7 +17759,7 @@ function validatePaymentChannelCreate(tx) {
 }
 exports.validatePaymentChannelCreate = validatePaymentChannelCreate;
 
-},{"../../errors":77,"./common":129}],154:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],156:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validatePaymentChannelFund = void 0;
@@ -17440,7 +17785,7 @@ function validatePaymentChannelFund(tx) {
 }
 exports.validatePaymentChannelFund = validatePaymentChannelFund;
 
-},{"../../errors":77,"./common":129}],155:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],157:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validatePermissionedDomainDelete = void 0;
@@ -17451,7 +17796,7 @@ function validatePermissionedDomainDelete(tx) {
 }
 exports.validatePermissionedDomainDelete = validatePermissionedDomainDelete;
 
-},{"./common":129}],156:[function(require,module,exports){
+},{"./common":131}],158:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validatePermissionedDomainSet = void 0;
@@ -17465,7 +17810,7 @@ function validatePermissionedDomainSet(tx) {
 }
 exports.validatePermissionedDomainSet = validatePermissionedDomainSet;
 
-},{"./common":129}],157:[function(require,module,exports){
+},{"./common":131}],159:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateSetRegularKey = void 0;
@@ -17479,7 +17824,7 @@ function validateSetRegularKey(tx) {
 }
 exports.validateSetRegularKey = validateSetRegularKey;
 
-},{"../../errors":77,"./common":129}],158:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],160:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateSignerListSet = void 0;
@@ -17515,7 +17860,7 @@ function validateSignerListSet(tx) {
 }
 exports.validateSignerListSet = validateSignerListSet;
 
-},{"../../errors":77,"./common":129}],159:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],161:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateTicketCreate = void 0;
@@ -17539,7 +17884,7 @@ function validateTicketCreate(tx) {
 }
 exports.validateTicketCreate = validateTicketCreate;
 
-},{"../../errors":77,"./common":129}],160:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],162:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validate = void 0;
@@ -17855,7 +18200,7 @@ function validate(transaction) {
 }
 exports.validate = validate;
 
-},{"../../errors":77,"../utils/flags":168,"./AMMBid":92,"./AMMClawback":93,"./AMMCreate":94,"./AMMDelete":95,"./AMMDeposit":96,"./AMMVote":97,"./AMMWithdraw":98,"./CredentialAccept":99,"./CredentialCreate":100,"./CredentialDelete":101,"./DIDDelete":102,"./DIDSet":103,"./MPTokenAuthorize":104,"./MPTokenIssuanceCreate":105,"./MPTokenIssuanceDestroy":106,"./MPTokenIssuanceSet":107,"./NFTokenAcceptOffer":108,"./NFTokenBurn":109,"./NFTokenCancelOffer":110,"./NFTokenCreateOffer":111,"./NFTokenMint":112,"./NFTokenModify":113,"./XChainAccountCreateCommit":114,"./XChainAddAccountCreateAttestation":115,"./XChainAddClaimAttestation":116,"./XChainClaim":117,"./XChainCommit":118,"./XChainCreateBridge":119,"./XChainCreateClaimID":120,"./XChainModifyBridge":121,"./accountDelete":122,"./accountSet":123,"./batch":124,"./checkCancel":125,"./checkCash":126,"./checkCreate":127,"./clawback":128,"./common":129,"./delegateSet":130,"./depositPreauth":131,"./escrowCancel":133,"./escrowCreate":134,"./escrowFinish":135,"./loanBrokerCoverClawback":137,"./loanBrokerCoverDeposit":138,"./loanBrokerCoverWithdraw":139,"./loanBrokerDelete":140,"./loanBrokerSet":141,"./loanDelete":142,"./loanManage":143,"./loanPay":144,"./loanSet":145,"./offerCancel":147,"./offerCreate":148,"./oracleDelete":149,"./oracleSet":150,"./payment":151,"./paymentChannelClaim":152,"./paymentChannelCreate":153,"./paymentChannelFund":154,"./permissionedDomainDelete":155,"./permissionedDomainSet":156,"./setRegularKey":157,"./signerListSet":158,"./ticketCreate":159,"./trustSet":161,"./vaultClawback":162,"./vaultCreate":163,"./vaultDelete":164,"./vaultDeposit":165,"./vaultSet":166,"./vaultWithdraw":167}],161:[function(require,module,exports){
+},{"../../errors":79,"../utils/flags":170,"./AMMBid":94,"./AMMClawback":95,"./AMMCreate":96,"./AMMDelete":97,"./AMMDeposit":98,"./AMMVote":99,"./AMMWithdraw":100,"./CredentialAccept":101,"./CredentialCreate":102,"./CredentialDelete":103,"./DIDDelete":104,"./DIDSet":105,"./MPTokenAuthorize":106,"./MPTokenIssuanceCreate":107,"./MPTokenIssuanceDestroy":108,"./MPTokenIssuanceSet":109,"./NFTokenAcceptOffer":110,"./NFTokenBurn":111,"./NFTokenCancelOffer":112,"./NFTokenCreateOffer":113,"./NFTokenMint":114,"./NFTokenModify":115,"./XChainAccountCreateCommit":116,"./XChainAddAccountCreateAttestation":117,"./XChainAddClaimAttestation":118,"./XChainClaim":119,"./XChainCommit":120,"./XChainCreateBridge":121,"./XChainCreateClaimID":122,"./XChainModifyBridge":123,"./accountDelete":124,"./accountSet":125,"./batch":126,"./checkCancel":127,"./checkCash":128,"./checkCreate":129,"./clawback":130,"./common":131,"./delegateSet":132,"./depositPreauth":133,"./escrowCancel":135,"./escrowCreate":136,"./escrowFinish":137,"./loanBrokerCoverClawback":139,"./loanBrokerCoverDeposit":140,"./loanBrokerCoverWithdraw":141,"./loanBrokerDelete":142,"./loanBrokerSet":143,"./loanDelete":144,"./loanManage":145,"./loanPay":146,"./loanSet":147,"./offerCancel":149,"./offerCreate":150,"./oracleDelete":151,"./oracleSet":152,"./payment":153,"./paymentChannelClaim":154,"./paymentChannelCreate":155,"./paymentChannelFund":156,"./permissionedDomainDelete":157,"./permissionedDomainSet":158,"./setRegularKey":159,"./signerListSet":160,"./ticketCreate":161,"./trustSet":163,"./vaultClawback":164,"./vaultCreate":165,"./vaultDelete":166,"./vaultDeposit":167,"./vaultSet":168,"./vaultWithdraw":169}],163:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateTrustSet = exports.TrustSetFlags = void 0;
@@ -17889,7 +18234,7 @@ function validateTrustSet(tx) {
 }
 exports.validateTrustSet = validateTrustSet;
 
-},{"../../errors":77,"./common":129}],162:[function(require,module,exports){
+},{"../../errors":79,"./common":131}],164:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateVaultClawback = void 0;
@@ -17902,7 +18247,7 @@ function validateVaultClawback(tx) {
 }
 exports.validateVaultClawback = validateVaultClawback;
 
-},{"./common":129}],163:[function(require,module,exports){
+},{"./common":131}],165:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateVaultCreate = exports.VaultCreateFlags = exports.VaultWithdrawalPolicy = void 0;
@@ -17980,7 +18325,7 @@ function validateVaultCreate(tx) {
 }
 exports.validateVaultCreate = validateVaultCreate;
 
-},{"../../errors":77,"../utils":169,"../utils/mptokenMetadata":170,"./common":129}],164:[function(require,module,exports){
+},{"../../errors":79,"../utils":171,"../utils/mptokenMetadata":172,"./common":131}],166:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateVaultDelete = void 0;
@@ -17991,7 +18336,7 @@ function validateVaultDelete(tx) {
 }
 exports.validateVaultDelete = validateVaultDelete;
 
-},{"./common":129}],165:[function(require,module,exports){
+},{"./common":131}],167:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateVaultDeposit = void 0;
@@ -18003,7 +18348,7 @@ function validateVaultDeposit(tx) {
 }
 exports.validateVaultDeposit = validateVaultDeposit;
 
-},{"./common":129}],166:[function(require,module,exports){
+},{"./common":131}],168:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateVaultSet = void 0;
@@ -18029,7 +18374,7 @@ function validateVaultSet(tx) {
 }
 exports.validateVaultSet = validateVaultSet;
 
-},{"../../errors":77,"../utils":169,"./common":129}],167:[function(require,module,exports){
+},{"../../errors":79,"../utils":171,"./common":131}],169:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateVaultWithdraw = void 0;
@@ -18043,7 +18388,7 @@ function validateVaultWithdraw(tx) {
 }
 exports.validateVaultWithdraw = validateVaultWithdraw;
 
-},{"./common":129}],168:[function(require,module,exports){
+},{"./common":131}],170:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parseTransactionFlags = exports.convertTxFlagsToNumber = exports.setTransactionFlagsToNumber = exports.parseAccountRootFlags = void 0;
@@ -18162,7 +18507,7 @@ function parseTransactionFlags(tx) {
 }
 exports.parseTransactionFlags = parseTransactionFlags;
 
-},{".":169,"../../errors":77,"../ledger/AccountRoot":81,"../transactions/AMMClawback":93,"../transactions/AMMDeposit":96,"../transactions/AMMWithdraw":98,"../transactions/MPTokenAuthorize":104,"../transactions/MPTokenIssuanceCreate":105,"../transactions/MPTokenIssuanceSet":107,"../transactions/NFTokenCreateOffer":111,"../transactions/NFTokenMint":112,"../transactions/XChainModifyBridge":121,"../transactions/accountSet":123,"../transactions/batch":124,"../transactions/common":129,"../transactions/loanManage":143,"../transactions/loanPay":144,"../transactions/offerCreate":148,"../transactions/payment":151,"../transactions/paymentChannelClaim":152,"../transactions/trustSet":161,"../transactions/vaultCreate":163}],169:[function(require,module,exports){
+},{".":171,"../../errors":79,"../ledger/AccountRoot":83,"../transactions/AMMClawback":95,"../transactions/AMMDeposit":98,"../transactions/AMMWithdraw":100,"../transactions/MPTokenAuthorize":106,"../transactions/MPTokenIssuanceCreate":107,"../transactions/MPTokenIssuanceSet":109,"../transactions/NFTokenCreateOffer":113,"../transactions/NFTokenMint":114,"../transactions/XChainModifyBridge":123,"../transactions/accountSet":125,"../transactions/batch":126,"../transactions/common":131,"../transactions/loanManage":145,"../transactions/loanPay":146,"../transactions/offerCreate":150,"../transactions/payment":153,"../transactions/paymentChannelClaim":154,"../transactions/trustSet":163,"../transactions/vaultCreate":165}],171:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isHex = exports.hasFlag = exports.isFlagEnabled = exports.onlyHasFields = exports.INTEGER_SANITY_CHECK = void 0;
@@ -18191,7 +18536,7 @@ function isHex(str) {
 }
 exports.isHex = isHex;
 
-},{}],170:[function(require,module,exports){
+},{}],172:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -18569,7 +18914,7 @@ function validateMPTokenMetadata(input) {
 }
 exports.validateMPTokenMetadata = validateMPTokenMetadata;
 
-},{".":169,"../transactions/common":129,"@xrplf/isomorphic/utils":40,"fast-json-stable-stringify":48}],171:[function(require,module,exports){
+},{".":171,"../transactions/common":131,"@xrplf/isomorphic/utils":42,"fast-json-stable-stringify":50}],173:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -18870,7 +19215,7 @@ function autofillBatchTxn(client, tx) {
 }
 exports.autofillBatchTxn = autofillBatchTxn;
 
-},{"../errors":77,"../utils":192,"./getFeeXrp":173,"bignumber.js":200,"ripple-address-codec":49}],172:[function(require,module,exports){
+},{"../errors":79,"../utils":194,"./getFeeXrp":175,"bignumber.js":202,"ripple-address-codec":51}],174:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.formatBalances = void 0;
@@ -18883,7 +19228,7 @@ function formatBalances(trustlines) {
 }
 exports.formatBalances = formatBalances;
 
-},{}],173:[function(require,module,exports){
+},{}],175:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -18922,7 +19267,7 @@ function getFeeXrp(client, cushion) {
 }
 exports.default = getFeeXrp;
 
-},{"../errors":77,"bignumber.js":200}],174:[function(require,module,exports){
+},{"../errors":79,"bignumber.js":202}],176:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -19034,7 +19379,7 @@ function sortAndLimitOffers(offers, limit) {
 }
 exports.sortAndLimitOffers = sortAndLimitOffers;
 
-},{"../errors":77,"../models/ledger/Offer":86,"bignumber.js":200}],175:[function(require,module,exports){
+},{"../errors":79,"../models/ledger/Offer":88,"bignumber.js":202}],177:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -19054,7 +19399,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./submit"), exports);
 __exportStar(require("./utils"), exports);
 
-},{"./submit":176,"./utils":177}],176:[function(require,module,exports){
+},{"./submit":178,"./utils":179}],178:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -19168,7 +19513,7 @@ function isAccountDelete(transaction) {
     return tx.TransactionType === 'AccountDelete';
 }
 
-},{"../errors":77,"../utils":192}],177:[function(require,module,exports){
+},{"../errors":79,"../utils":194}],179:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ensureClassicAddress = void 0;
@@ -19185,7 +19530,7 @@ function ensureClassicAddress(account) {
 }
 exports.ensureClassicAddress = ensureClassicAddress;
 
-},{"ripple-address-codec":49}],178:[function(require,module,exports){
+},{"ripple-address-codec":51}],180:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.omitBy = exports.groupBy = void 0;
@@ -19210,7 +19555,7 @@ function omitBy(obj, predicate) {
 }
 exports.omitBy = omitBy;
 
-},{}],179:[function(require,module,exports){
+},{}],181:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deriveXAddress = exports.deriveAddress = exports.deriveKeypair = void 0;
@@ -19224,7 +19569,7 @@ function deriveXAddress(options) {
 }
 exports.deriveXAddress = deriveXAddress;
 
-},{"ripple-address-codec":49,"ripple-keypairs":52}],180:[function(require,module,exports){
+},{"ripple-address-codec":51,"ripple-keypairs":54}],182:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -19334,7 +19679,7 @@ function getBalanceChanges(metadata) {
 }
 exports.default = getBalanceChanges;
 
-},{"./collections":178,"./xrpConversion":199,"bignumber.js":200}],181:[function(require,module,exports){
+},{"./collections":180,"./xrpConversion":201,"bignumber.js":202}],183:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ripple_binary_codec_1 = require("ripple-binary-codec");
@@ -19382,7 +19727,7 @@ function getNFTokenID(meta) {
 }
 exports.default = getNFTokenID;
 
-},{"../models/transactions/metadata":146,"ripple-binary-codec":212}],182:[function(require,module,exports){
+},{"../models/transactions/metadata":148,"ripple-binary-codec":214}],184:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ripple_binary_codec_1 = require("ripple-binary-codec");
@@ -19412,7 +19757,7 @@ function getXChainClaimID(meta) {
 }
 exports.default = getXChainClaimID;
 
-},{"../models/transactions/metadata":146,"ripple-binary-codec":212}],183:[function(require,module,exports){
+},{"../models/transactions/metadata":148,"ripple-binary-codec":214}],185:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var HashPrefix;
@@ -19428,7 +19773,7 @@ var HashPrefix;
 })(HashPrefix || (HashPrefix = {}));
 exports.default = HashPrefix;
 
-},{}],184:[function(require,module,exports){
+},{}],186:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -19500,7 +19845,7 @@ class InnerNode extends node_1.Node {
 }
 exports.default = InnerNode;
 
-},{"../../../errors":77,"../HashPrefix":183,"../sha512Half":191,"./LeafNode":185,"./node":187}],185:[function(require,module,exports){
+},{"../../../errors":79,"../HashPrefix":185,"../sha512Half":193,"./LeafNode":187,"./node":189}],187:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -19543,7 +19888,7 @@ class LeafNode extends node_1.Node {
 }
 exports.default = LeafNode;
 
-},{"../../../errors":77,"../HashPrefix":183,"../sha512Half":191,"./node":187}],186:[function(require,module,exports){
+},{"../../../errors":79,"../HashPrefix":185,"../sha512Half":193,"./node":189}],188:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -19579,7 +19924,7 @@ class SHAMap {
 __exportStar(require("./node"), exports);
 exports.default = SHAMap;
 
-},{"./InnerNode":184,"./LeafNode":185,"./node":187}],187:[function(require,module,exports){
+},{"./InnerNode":186,"./LeafNode":187,"./node":189}],189:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Node = exports.NodeType = void 0;
@@ -19594,7 +19939,7 @@ class Node {
 }
 exports.Node = Node;
 
-},{}],188:[function(require,module,exports){
+},{}],190:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -19762,7 +20107,7 @@ function hashLedger(ledger, options = {}) {
 }
 exports.default = hashLedger;
 
-},{"../../errors":77,"../../models/transactions/common":129,"../../models/utils":169,"./HashPrefix":183,"./SHAMap":186,"./sha512Half":191,"@xrplf/isomorphic/utils":40,"bignumber.js":200,"ripple-binary-codec":212}],189:[function(require,module,exports){
+},{"../../errors":79,"../../models/transactions/common":131,"../../models/utils":171,"./HashPrefix":185,"./SHAMap":188,"./sha512Half":193,"@xrplf/isomorphic/utils":42,"bignumber.js":202,"ripple-binary-codec":214}],191:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -19888,7 +20233,7 @@ function hashLoan(loanBrokerId, loanSequence) {
 }
 exports.hashLoan = hashLoan;
 
-},{"./HashPrefix":183,"./hashLedger":188,"./ledgerSpaces":190,"./sha512Half":191,"@xrplf/isomorphic/utils":40,"bignumber.js":200,"ripple-address-codec":49}],190:[function(require,module,exports){
+},{"./HashPrefix":185,"./hashLedger":190,"./ledgerSpaces":192,"./sha512Half":193,"@xrplf/isomorphic/utils":42,"bignumber.js":202,"ripple-address-codec":51}],192:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ledgerSpaces = {
@@ -19915,7 +20260,7 @@ const ledgerSpaces = {
 };
 exports.default = ledgerSpaces;
 
-},{}],191:[function(require,module,exports){
+},{}],193:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const sha512_1 = require("@xrplf/isomorphic/sha512");
@@ -19926,7 +20271,7 @@ function sha512Half(hex) {
 }
 exports.default = sha512Half;
 
-},{"@xrplf/isomorphic/sha512":39,"@xrplf/isomorphic/utils":40}],192:[function(require,module,exports){
+},{"@xrplf/isomorphic/sha512":41,"@xrplf/isomorphic/utils":42}],194:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20047,7 +20392,7 @@ const hashes = {
 };
 exports.hashes = hashes;
 
-},{"./derive":179,"./getBalanceChanges":180,"./getNFTokenID":181,"./getXChainClaimID":182,"./hashes":189,"./parseNFTokenID":193,"./quality":194,"./signPaymentChannelClaim":195,"./stringConversion":196,"./timeConversion":197,"./verifyPaymentChannelClaim":198,"./xrpConversion":199,"ripple-address-codec":49,"ripple-binary-codec":212,"ripple-keypairs":52}],193:[function(require,module,exports){
+},{"./derive":181,"./getBalanceChanges":182,"./getNFTokenID":183,"./getXChainClaimID":184,"./hashes":191,"./parseNFTokenID":195,"./quality":196,"./signPaymentChannelClaim":197,"./stringConversion":198,"./timeConversion":199,"./verifyPaymentChannelClaim":200,"./xrpConversion":201,"ripple-address-codec":51,"ripple-binary-codec":214,"ripple-keypairs":54}],195:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20089,7 +20434,7 @@ function parseNFTokenID(nftokenID) {
 }
 exports.default = parseNFTokenID;
 
-},{"../errors":77,"@xrplf/isomorphic/utils":40,"bignumber.js":200,"ripple-address-codec":49}],194:[function(require,module,exports){
+},{"../errors":79,"@xrplf/isomorphic/utils":42,"bignumber.js":202,"ripple-address-codec":51}],196:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20184,7 +20529,7 @@ function percentToQuality(percent) {
 }
 exports.percentToQuality = percentToQuality;
 
-},{"../errors":77,"bignumber.js":200}],195:[function(require,module,exports){
+},{"../errors":79,"bignumber.js":202}],197:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ripple_binary_codec_1 = require("ripple-binary-codec");
@@ -20199,7 +20544,7 @@ function signPaymentChannelClaim(channel, xrpAmount, privateKey) {
 }
 exports.default = signPaymentChannelClaim;
 
-},{"./xrpConversion":199,"ripple-binary-codec":212,"ripple-keypairs":52}],196:[function(require,module,exports){
+},{"./xrpConversion":201,"ripple-binary-codec":214,"ripple-keypairs":54}],198:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.convertStringToHex = exports.convertHexToString = void 0;
@@ -20213,7 +20558,7 @@ function convertHexToString(hex, encoding = 'utf8') {
 }
 exports.convertHexToString = convertHexToString;
 
-},{"@xrplf/isomorphic/utils":40}],197:[function(require,module,exports){
+},{"@xrplf/isomorphic/utils":42}],199:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isoTimeToRippleTime = exports.rippleTimeToISOTime = exports.unixTimeToRippleTime = exports.rippleTimeToUnixTime = void 0;
@@ -20236,7 +20581,7 @@ function isoTimeToRippleTime(iso8601) {
 }
 exports.isoTimeToRippleTime = isoTimeToRippleTime;
 
-},{}],198:[function(require,module,exports){
+},{}],200:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ripple_binary_codec_1 = require("ripple-binary-codec");
@@ -20251,7 +20596,7 @@ function verifyPaymentChannelClaim(channel, xrpAmount, signature, publicKey) {
 }
 exports.default = verifyPaymentChannelClaim;
 
-},{"./xrpConversion":199,"ripple-binary-codec":212,"ripple-keypairs":52}],199:[function(require,module,exports){
+},{"./xrpConversion":201,"ripple-binary-codec":214,"ripple-keypairs":54}],201:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -20303,7 +20648,7 @@ function xrpToDrops(xrpToConvert) {
 }
 exports.xrpToDrops = xrpToDrops;
 
-},{"../errors":77,"bignumber.js":200}],200:[function(require,module,exports){
+},{"../errors":79,"bignumber.js":202}],202:[function(require,module,exports){
 ;(function (globalObject) {
   'use strict';
 
@@ -23227,7 +23572,7 @@ exports.xrpToDrops = xrpToDrops;
   }
 })(this);
 
-},{}],201:[function(require,module,exports){
+},{}],203:[function(require,module,exports){
 "use strict";
 /* eslint-disable func-style */
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -23382,7 +23727,7 @@ function signingBatchData(batch) {
 }
 exports.signingBatchData = signingBatchData;
 
-},{"./enums":207,"./hash-prefixes":210,"./hashes":211,"./serdes/binary-parser":215,"./serdes/binary-serializer":216,"./types":227,"@xrplf/isomorphic/utils":40}],202:[function(require,module,exports){
+},{"./enums":209,"./hash-prefixes":212,"./hashes":213,"./serdes/binary-parser":217,"./serdes/binary-serializer":218,"./types":229,"@xrplf/isomorphic/utils":42}],204:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -23431,7 +23776,7 @@ Object.defineProperty(exports, "quality", { enumerable: true, get: function () {
 const hash_prefixes_1 = require("./hash-prefixes");
 Object.defineProperty(exports, "HashPrefix", { enumerable: true, get: function () { return hash_prefixes_1.HashPrefix; } });
 
-},{"./binary":201,"./enums":207,"./hash-prefixes":210,"./hashes":211,"./ledger-hashes":213,"./quality":214,"./shamap":217,"./types":227}],203:[function(require,module,exports){
+},{"./binary":203,"./enums":209,"./hash-prefixes":212,"./hashes":213,"./ledger-hashes":215,"./quality":216,"./shamap":219,"./types":229}],205:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BytesLookup = exports.Bytes = void 0;
@@ -23495,7 +23840,7 @@ class BytesLookup {
 }
 exports.BytesLookup = BytesLookup;
 
-},{}],204:[function(require,module,exports){
+},{}],206:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DELEGATABLE_PERMISSIONS_WIDTH = exports.TRANSACTION_RESULT_WIDTH = exports.TRANSACTION_TYPE_WIDTH = exports.LEDGER_ENTRY_WIDTH = exports.TYPE_WIDTH = void 0;
@@ -23505,7 +23850,7 @@ exports.TRANSACTION_TYPE_WIDTH = 2; // UInt16
 exports.TRANSACTION_RESULT_WIDTH = 1; // UInt8
 exports.DELEGATABLE_PERMISSIONS_WIDTH = 4; // UInt32
 
-},{}],205:[function(require,module,exports){
+},{}],207:[function(require,module,exports){
 module.exports={
     "FIELDS": [
         [
@@ -27276,7 +27621,7 @@ module.exports={
     }
 }
 
-},{}],206:[function(require,module,exports){
+},{}],208:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FieldLookup = void 0;
@@ -27335,7 +27680,7 @@ class FieldLookup {
 }
 exports.FieldLookup = FieldLookup;
 
-},{"../types/serialized-type":232,"./bytes":203,"./constants":204}],207:[function(require,module,exports){
+},{"../types/serialized-type":234,"./bytes":205,"./constants":206}],209:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -27367,7 +27712,7 @@ exports.Field = Field;
 const TRANSACTION_TYPES = DEFAULT_DEFINITIONS.transactionNames;
 exports.TRANSACTION_TYPES = TRANSACTION_TYPES;
 
-},{"./definitions.json":205,"./xrpl-definitions-base":208}],208:[function(require,module,exports){
+},{"./definitions.json":207,"./xrpl-definitions-base":210}],210:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BytesLookup = exports.Bytes = exports.FieldLookup = exports.XrplDefinitionsBase = void 0;
@@ -27451,7 +27796,7 @@ class XrplDefinitionsBase {
 }
 exports.XrplDefinitionsBase = XrplDefinitionsBase;
 
-},{"./bytes":203,"./constants":204,"./field":206}],209:[function(require,module,exports){
+},{"./bytes":205,"./constants":206,"./field":208}],211:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.XrplDefinitions = void 0;
@@ -27482,7 +27827,7 @@ class XrplDefinitions extends xrpl_definitions_base_1.XrplDefinitionsBase {
 }
 exports.XrplDefinitions = XrplDefinitions;
 
-},{"../types":227,"./xrpl-definitions-base":208}],210:[function(require,module,exports){
+},{"../types":229,"./xrpl-definitions-base":210}],212:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HashPrefix = void 0;
@@ -27526,7 +27871,7 @@ const HashPrefix = {
 };
 exports.HashPrefix = HashPrefix;
 
-},{"./utils":243}],211:[function(require,module,exports){
+},{"./utils":245}],213:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.transactionID = exports.sha512Half = exports.Sha512Half = void 0;
@@ -27603,7 +27948,7 @@ function transactionID(serialized) {
 }
 exports.transactionID = transactionID;
 
-},{"./hash-prefixes":210,"./serdes/binary-serializer":216,"./types":227,"@xrplf/isomorphic/sha512":39}],212:[function(require,module,exports){
+},{"./hash-prefixes":212,"./serdes/binary-serializer":218,"./types":229,"@xrplf/isomorphic/sha512":41}],214:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.coreTypes = exports.DEFAULT_DEFINITIONS = exports.XrplDefinitionsBase = exports.XrplDefinitions = exports.TRANSACTION_TYPES = exports.decodeLedgerData = exports.decodeQuality = exports.encodeQuality = exports.encodeForSigningBatch = exports.encodeForMultisigning = exports.encodeForSigningClaim = exports.encodeForSigning = exports.encode = exports.decode = void 0;
@@ -27735,7 +28080,7 @@ function decodeQuality(value) {
 }
 exports.decodeQuality = decodeQuality;
 
-},{"./coretypes":202,"./enums":207,"./enums/xrpl-definitions":209,"./ledger-hashes":213,"./types":227,"@xrplf/isomorphic/utils":40}],213:[function(require,module,exports){
+},{"./coretypes":204,"./enums":209,"./enums/xrpl-definitions":211,"./ledger-hashes":215,"./types":229,"@xrplf/isomorphic/utils":42}],215:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.decodeLedgerData = exports.ledgerHash = exports.transactionTreeHash = exports.accountStateHash = void 0;
@@ -27877,7 +28222,7 @@ function decodeLedgerData(binary, definitions) {
 }
 exports.decodeLedgerData = decodeLedgerData;
 
-},{"./binary":201,"./hash-prefixes":210,"./hashes":211,"./serdes/binary-parser":215,"./shamap":217,"./types/hash-256":225,"./types/st-object":235,"./types/uint-32":237,"./types/uint-64":238,"./types/uint-8":239}],214:[function(require,module,exports){
+},{"./binary":203,"./hash-prefixes":212,"./hashes":213,"./serdes/binary-parser":217,"./shamap":219,"./types/hash-256":227,"./types/st-object":237,"./types/uint-32":239,"./types/uint-64":240,"./types/uint-8":241}],216:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -27920,7 +28265,7 @@ class quality {
 }
 exports.quality = quality;
 
-},{"./types":227,"@xrplf/isomorphic/utils":40,"bignumber.js":200}],215:[function(require,module,exports){
+},{"./types":229,"@xrplf/isomorphic/utils":42,"bignumber.js":202}],217:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BinaryParser = void 0;
@@ -28115,7 +28460,7 @@ class BinaryParser {
 }
 exports.BinaryParser = BinaryParser;
 
-},{"../enums":207,"@xrplf/isomorphic/utils":40}],216:[function(require,module,exports){
+},{"../enums":209,"@xrplf/isomorphic/utils":42}],218:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BinarySerializer = exports.BytesList = void 0;
@@ -28265,7 +28610,7 @@ class BinarySerializer {
 }
 exports.BinarySerializer = BinarySerializer;
 
-},{"@xrplf/isomorphic/utils":40}],217:[function(require,module,exports){
+},{"@xrplf/isomorphic/utils":42}],219:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ShaMapLeaf = exports.ShaMapNode = exports.ShaMap = void 0;
@@ -28438,7 +28783,7 @@ class ShaMap extends ShaMapInner {
 }
 exports.ShaMap = ShaMap;
 
-},{"./hash-prefixes":210,"./hashes":211,"./types":227}],218:[function(require,module,exports){
+},{"./hash-prefixes":212,"./hashes":213,"./types":229}],220:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AccountID = void 0;
@@ -28508,7 +28853,7 @@ class AccountID extends hash_160_1.Hash160 {
 exports.AccountID = AccountID;
 AccountID.defaultAccountID = new AccountID(new Uint8Array(20));
 
-},{"./hash-160":223,"@xrplf/isomorphic/utils":40,"ripple-address-codec":49}],219:[function(require,module,exports){
+},{"./hash-160":225,"@xrplf/isomorphic/utils":42,"ripple-address-codec":51}],221:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -28798,7 +29143,7 @@ class Amount extends serialized_type_1.SerializedType {
 exports.Amount = Amount;
 Amount.defaultAmount = new Amount((0, utils_1.hexToBytes)('4000000000000000'));
 
-},{"../serdes/binary-parser":215,"../utils":243,"./account-id":218,"./currency":221,"./hash-192":224,"./serialized-type":232,"@xrplf/isomorphic/utils":40,"bignumber.js":200}],220:[function(require,module,exports){
+},{"../serdes/binary-parser":217,"../utils":245,"./account-id":220,"./currency":223,"./hash-192":226,"./serialized-type":234,"@xrplf/isomorphic/utils":42,"bignumber.js":202}],222:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Blob = void 0;
@@ -28842,7 +29187,7 @@ class Blob extends serialized_type_1.SerializedType {
 }
 exports.Blob = Blob;
 
-},{"./serialized-type":232,"@xrplf/isomorphic/utils":40}],221:[function(require,module,exports){
+},{"./serialized-type":234,"@xrplf/isomorphic/utils":42}],223:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Currency = void 0;
@@ -28970,7 +29315,7 @@ class Currency extends hash_160_1.Hash160 {
 exports.Currency = Currency;
 Currency.XRP = new Currency(new Uint8Array(20));
 
-},{"./hash-160":223,"@xrplf/isomorphic/utils":40}],222:[function(require,module,exports){
+},{"./hash-160":225,"@xrplf/isomorphic/utils":42}],224:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Hash128 = void 0;
@@ -29003,7 +29348,7 @@ exports.Hash128 = Hash128;
 Hash128.width = 16;
 Hash128.ZERO_128 = new Hash128(new Uint8Array(Hash128.width));
 
-},{"./hash":226,"@xrplf/isomorphic/utils":40}],223:[function(require,module,exports){
+},{"./hash":228,"@xrplf/isomorphic/utils":42}],225:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Hash160 = void 0;
@@ -29023,7 +29368,7 @@ exports.Hash160 = Hash160;
 Hash160.width = 20;
 Hash160.ZERO_160 = new Hash160(new Uint8Array(Hash160.width));
 
-},{"./hash":226}],224:[function(require,module,exports){
+},{"./hash":228}],226:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Hash192 = void 0;
@@ -29043,7 +29388,7 @@ exports.Hash192 = Hash192;
 Hash192.width = 24;
 Hash192.ZERO_192 = new Hash192(new Uint8Array(Hash192.width));
 
-},{"./hash":226}],225:[function(require,module,exports){
+},{"./hash":228}],227:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Hash256 = void 0;
@@ -29060,7 +29405,7 @@ exports.Hash256 = Hash256;
 Hash256.width = 32;
 Hash256.ZERO_256 = new Hash256(new Uint8Array(Hash256.width));
 
-},{"./hash":226}],226:[function(require,module,exports){
+},{"./hash":228}],228:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Hash = void 0;
@@ -29137,7 +29482,7 @@ class Hash extends serialized_type_1.Comparable {
 }
 exports.Hash = Hash;
 
-},{"../utils":243,"./serialized-type":232,"@xrplf/isomorphic/utils":40}],227:[function(require,module,exports){
+},{"../utils":245,"./serialized-type":234,"@xrplf/isomorphic/utils":42}],229:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Vector256 = exports.UInt64 = exports.UInt32 = exports.UInt16 = exports.UInt8 = exports.STObject = exports.STArray = exports.PathSet = exports.Int32 = exports.Hash256 = exports.Hash192 = exports.Hash160 = exports.Hash128 = exports.Currency = exports.Blob = exports.Amount = exports.AccountID = exports.coreTypes = void 0;
@@ -29207,7 +29552,7 @@ exports.coreTypes = coreTypes;
 // because some of the above types depend on BinarySerializer which depends on enums/index.ts.
 enums_1.DEFAULT_DEFINITIONS.associateTypes(coreTypes);
 
-},{"../enums":207,"./account-id":218,"./amount":219,"./blob":220,"./currency":221,"./hash-128":222,"./hash-160":223,"./hash-192":224,"./hash-256":225,"./int-32":228,"./issue":230,"./path-set":231,"./st-array":233,"./st-number":234,"./st-object":235,"./uint-16":236,"./uint-32":237,"./uint-64":238,"./uint-8":239,"./vector-256":241,"./xchain-bridge":242}],228:[function(require,module,exports){
+},{"../enums":209,"./account-id":220,"./amount":221,"./blob":222,"./currency":223,"./hash-128":224,"./hash-160":225,"./hash-192":226,"./hash-256":227,"./int-32":230,"./issue":232,"./path-set":233,"./st-array":235,"./st-number":236,"./st-object":237,"./uint-16":238,"./uint-32":239,"./uint-64":240,"./uint-8":241,"./vector-256":243,"./xchain-bridge":244}],230:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Int32 = void 0;
@@ -29272,7 +29617,7 @@ Int32.defaultInt32 = new Int32(new Uint8Array(Int32.width));
 Int32.MIN_VALUE = -2147483648; // -2^31
 Int32.MAX_VALUE = 2147483647; // 2^31 - 1
 
-},{"../utils":243,"./int":229}],229:[function(require,module,exports){
+},{"../utils":245,"./int":231}],231:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Int = void 0;
@@ -29330,7 +29675,7 @@ class Int extends serialized_type_1.Comparable {
 }
 exports.Int = Int;
 
-},{"./serialized-type":232}],230:[function(require,module,exports){
+},{"./serialized-type":234}],232:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Issue = void 0;
@@ -29448,7 +29793,7 @@ class Issue extends serialized_type_1.SerializedType {
 exports.Issue = Issue;
 Issue.XRP_ISSUE = new Issue(new Uint8Array(20));
 
-},{"../serdes/binary-parser":215,"../utils":243,"./account-id":218,"./currency":221,"./hash-192":224,"./serialized-type":232,"@xrplf/isomorphic/utils":40}],231:[function(require,module,exports){
+},{"../serdes/binary-parser":217,"../utils":245,"./account-id":220,"./currency":223,"./hash-192":226,"./serialized-type":234,"@xrplf/isomorphic/utils":42}],233:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PathSet = void 0;
@@ -29682,7 +30027,7 @@ class PathSet extends serialized_type_1.SerializedType {
 }
 exports.PathSet = PathSet;
 
-},{"../serdes/binary-parser":215,"./account-id":218,"./currency":221,"./serialized-type":232,"@xrplf/isomorphic/utils":40}],232:[function(require,module,exports){
+},{"../serdes/binary-parser":217,"./account-id":220,"./currency":223,"./serialized-type":234,"@xrplf/isomorphic/utils":42}],234:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Comparable = exports.SerializedType = void 0;
@@ -29788,7 +30133,7 @@ class Comparable extends SerializedType {
 }
 exports.Comparable = Comparable;
 
-},{"../serdes/binary-serializer":216,"@xrplf/isomorphic/utils":40}],233:[function(require,module,exports){
+},{"../serdes/binary-serializer":218,"@xrplf/isomorphic/utils":42}],235:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.STArray = void 0;
@@ -29875,7 +30220,7 @@ class STArray extends serialized_type_1.SerializedType {
 }
 exports.STArray = STArray;
 
-},{"../enums":207,"../serdes/binary-parser":215,"./serialized-type":232,"./st-object":235,"@xrplf/isomorphic/utils":40}],234:[function(require,module,exports){
+},{"../enums":209,"../serdes/binary-parser":217,"./serialized-type":234,"./st-object":237,"@xrplf/isomorphic/utils":42}],236:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.STNumber = void 0;
@@ -30140,7 +30485,7 @@ exports.STNumber = STNumber;
 /** 12 zero bytes, represents canonical zero. */
 STNumber.defaultBytes = new Uint8Array(12);
 
-},{"../utils":243,"./serialized-type":232}],235:[function(require,module,exports){
+},{"../utils":245,"./serialized-type":234}],237:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.STObject = void 0;
@@ -30309,7 +30654,7 @@ class STObject extends serialized_type_1.SerializedType {
 }
 exports.STObject = STObject;
 
-},{"../enums":207,"../serdes/binary-parser":215,"../serdes/binary-serializer":216,"./serialized-type":232,"./st-array":233,"./uint-64":238,"ripple-address-codec":49}],236:[function(require,module,exports){
+},{"../enums":209,"../serdes/binary-parser":217,"../serdes/binary-serializer":218,"./serialized-type":234,"./st-array":235,"./uint-64":240,"ripple-address-codec":51}],238:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UInt16 = void 0;
@@ -30355,7 +30700,7 @@ exports.UInt16 = UInt16;
 UInt16.width = 16 / 8; // 2
 UInt16.defaultUInt16 = new UInt16(new Uint8Array(UInt16.width));
 
-},{"../utils":243,"./uint":240}],237:[function(require,module,exports){
+},{"../utils":245,"./uint":242}],239:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UInt32 = void 0;
@@ -30406,7 +30751,7 @@ exports.UInt32 = UInt32;
 UInt32.width = 32 / 8; // 4
 UInt32.defaultUInt32 = new UInt32(new Uint8Array(UInt32.width));
 
-},{"../utils":243,"./uint":240}],238:[function(require,module,exports){
+},{"../utils":245,"./uint":242}],240:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UInt64 = void 0;
@@ -30515,7 +30860,7 @@ exports.UInt64 = UInt64;
 UInt64.width = 64 / 8; // 8
 UInt64.defaultUInt64 = new UInt64(new Uint8Array(UInt64.width));
 
-},{"../enums":207,"../utils":243,"./uint":240,"@xrplf/isomorphic/utils":40}],239:[function(require,module,exports){
+},{"../enums":209,"../utils":245,"./uint":242,"@xrplf/isomorphic/utils":42}],241:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UInt8 = void 0;
@@ -30562,7 +30907,7 @@ exports.UInt8 = UInt8;
 UInt8.width = 8 / 8; // 1
 UInt8.defaultUInt8 = new UInt8(new Uint8Array(UInt8.width));
 
-},{"../utils":243,"./uint":240,"@xrplf/isomorphic/utils":40}],240:[function(require,module,exports){
+},{"../utils":245,"./uint":242,"@xrplf/isomorphic/utils":42}],242:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UInt = void 0;
@@ -30610,7 +30955,7 @@ class UInt extends serialized_type_1.Comparable {
 }
 exports.UInt = UInt;
 
-},{"./serialized-type":232}],241:[function(require,module,exports){
+},{"./serialized-type":234}],243:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Vector256 = void 0;
@@ -30684,7 +31029,7 @@ class Vector256 extends serialized_type_1.SerializedType {
 }
 exports.Vector256 = Vector256;
 
-},{"../serdes/binary-serializer":216,"./hash-256":225,"./serialized-type":232,"@xrplf/isomorphic/utils":40}],242:[function(require,module,exports){
+},{"../serdes/binary-serializer":218,"./hash-256":227,"./serialized-type":234,"@xrplf/isomorphic/utils":42}],244:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.XChainBridge = void 0;
@@ -30787,7 +31132,7 @@ XChainBridge.TYPE_ORDER = [
     { name: 'IssuingChainIssue', type: issue_1.Issue },
 ];
 
-},{"../serdes/binary-parser":215,"./account-id":218,"./issue":230,"./serialized-type":232,"@xrplf/isomorphic/utils":40}],243:[function(require,module,exports){
+},{"../serdes/binary-parser":217,"./account-id":220,"./issue":232,"./serialized-type":234,"@xrplf/isomorphic/utils":42}],245:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.compare = exports.equal = exports.readInt64BE = exports.readInt32BE = exports.readUInt32BE = exports.readUInt16BE = exports.writeInt64BE = exports.writeInt32BE = exports.writeUInt32BE = exports.writeUInt16BE = exports.writeUInt8 = void 0;
@@ -30969,7 +31314,7 @@ function aligned32(array) {
     return array.byteOffset % 4 === 0 && array.byteLength % 4 === 0;
 }
 
-},{}],244:[function(require,module,exports){
+},{}],246:[function(require,module,exports){
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -35910,7 +36255,7 @@ qr/dom.js:
    *)
 */
 
-},{}],245:[function(require,module,exports){
+},{}],247:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -36396,7 +36741,7 @@ if (targetGlobal) {
 module.exports = compatExport;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./qr-bundle.cjs":244}],246:[function(require,module,exports){
+},{"./qr-bundle.cjs":246}],248:[function(require,module,exports){
 'use strict';
 if (typeof window !== 'undefined') {
 	class BN {
@@ -36430,9 +36775,10 @@ if (typeof window !== 'undefined') {
 	window['qr'] = qrCompat;
 	window['kjua'] = qrCompat.kjua;
 	window['Instascan'] = qrCompat.Instascan;
+	window['hashicon'] = require('./hashicon.js');
 }
 
-},{"./qr-compat.js":245,"./sodium-compat.js":248,"./utils.js":249,"xrpl":78,"xrpl/node_modules/bignumber.js":200}],247:[function(require,module,exports){
+},{"./hashicon.js":1,"./qr-compat.js":247,"./sodium-compat.js":250,"./utils.js":251,"xrpl":80,"xrpl/node_modules/bignumber.js":202}],249:[function(require,module,exports){
 'use strict';
 const MASK64 = 0xffffffffffffffffn;
 const rotl = (x, b) => ((x << b) | (x >> (64n - b))) & MASK64;
@@ -36482,7 +36828,7 @@ function siphash24(msg, key) {
 
 module.exports = { siphash24 };
 
-},{}],248:[function(require,module,exports){
+},{}],250:[function(require,module,exports){
 'use strict';
 /*
  * sodium-compat.js — libsodium.js 1.0.13-compatible subset, exposed permanently as window.sodium.
@@ -36686,7 +37032,7 @@ module.exports = {
   crypto_pwhash_MEMLIMIT_INTERACTIVE: 33554432,
 };
 
-},{"./siphash24.js":247,"@noble/ciphers/salsa":3,"@noble/hashes/blake2b":20,"@noble/hashes/scrypt":26}],249:[function(require,module,exports){
+},{"./siphash24.js":249,"@noble/ciphers/salsa":4,"@noble/hashes/blake2b":21,"@noble/hashes/scrypt":27}],251:[function(require,module,exports){
 'use strict';
 const { sha256 } = require('@noble/hashes/sha256');
 const { ripemd160 } = require('@noble/hashes/ripemd160');
@@ -36730,4 +37076,4 @@ module.exports = {
   seedFromPhrase
 };
 
-},{"@noble/hashes/ripemd160":25,"@noble/hashes/sha256":28,"@noble/hashes/sha512":29}]},{},[246]);
+},{"@noble/hashes/ripemd160":26,"@noble/hashes/sha256":29,"@noble/hashes/sha512":31}]},{},[248]);

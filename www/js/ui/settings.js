@@ -14,7 +14,8 @@ function doUpdateInterfaceSettings() {
 
 function showInterfaceTab() {
     try {
-    $('#valuationcurrency > option[data-currency="'+interface_settings.valuation_currency+'"][data-counterparty="'+interface_settings.valuation_counterparty+'"]')[0].selected = true
+        $('#valuationcurrency > option[data-currency="'+interface_settings.valuation_currency+'"][data-counterparty="'+interface_settings.valuation_counterparty+'"]')[0].selected = true
+        if (typeof refreshSelect === 'function') refreshSelect('#valuationcurrency');
     } catch(e) {}
     setToggleSwitch('#tglUseXAddress', interface_settings.display_xaddresses)
     showTab('#tabinterface', true)

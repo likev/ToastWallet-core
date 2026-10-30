@@ -57,7 +57,9 @@ test('ui-assets: purged dead vendor files and packages are absent', () => {
         'www/js/pouchdb.min.js',
         'www/js/pouchdb.upsert.min.js',
         'www/js/hashicon.js',
-        'www/css/bootstrap.min.css'
+        'www/css/bootstrap.min.css',
+        'www/js/select2.js',
+        'www/css/select2.css'
     ];
 
     for (const file of deadFiles) {

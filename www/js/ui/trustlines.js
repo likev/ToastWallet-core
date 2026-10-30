@@ -403,11 +403,9 @@ function onToggleIssueOwnCurrency(forceoff) {
         $('#payassetofl').attr('placeholder', 'Leave blank for XRP');
         $('#oflcurrencydiv').hide();
         $('#issueraddressbtnpaste').show();
-        //$('#payasset').show();
-        $('#payasset + .select2').show()
+        if (typeof setSelectVisible === 'function') setSelectVisible('#payasset', true);
     } else {
-        //$('#payasset').hide();
-        $('#payasset + .select2').hide()
+        if (typeof setSelectVisible === 'function') setSelectVisible('#payasset', false);
         $('#oflcurrencydiv').show();
         $('#payissuerofl').val('This account');
         $('#payissuerofl').attr('readonly', 'readonly');

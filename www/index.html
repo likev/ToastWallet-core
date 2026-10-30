@@ -7,12 +7,11 @@
 	<meta name="viewport" content="viewport-fit=cover, user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
 	<link rel="stylesheet" href="css/base.css">
 	<link rel="stylesheet" href="css/app.css">
-    <link href="css/select2.css" rel="stylesheet" />
+	<link rel="stylesheet" href="css/custom-select.css">
 	<link rel="stylesheet" href="css/icons.css">
 	<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
         <script src="js/jquery-3.7.1.min.js" type="text/javascript"></script>
 	<script src="js/rippleutils-build.js"></script>
-    <script src="js/select2.js"></script>
 	<script src="js/head-shim.js"></script>
 </head>
 <body class="loading">
@@ -838,7 +837,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
         <span id="customexpirydiv" style="display:none;">
             <div class="input-group" style="display: flex;">
                 <input ontouchend="te(event, quickSelectInput)" type="text" id="ntloexpirycustom" class="form-control" placeholder="" style="flex: 2;" >
-                <select id="ntloexpirycustomunit" ontouchstart="ts(event,()=>{})" ontouchend="te(event, quickSelectInput)" class="form-control" style="flex: 1; max-width: 7.5em; width: 7.5em; margin-left: -1px; border-radius: 0 0 0 0 !important;" onchange="($('#ntloexpirycustomunit').find(':selected')[0].id == 'ntloexpirycustomunit-nocustom' ? $('#customexpirydiv').hide() + $('#ntloexpiry').show() + $('#ntloexpiry > option').removeAttr('selected') + $('#ntloexpiry-24h').attr('selected', 'selected') : $('#customexpirydiv').show() + $('#ntloexpiry').hide() )">
+                <select id="ntloexpirycustomunit" ontouchstart="ts(event,()=>{})" ontouchend="te(event, quickSelectInput)" class="form-control" style="flex: 1; max-width: 7.5em; width: 7.5em; margin-left: -1px; border-radius: 0 0 0 0 !important;" onchange="($('#ntloexpirycustomunit').find(':selected')[0].id == 'ntloexpirycustomunit-nocustom' ? $('#customexpirydiv').hide() + $('#ntloexpiry').show() + (typeof setSelectVisible === 'function' ? setSelectVisible('#ntloexpiry', true) : 0) + $('#ntloexpiry > option').removeAttr('selected') + $('#ntloexpiry-24h').attr('selected', 'selected') + (typeof refreshSelect === 'function' ? refreshSelect('#ntloexpiry') : 0) : $('#customexpirydiv').show() + $('#ntloexpiry').hide() + (typeof setSelectVisible === 'function' ? setSelectVisible('#ntloexpiry', false) : 0) )">
                     <option id="ntloexpirycustomunit-minute" data-unit="minute">Minute(s)</option>
                     <option id="ntloexpirycustomunit-hour" data-unit="hour">Hour(s)</option>
                     <option id="ntloexpirycustomunit-day" data-unit="day">Day(s)</option>
@@ -849,7 +848,7 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
                 </select>                
             </div>
         </span>        
-        <select id="ntloexpiry" ontouchstart="ts(event,()=>{})" ontouchend="te(event, quickSelectInput)" class="form-control" onchange="($('#ntloexpiry').find(':selected')[0].id == 'ntloexpiry-opt-custom' ? $('#customexpirydiv').show() + $('#ntloexpiry').hide() + $('#ntloexpirycustomunit > option').removeAttr('selected') + $('#ntloexpirycustomunit-hour').attr('selected', 'selected') : $('#customexpirydiv').hide() + $('#ntloexpiry').show() )">
+        <select id="ntloexpiry" ontouchstart="ts(event,()=>{})" ontouchend="te(event, quickSelectInput)" class="form-control" onchange="($('#ntloexpiry').find(':selected')[0].id == 'ntloexpiry-opt-custom' ? $('#customexpirydiv').show() + $('#ntloexpiry').hide() + (typeof setSelectVisible === 'function' ? setSelectVisible('#ntloexpiry', false) : 0) + $('#ntloexpirycustomunit > option').removeAttr('selected') + $('#ntloexpirycustomunit-hour').attr('selected', 'selected') + (typeof refreshSelect === 'function' ? refreshSelect('#ntloexpirycustomunit') : 0) : $('#customexpirydiv').hide() + $('#ntloexpiry').show() + (typeof setSelectVisible === 'function' ? setSelectVisible('#ntloexpiry', true) : 0) )">
             <option id="ntloexpiry-opt-custom" data-hours="0" data-minutes="0">Custom ...</option>
             <option id="ntloexpiry-1m" data-hours="0" data-minutes="1">1 minute</option>
             <option id="ntloexpiry-5m" data-hours="0" data-minutes="5">5 minutes</option>

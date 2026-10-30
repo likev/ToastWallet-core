@@ -1,56 +1,8 @@
 
 
-// adds ontouchend events to select2 boxes for more snappy use on mobile
-function select2EventProxy() {
-    $('.select2').off('touchend')
-    $('.select2').on('touchend', (event)=>{
-        
-        try {
-            event.stopPropagation();
-            event.preventDefault();
-            if (!event.changedTouches || event.changedTouches.length === 0) {
-                return;
-            }
-            if (event.target == document.elementFromPoint(event.changedTouches[0].pageX, event.changedTouches[0].pageY)) {
-                var e = event.target
-                while (e && e.parentNode && !(e.previousElementSibling && e.previousElementSibling.tagName == 'SELECT'))
-                    e = e.parentNode
-                if (!e || !e.parentNode || !e.previousElementSibling)
-                    return
-                try {$(e.previousElementSibling).select2('open')} catch(e) {}
-                $('.select2-results__option').off('touchend')
-                $('.select2-results__option').on('touchend', (event)=>{
-                    try {
-                        event.stopPropagation();
-                        event.preventDefault();
-                    } catch (E) {}
-                    
-                    if (event.changedTouches && event.changedTouches.length > 0 && event.target == document.elementFromPoint(event.changedTouches[0].pageX, event.changedTouches[0].pageY))
-                        $(event.target).trigger('mouseup')
-                })
-            }
-        } catch (E) {}
-    })
-}
-// formats the internals of select2 comboboxes
+function select2EventProxy() {}
 function formatSelect2(state) {
-    console.log('formataccselect2 called')    
-    
-    if (!state.element || !state.element.parentNode || 
-        !state.element.parentNode.id || 
-        !state.element.dataset || !state.element.dataset.account ||
-        state.element.parentNode.id != 'payfromaccount'  ) 
-        return $('<span>' + state.text + '</span>')
- 
-    var acc = state.element.dataset.account //state._resultId.replace(/^.+-/, '')
-    var xacc = xaddr(acc, false)
-    var ret = $('<span class="accselect2"></span>')
-    ret.append(hashicon(xacc, 20))
-    ret.append(' ')
-    ret.append(
-        (state.text == acc ? dispaddr(acc) : state.text)
-    )
-    return ret
+    return state ? (state.text || '') : '';
 }
 // this function fires when an account is selected on the payments tab
 // but is only used to supply red qr code in the event the user is in offline mode
@@ -574,9 +526,10 @@ onDeviceReady: function() {
 			if (debug) console.log("onDeviceReady:3");
             // change all select boxes to the modern graphical format
             try {
-                $('select').select2({templateResult:formatSelect2, templateSelection:formatSelect2})
+                if (typeof enhanceSelect === 'function') {
+                    document.querySelectorAll('select').forEach((el) => enhanceSelect(el));
+                }
             } catch(e) {}
-            select2EventProxy()
 			if (false) {
 				navigator.notification.alert("Toast Wallet does not work with iOS versions below 11.0. Toast Wallet will now start in offline mode.", 
 					()=>{

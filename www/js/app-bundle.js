@@ -86,7 +86,7 @@ function renderMoreContentIndicator() {
 function quickSelectInput(e) {
     if (e == undefined) return;
     try {
-        $('select').select2('close')
+        if (typeof closeAllCustomSelects === 'function') closeAllCustomSelects();
     } catch(e) {}
     $(e).focus();
 }
@@ -302,57 +302,9 @@ window.initAppUI = initAppUI;
 },{}],2:[function(require,module,exports){
 
 
-// adds ontouchend events to select2 boxes for more snappy use on mobile
-function select2EventProxy() {
-    $('.select2').off('touchend')
-    $('.select2').on('touchend', (event)=>{
-        
-        try {
-            event.stopPropagation();
-            event.preventDefault();
-            if (!event.changedTouches || event.changedTouches.length === 0) {
-                return;
-            }
-            if (event.target == document.elementFromPoint(event.changedTouches[0].pageX, event.changedTouches[0].pageY)) {
-                var e = event.target
-                while (e && e.parentNode && !(e.previousElementSibling && e.previousElementSibling.tagName == 'SELECT'))
-                    e = e.parentNode
-                if (!e || !e.parentNode || !e.previousElementSibling)
-                    return
-                try {$(e.previousElementSibling).select2('open')} catch(e) {}
-                $('.select2-results__option').off('touchend')
-                $('.select2-results__option').on('touchend', (event)=>{
-                    try {
-                        event.stopPropagation();
-                        event.preventDefault();
-                    } catch (E) {}
-                    
-                    if (event.changedTouches && event.changedTouches.length > 0 && event.target == document.elementFromPoint(event.changedTouches[0].pageX, event.changedTouches[0].pageY))
-                        $(event.target).trigger('mouseup')
-                })
-            }
-        } catch (E) {}
-    })
-}
-// formats the internals of select2 comboboxes
+function select2EventProxy() {}
 function formatSelect2(state) {
-    console.log('formataccselect2 called')    
-    
-    if (!state.element || !state.element.parentNode || 
-        !state.element.parentNode.id || 
-        !state.element.dataset || !state.element.dataset.account ||
-        state.element.parentNode.id != 'payfromaccount'  ) 
-        return $('<span>' + state.text + '</span>')
- 
-    var acc = state.element.dataset.account //state._resultId.replace(/^.+-/, '')
-    var xacc = xaddr(acc, false)
-    var ret = $('<span class="accselect2"></span>')
-    ret.append(hashicon(xacc, 20))
-    ret.append(' ')
-    ret.append(
-        (state.text == acc ? dispaddr(acc) : state.text)
-    )
-    return ret
+    return state ? (state.text || '') : '';
 }
 // this function fires when an account is selected on the payments tab
 // but is only used to supply red qr code in the event the user is in offline mode
@@ -876,9 +828,10 @@ onDeviceReady: function() {
 			if (debug) console.log("onDeviceReady:3");
             // change all select boxes to the modern graphical format
             try {
-                $('select').select2({templateResult:formatSelect2, templateSelection:formatSelect2})
+                if (typeof enhanceSelect === 'function') {
+                    document.querySelectorAll('select').forEach((el) => enhanceSelect(el));
+                }
             } catch(e) {}
-            select2EventProxy()
 			if (false) {
 				navigator.notification.alert("Toast Wallet does not work with iOS versions below 11.0. Toast Wallet will now start in offline mode.", 
 					()=>{
@@ -992,6 +945,7 @@ function roundXRP(x) {
 },{}],3:[function(require,module,exports){
 require('./state.js');
 require('./modules/storage.js');
+require('./modules/custom-select.js');
 require('./modules/address.js');
 require('./modules/clipboard.js');
 require('./modules/navigation.js');
@@ -1012,7 +966,7 @@ require('./ui/transactions.js');
 require('./app-init.js');
 require('./app-logic.js');
 
-},{"./app-init.js":1,"./app-logic.js":2,"./modules/address.js":4,"./modules/clipboard.js":5,"./modules/crypto.js":6,"./modules/db.js":7,"./modules/navigation.js":8,"./modules/orderbook.js":9,"./modules/storage.js":10,"./modules/xrpl-client.js":11,"./modules/xrpl-tx.js":12,"./state.js":13,"./ui/accounts.js":14,"./ui/backup.js":15,"./ui/flags.js":16,"./ui/login.js":17,"./ui/orders.js":18,"./ui/payments.js":19,"./ui/settings.js":20,"./ui/transactions.js":21,"./ui/trustlines.js":22}],4:[function(require,module,exports){
+},{"./app-init.js":1,"./app-logic.js":2,"./modules/address.js":4,"./modules/clipboard.js":5,"./modules/crypto.js":6,"./modules/custom-select.js":7,"./modules/db.js":8,"./modules/navigation.js":9,"./modules/orderbook.js":10,"./modules/storage.js":11,"./modules/xrpl-client.js":12,"./modules/xrpl-tx.js":13,"./state.js":14,"./ui/accounts.js":15,"./ui/backup.js":16,"./ui/flags.js":17,"./ui/login.js":18,"./ui/orders.js":19,"./ui/payments.js":20,"./ui/settings.js":21,"./ui/transactions.js":22,"./ui/trustlines.js":23}],4:[function(require,module,exports){
 function xaddr(raddr, tag) {
 	try {
 		return xrpl.classicAddressToXAddress(raddr, tag, false);
@@ -1270,6 +1224,333 @@ window.fromhex_chksum = fromhex_chksum;
 window.randShuffleArray = randShuffleArray;
 
 },{}],7:[function(require,module,exports){
+'use strict';
+
+const enhancedSelects = new Map();
+
+function resolveSelect(target) {
+    if (!target) return null;
+    if (typeof target === 'string') {
+        const sel = target.startsWith('#') || target.startsWith('.') ? target : '#' + target;
+        return document.querySelector(sel);
+    }
+    if (typeof HTMLSelectElement !== 'undefined' && target instanceof HTMLSelectElement) {
+        return target;
+    }
+    if (target.nodeType === 1 && target.tagName === 'SELECT') {
+        return target;
+    }
+    return null;
+}
+
+function closeAllCustomSelects() {
+    for (const data of enhancedSelects.values()) {
+        if (data.container && data.container.classList.contains('cs-open')) {
+            data.container.classList.remove('cs-open');
+            data.trigger.setAttribute('aria-expanded', 'false');
+            if (data.searchInput) {
+                data.searchInput.value = '';
+                filterOptions(data, '');
+            }
+        }
+    }
+}
+
+function renderDefaultOption(opt, selectEl, customRenderer) {
+    if (typeof customRenderer === 'function') {
+        return customRenderer(opt);
+    }
+    if ((selectEl && selectEl.id === 'payfromaccount') || (opt.dataset && opt.dataset.account)) {
+        const acc = (opt.dataset && opt.dataset.account) || opt.value;
+        const xacc = (typeof window !== 'undefined' && typeof window.xaddr === 'function') ? window.xaddr(acc, false) : acc;
+        const span = document.createElement('span');
+        span.className = 'accselect2';
+        if (typeof window !== 'undefined' && typeof window.hashicon === 'function') {
+            const icon = window.hashicon(xacc, 20);
+            if (icon) span.appendChild(icon);
+        }
+        const label = (opt.textContent === acc && typeof window !== 'undefined' && typeof window.dispaddr === 'function')
+            ? window.dispaddr(acc)
+            : opt.textContent;
+        span.appendChild(document.createTextNode((span.childNodes.length > 0 ? ' ' : '') + label));
+        return span;
+    }
+    const span = document.createElement('span');
+    span.textContent = opt.textContent;
+    return span;
+}
+
+function filterOptions(data, query) {
+    const q = query.trim().toLowerCase();
+    const items = data.optionsList.querySelectorAll('.custom-select-option');
+    let hasMatch = false;
+    items.forEach((item) => {
+        if (item.classList.contains('cs-no-match')) return;
+        const text = (item.textContent || '').toLowerCase();
+        if (!q || text.includes(q)) {
+            item.style.display = '';
+            hasMatch = true;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+
+    let noMatchEl = data.optionsList.querySelector('.cs-no-match');
+    if (!hasMatch) {
+        if (!noMatchEl) {
+            noMatchEl = document.createElement('li');
+            noMatchEl.className = 'custom-select-option cs-no-match';
+            noMatchEl.textContent = 'No matches found';
+            data.optionsList.appendChild(noMatchEl);
+        }
+        noMatchEl.style.display = '';
+    } else if (noMatchEl) {
+        noMatchEl.style.display = 'none';
+    }
+}
+
+function updateTriggerLabel(data) {
+    const selectEl = data.select;
+    const selectedOpt = selectEl.options[selectEl.selectedIndex] || selectEl.options[0];
+    data.labelEl.replaceChildren();
+    if (selectedOpt) {
+        const rendered = renderDefaultOption(selectedOpt, selectEl, data.opts.renderOption);
+        data.labelEl.appendChild(rendered);
+    }
+}
+
+function buildOptionsList(data) {
+    const selectEl = data.select;
+    const list = data.optionsList;
+    list.replaceChildren();
+
+    Array.from(selectEl.options).forEach((opt, idx) => {
+        const li = document.createElement('li');
+        li.className = 'custom-select-option';
+        li.setAttribute('role', 'option');
+        li.setAttribute('data-index', idx);
+        li.setAttribute('data-value', opt.value);
+
+        if (idx === selectEl.selectedIndex) {
+            li.classList.add('cs-selected');
+        }
+
+        const rendered = renderDefaultOption(opt, selectEl, data.opts.renderOption);
+        li.appendChild(rendered);
+
+        li.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (selectEl.value !== opt.value || selectEl.selectedIndex !== idx) {
+                selectEl.value = opt.value;
+                selectEl.selectedIndex = idx;
+                selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            updateTriggerLabel(data);
+            closeAllCustomSelects();
+        });
+
+        list.appendChild(li);
+    });
+}
+
+function enhanceSelect(target, opts = {}) {
+    if (typeof document === 'undefined') return null;
+    const selectEl = resolveSelect(target);
+    if (!selectEl) return null;
+
+    if (enhancedSelects.has(selectEl)) {
+        refreshSelect(selectEl);
+        return selectEl;
+    }
+
+    selectEl.classList.add('cs-native-hidden');
+    selectEl.setAttribute('tabindex', '-1');
+
+    const container = document.createElement('div');
+    container.className = 'custom-select-container';
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'custom-select-trigger';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+
+    const labelEl = document.createElement('span');
+    labelEl.className = 'custom-select-label';
+
+    const arrowEl = document.createElement('span');
+    arrowEl.className = 'custom-select-arrow';
+
+    trigger.appendChild(labelEl);
+    trigger.appendChild(arrowEl);
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'custom-select-dropdown';
+
+    const isSearchable = opts.searchable || selectEl.options.length >= 10;
+    let searchInput = null;
+
+    if (isSearchable) {
+        const searchBox = document.createElement('div');
+        searchBox.className = 'custom-select-search-box';
+        searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.className = 'custom-select-search-input';
+        searchInput.placeholder = 'Search...';
+        searchBox.appendChild(searchInput);
+        dropdown.appendChild(searchBox);
+    }
+
+    const optionsList = document.createElement('ul');
+    optionsList.className = 'custom-select-options';
+    optionsList.setAttribute('role', 'listbox');
+    dropdown.appendChild(optionsList);
+
+    container.appendChild(trigger);
+    container.appendChild(dropdown);
+
+    const data = {
+        select: selectEl,
+        container,
+        trigger,
+        labelEl,
+        dropdown,
+        optionsList,
+        searchInput,
+        opts
+    };
+
+    enhancedSelects.set(selectEl, data);
+
+    buildOptionsList(data);
+    updateTriggerLabel(data);
+
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const wasOpen = container.classList.contains('cs-open');
+        closeAllCustomSelects();
+        if (!wasOpen) {
+            container.classList.add('cs-open');
+            trigger.setAttribute('aria-expanded', 'true');
+            if (searchInput) {
+                setTimeout(() => searchInput.focus(), 50);
+            }
+        }
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            filterOptions(data, e.target.value);
+        });
+        searchInput.addEventListener('click', (e) => e.stopPropagation());
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeAllCustomSelects();
+                trigger.focus();
+            }
+        });
+    }
+
+    trigger.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown' || e.key === 'Enter') {
+            e.preventDefault();
+            if (!container.classList.contains('cs-open')) {
+                trigger.click();
+            }
+        } else if (e.key === 'Escape') {
+            closeAllCustomSelects();
+        }
+    });
+
+    const onNativeChange = () => {
+        updateTriggerLabel(data);
+        const items = optionsList.querySelectorAll('.custom-select-option');
+        items.forEach((item, idx) => {
+            if (idx === selectEl.selectedIndex) {
+                item.classList.add('cs-selected');
+            } else {
+                item.classList.remove('cs-selected');
+            }
+        });
+    };
+    selectEl.addEventListener('change', onNativeChange);
+    data._onNativeChange = onNativeChange;
+
+    if (selectEl.parentNode) {
+        selectEl.parentNode.insertBefore(container, selectEl.nextSibling);
+    }
+
+    return selectEl;
+}
+
+function refreshSelect(target) {
+    const selectEl = resolveSelect(target);
+    if (!selectEl) return;
+    const data = enhancedSelects.get(selectEl);
+    if (!data) return;
+
+    buildOptionsList(data);
+    updateTriggerLabel(data);
+}
+
+function destroySelect(target) {
+    const selectEl = resolveSelect(target);
+    if (!selectEl) return;
+    const data = enhancedSelects.get(selectEl);
+    if (!data) return;
+
+    if (data._onNativeChange) {
+        selectEl.removeEventListener('change', data._onNativeChange);
+    }
+    if (data.container && data.container.parentNode) {
+        data.container.parentNode.removeChild(data.container);
+    }
+    selectEl.classList.remove('cs-native-hidden');
+    selectEl.removeAttribute('tabindex');
+
+    enhancedSelects.delete(selectEl);
+}
+
+function setSelectVisible(target, visible) {
+    const selectEl = resolveSelect(target);
+    if (!selectEl) return;
+    const data = enhancedSelects.get(selectEl);
+    if (data && data.container) {
+        data.container.style.display = visible ? '' : 'none';
+    }
+    selectEl.style.display = visible ? '' : 'none';
+}
+
+// Global outside click handler
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+    document.addEventListener('click', (e) => {
+        if (!e.target || !e.target.closest || !e.target.closest('.custom-select-container')) {
+            closeAllCustomSelects();
+        }
+    });
+}
+
+// Expose globally
+if (typeof window !== 'undefined') {
+    window.enhanceSelect = enhanceSelect;
+    window.refreshSelect = refreshSelect;
+    window.destroySelect = destroySelect;
+    window.setSelectVisible = setSelectVisible;
+    window.closeAllCustomSelects = closeAllCustomSelects;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        enhanceSelect,
+        refreshSelect,
+        destroySelect,
+        setSelectVisible,
+        closeAllCustomSelects,
+        renderDefaultOption
+    };
+}
+
+},{}],8:[function(require,module,exports){
 function getSavedGateways(callback) {
 	var f	= function(savedgateways) { try {
 		if (savedgateways.data == undefined) {
@@ -1450,7 +1731,7 @@ window.getAccounts = getAccounts;
 window.getAccountInfo = getAccountInfo;
 window.validateDataStores = validateDataStores;
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 function selectAccountDetailsSubTab(tabele, subtabname) {
     $('.accdetailsinnertabselected').removeClass('accdetailsinnertabselected');
     $(tabele).addClass('accdetailsinnertabselected');
@@ -1496,7 +1777,7 @@ function showTab(tab, dontClearText) {
     
 	if (tab == currenttab) return;
     try {
-        $('select').select2('close')
+        if (typeof closeAllCustomSelects === 'function') closeAllCustomSelects();
     } catch(e) {}
     if (dontClearText == undefined) dontClearText = false;
 	blockInput(true);
@@ -1646,13 +1927,14 @@ function showTab(tab, dontClearText) {
 	var tabs = $(".screentab");
 	for (var i = 0; i < tabs.length; i++) $("#" + tabs[i].id).hide();
     try {
-        $(tab + ' select').select2({templateResult:formatSelect2, templateSelection:formatSelect2})
+        if (typeof enhanceSelect === 'function') {
+            document.querySelectorAll(tab + ' select').forEach((el) => enhanceSelect(el));
+        }
     } catch(e) {}
-    select2EventProxy()
     //clean up stray dropdown
     if (offlinemode) 
         try {
-            $("#payasset").select2('destroy')
+            if (typeof destroySelect === 'function') destroySelect('#payasset');
         } catch (e) {}
     $(tab).show();
     if (tab != '#tabaccounts') $(tab).scrollTop(0);
@@ -1760,7 +2042,7 @@ window.showTab = showTab;
 window.rebindAllHandlers = rebindAllHandlers;
 
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 function renderOrderbookChart(orders, eleid, exchangerate, tlbalance) {
     var o = orders;
     var bids_raw = o.bids;
@@ -1914,7 +2196,7 @@ function getExchangeRate(currency, counterparty, then, then2) {
 window.renderOrderbookChart = renderOrderbookChart;
 window.getOrders = getOrders;
 window.getExchangeRate = getExchangeRate;
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 function create404Error(id) {
@@ -2340,7 +2622,7 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = { WalletDB, create404Error };
 }
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 function setRemoteGateway(server) {
 	currentServer = server;
 	remote = new xrpl.Client(server, { connectionTimeout: 10000 });
@@ -2917,7 +3199,7 @@ window.checkConnection = checkConnection;
 window.serverCycle = serverCycle;
 window.injectCompatibilityLayer = injectCompatibilityLayer;
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 function sendPayment(passphrase, fromacc, xrpAmount, destination, sourceTag, destTag, invoiceID, asset, issuer, successfunc, failurefunc) {
 	
 	if (debug) console.log("sendPayment - " + xrpAmount);
@@ -3607,7 +3889,7 @@ window.sendAccountFlagsTx = sendAccountFlagsTx;
 window.sendAccountFlagsTxOffline = sendAccountFlagsTxOffline;
 window.submitSignedTransaction = submitSignedTransaction;
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 window.AppState = {
     debug: true,
     ontestnet: false,
@@ -3681,7 +3963,7 @@ Object.keys(window.AppState).forEach(function(key) {
     });
 });
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 function refreshAccounts(after) {
     // mark and sweep to remove any dead accounts
     
@@ -4337,7 +4619,7 @@ window.importAddress = importAddress;
 window.generateAddress = generateAddress;
 window.getSecretForAccount = getSecretForAccount;
 window.removeSecret = removeSecret;
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 function showBackupReminderTab(){
 	showTab('#tabbackupreminder');
 }
@@ -4732,7 +5014,7 @@ window.doRestoreBackup = doRestoreBackup;
 window.exportWallet = exportWallet;
 window.importWallet = importWallet;
 window.doCheckBackup = doCheckBackup;
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 function showAccountFlags(account, dontshow) {
     blockInput();
     $('#afaddress').val(dispaddr(account));
@@ -4963,7 +5245,7 @@ function doConfirmAccountFlags(passphrase) {
 window.showAccountFlags = showAccountFlags;
 window.doSetAccountFlags = doSetAccountFlags;
 window.doConfirmAccountFlags = doConfirmAccountFlags;
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 function doShowLogin() {
 	if (debug) console.log("doShowLogin");
     if (paylink_pending != null) $('#tablogin>center>div').addClass('pinpad_pending');
@@ -5145,7 +5427,7 @@ window.renderEnteredPin = renderEnteredPin;
 window.doFinishSetup = doFinishSetup;
 window.restart = restart;
 window.__freshinstall = __freshinstall;
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 function showNewOrder(account, direction, currency, issuer, balance, bid, ask) {
     if (debug) console.log("showNewOrder - direction: " + direction + ", currency: " + currency + ", issuer: " + issuer + ", balance: " + balance + ", bid: " + bid + ", ask: " + ask); 
     $('#ntloaddress').val(dispaddr(account));
@@ -5173,8 +5455,10 @@ function showNewOrder(account, direction, currency, issuer, balance, bid, ask) {
     $('#ntloamount').val('1');
     $('#customexpirydiv').hide();
     $('#ntloexpiry').show();
+    if (typeof setSelectVisible === 'function') setSelectVisible('#ntloexpiry', true);
     $('#ntloexpiry > option').removeAttr('selected');
     $('#ntloexpiry-24h').attr('selected', 'selected');
+    if (typeof refreshSelect === 'function') refreshSelect('#ntloexpiry');
     renderOrderPreview(direction == 'sell');
     showTab('#tabneworder', true);
     
@@ -5662,7 +5946,7 @@ window.doPlaceCancelOrder = doPlaceCancelOrder;
 window.doPlaceOrder = doPlaceOrder;
 window.doConfirmCancelOrder = doConfirmCancelOrder;
 window.doConfirmOrder = doConfirmOrder;
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 function showPaymentTab(account, currency, issuer, balance) {
     if (debug) console.log("showPaymentTab - account: " + account + ", currency: " + currency + ", issuer: " + issuer + ", balance: " + balance); 
     clearPaymentScreen();
@@ -6041,7 +6325,7 @@ function onPaymentSelectFromAccount() {
     //clean up stray dropdown
     if (offlinemode) 
         try {
-            $("#payasset").select2('destroy')
+            if (typeof destroySelect === 'function') destroySelect('#payasset');
         } catch (e) {}
     if ($("#payfromaccount").find(":selected") == undefined) {
         if (activeaccount == undefined) return;
@@ -6056,7 +6340,7 @@ function onPaymentSelectFromAccount() {
         $("#paytabredqr").append(kjua({text: account, fill:"#ff0000"}));    
         $("#payasset").hide();
         try {
-            $("#payasset").select2('destroy')
+            if (typeof destroySelect === 'function') destroySelect('#payasset');
         } catch (e) {}
         $('#oflcurrencydiv').show();
         
@@ -6074,9 +6358,11 @@ function onPaymentSelectFromAccount() {
             $('#payasset').html(xrpoption);
         }
         try {
-            $('#payasset').select2()
+            if (typeof enhanceSelect === 'function') {
+                enhanceSelect('#payasset');
+                refreshSelect('#payasset');
+            }
         } catch(e) {}
-        select2EventProxy()
     }
 }
 
@@ -6541,7 +6827,7 @@ window.xls2d = xls2d;
 window.decodeSecretAddressURI = decodeSecretAddressURI;
 window.checkAccountIsFunded = checkAccountIsFunded;
 window.validateOfflineCode = validateOfflineCode;
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 function doUpdateInterfaceSettings() {
     var currency = $('#valuationcurrency option:selected').data('currency')
     var counterparty = $('#valuationcurrency option:selected').data('counterparty')
@@ -6558,7 +6844,8 @@ function doUpdateInterfaceSettings() {
 
 function showInterfaceTab() {
     try {
-    $('#valuationcurrency > option[data-currency="'+interface_settings.valuation_currency+'"][data-counterparty="'+interface_settings.valuation_counterparty+'"]')[0].selected = true
+        $('#valuationcurrency > option[data-currency="'+interface_settings.valuation_currency+'"][data-counterparty="'+interface_settings.valuation_counterparty+'"]')[0].selected = true
+        if (typeof refreshSelect === 'function') refreshSelect('#valuationcurrency');
     } catch(e) {}
     setToggleSwitch('#tglUseXAddress', interface_settings.display_xaddresses)
     showTab('#tabinterface', true)
@@ -7225,7 +7512,7 @@ window._validatePassphraseCacheHit = _validatePassphraseCacheHit;
 window.setPassphrase = setPassphrase;
 window.getRpPpData = getRpPpData;
 window.validatePassphaseOrRecovery = validatePassphaseOrRecovery;
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 function doViewTransaction(hash) {
     if (debug) console.log('doViewTransaction -- ' + hash);
     blockInput();	
@@ -7353,7 +7640,7 @@ function doGetTransactions(address, marker) {
 // Expose functions globally
 window.doViewTransaction = doViewTransaction;
 window.doGetTransactions = doGetTransactions;
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 function refreshTrustlines(account, after) {
     if (offlinemode) { $('#adtrustlines').html('<li><center><i>Offline trading not yet supported.<br>You can still send from a trustline balance and/or create a trustline.</i></center></li>'); return; }
     
@@ -7759,11 +8046,9 @@ function onToggleIssueOwnCurrency(forceoff) {
         $('#payassetofl').attr('placeholder', 'Leave blank for XRP');
         $('#oflcurrencydiv').hide();
         $('#issueraddressbtnpaste').show();
-        //$('#payasset').show();
-        $('#payasset + .select2').show()
+        if (typeof setSelectVisible === 'function') setSelectVisible('#payasset', true);
     } else {
-        //$('#payasset').hide();
-        $('#payasset + .select2').hide()
+        if (typeof setSelectVisible === 'function') setSelectVisible('#payasset', false);
         $('#oflcurrencydiv').show();
         $('#payissuerofl').val('This account');
         $('#payissuerofl').attr('readonly', 'readonly');

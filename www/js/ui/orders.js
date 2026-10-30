@@ -25,8 +25,10 @@ function showNewOrder(account, direction, currency, issuer, balance, bid, ask) {
     $('#ntloamount').val('1');
     $('#customexpirydiv').hide();
     $('#ntloexpiry').show();
+    if (typeof setSelectVisible === 'function') setSelectVisible('#ntloexpiry', true);
     $('#ntloexpiry > option').removeAttr('selected');
     $('#ntloexpiry-24h').attr('selected', 'selected');
+    if (typeof refreshSelect === 'function') refreshSelect('#ntloexpiry');
     renderOrderPreview(direction == 'sell');
     showTab('#tabneworder', true);
     

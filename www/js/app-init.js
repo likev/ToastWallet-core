@@ -85,7 +85,7 @@ function renderMoreContentIndicator() {
 function quickSelectInput(e) {
     if (e == undefined) return;
     try {
-        $('select').select2('close')
+        if (typeof closeAllCustomSelects === 'function') closeAllCustomSelects();
     } catch(e) {}
     $(e).focus();
 }
