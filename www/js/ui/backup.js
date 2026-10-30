@@ -161,6 +161,7 @@ function doRestoreBackup() {
 	}
     if (getVal('#restorebackup').trim().toLowerCase() == 'delete') {
         var onComplete = function() {
+            if (typeof resetPinThrottle === 'function') resetPinThrottle();
             if (typeof wipeSensitiveDom === 'function') wipeSensitiveDom();
             if (typeof clearClipboard === 'function') clearClipboard();
             if (typeof window !== 'undefined' && window.AppState) {

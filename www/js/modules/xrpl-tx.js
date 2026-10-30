@@ -44,7 +44,7 @@ function sendPayment(passphrase, fromacc, xrpAmount, destination, sourceTag, des
                 payment.source.maxAmount['counterparty'] = issuer;
                 payment.destination.amount['counterparty'] = issuer;
             }
-            console.log(payment);
+            if (debug) console.log("payment prepared");
 			var preparepayment = function(fromacc, payment, instructions, ptries) {
 				return remote.preparePayment(fromacc, payment, instructions).then(prepared => {
 				    console.log('Payment transaction prepared...');
@@ -302,7 +302,7 @@ function sendOfferCreate(passphrase, fromacc, amount, asset, issuer, price, sell
             if (fok) order['fillOrKill'] = true;
             if (ioc && !fok) order['immediateOrCancel'] = true;
             
-            console.log(order);
+            if (debug) console.log("order prepared");
 			var prepareorder = function(fromacc, order, instructions, ptries) {
 				return remote.prepareOrder(fromacc, order, instructions).then(prepared => {
 				    console.log('OfferCreate transaction prepared...');
@@ -363,7 +363,7 @@ function sendOfferCreateOffline(passphrase, fromacc, amount, asset, issuer, pric
             if (fok) order['fillOrKill'] = true;
             if (ioc && !fok) order['immediateOrCancel'] = true;
             
-            console.log(order)
+            if (debug) console.log("order prepared");
             remote.prepareOrder(fromacc, order, instructions).then(prepared => {
  				    console.log('Order transaction prepared...');
 				    const {signedTransaction} = remote.sign(prepared.txJSON, secret);
@@ -421,7 +421,7 @@ function sendOfferCancel(passphrase, fromacc, seq, successfunc, failurefunc) {
 			var cancel = {
                 orderSequence: seq
             };
-            console.log(cancel);
+            if (debug) console.log("cancel prepared");
 			var preparecancelorder = function(fromacc, cancel, instructions, ptries) {
 				return remote.prepareOrderCancellation(fromacc, cancel, instructions).then(prepared => {
 				    console.log('OfferCancel transaction prepared...');
@@ -469,7 +469,7 @@ function sendOfferCancelOffline(passphrase, fromacc, seq, accSeqID, ledSeqID, fe
                 orderSequence: seq
             };
           
-            console.log(cancel);
+            if (debug) console.log("cancel prepared");
             remote.prepareOrderCancellation(fromacc, cancel, instructions).then(prepared => {
  				    console.log('OfferCancel transaction prepared...');
 				    const {signedTransaction} = remote.sign(prepared.txJSON, secret);

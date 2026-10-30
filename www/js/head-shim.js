@@ -35,8 +35,8 @@ var setupcompletedthissession = false;
 
 window.onerror = function(message, url, lineNumber) {  
     if ((message + "").startsWith("Uncaught, unspecified")) return; // not entirely sure what this error is but it seems to happen very occasionally when switching back after inactivity and doesn't seem to affect behaviour 
-    var x = "We're sorry: An unexpected error has occured with Toast Wallet. Please report the below to support@toastwallet.com along with what you were trying to do at the time the error occured. If you haven't already it would be prudent to make a backup of your wallet. You may need to restart Toast Wallet by closing it manually. " + message + " " + url + " " + lineNumber;
-    console.log("Error: `" + message + "`, url: " + url + " line: " + lineNumber);
+    var x = "We're sorry: An unexpected error has occured with Toast Wallet. Please report the below to support@toastwallet.com along with what you were trying to do at the time the error occured. If you haven't already it would be prudent to make a backup of your wallet. You may need to restart Toast Wallet by closing it manually. " + String(message).slice(0, 120).replace(/s[1-9A-HJ-NP-Za-km-z]{24,}/g, "[redacted]") + " (line " + lineNumber + ")";
+    if (typeof debug !== "undefined" && debug) console.log("Error: `" + message + "`, url: " + url + " line: " + lineNumber);
     try {
         navigator.notification.alert(x, 
             function(){

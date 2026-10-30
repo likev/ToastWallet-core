@@ -141,7 +141,7 @@ function setAndShowNewRecoveryPhrase(passphrase) {
 		  if (is_vowel) arr = vowels
 		  else arr = consts
 		  is_vowel = !is_vowel;
-		  word +=  arr[sodium.randombytes_random() % arr.length];
+		  word +=  arr[randUniform(arr.length)];
 		}
 		return word;
 	};

@@ -138,7 +138,11 @@ function handleOpenURL(link, e) {
 
 function openExternalUrl(url) {
     try {
-        return window.open(url, '_blank');
+        return (function () {
+            var u = new URL(String(url), window.location.href);
+            if (['https:', 'http:', 'mailto:'].indexOf(u.protocol) === -1) return null;
+            return window.open(u.href, '_blank', 'noopener,noreferrer');
+        })();
     } catch (E) {
         console.log(E);
     }
@@ -374,7 +378,7 @@ function initAppUI() {
 
     // since we're booting, if the wallet was started with a pay link we need to process that now
     if (typeof(document.location) == 'object' && typeof(document.location.search) == 'string') {
-        console.log("paylink passed on boot: " + document.location.search);
+        if (debug) console.log("paylink passed on boot");
         var pieces = document.location.search.split("?paylink=");
         if (pieces.length > 1) {
             var decodedLink = '';
@@ -385,6 +389,7 @@ function initAppUI() {
                     decodedLink += String.fromCharCode(parseInt(pieces[1].substr(i, 2), 16));
                 }
             }
+            try { window.history.replaceState(null, '', window.location.pathname); } catch (e2) {}
             paylink_handler("boot", decodedLink);
         }
     }
@@ -782,6 +787,7 @@ resetServerStack();
 
 // imported from https://toastwallet.com/backupcheck/
 function dbgdumpdata() {
+	if (!debug) return;
 	var f = function(x) {console.log(x);}
 	
 	db.get("pindata").then(function(x){ console.log("pindata: " + x.data);});
@@ -1441,9 +1447,20 @@ function fromhex_chksum(hex, format) {
 	return payload;
 }
 
+// Unbiased uniform integer in [0, n) via rejection sampling over 32-bit CSPRNG output.
+function randUniform(n) {
+    if (!(n > 0) || n > 0x100000000) throw new Error('randUniform: bad range');
+    var limit = 0x100000000 - (0x100000000 % n);
+    while (true) {
+        var b = sodium.randombytes_buf(4);
+        var r = ((b[0] * 16777216) + (b[1] << 16) + (b[2] << 8) + b[3]);
+        if (r < limit) return r % n;
+    }
+}
+
 function randShuffleArray(array) {
     for (var i = array.length - 1; i > 0; i--) {
-        var j = Math.floor((sodium.randombytes_buf(1)[0]/256) * (i + 1));
+        var j = randUniform(i + 1);
         var temp = array[i];
         array[i] = array[j];
         array[j] = temp;
@@ -1456,6 +1473,7 @@ window.validatePin = validatePin;
 window.tohex_chksum = tohex_chksum;
 window.fromhex_chksum = fromhex_chksum;
 window.randShuffleArray = randShuffleArray;
+window.randUniform = randUniform;
 window.getScryptParamsForVersion = getScryptParamsForVersion;
 
 if (typeof module !== 'undefined' && module.exports) {
@@ -1465,6 +1483,7 @@ if (typeof module !== 'undefined' && module.exports) {
         tohex_chksum,
         fromhex_chksum,
         randShuffleArray,
+        randUniform,
         getScryptParamsForVersion
     };
 }
@@ -4138,7 +4157,7 @@ function sendPayment(passphrase, fromacc, xrpAmount, destination, sourceTag, des
                 payment.source.maxAmount['counterparty'] = issuer;
                 payment.destination.amount['counterparty'] = issuer;
             }
-            console.log(payment);
+            if (debug) console.log("payment prepared");
 			var preparepayment = function(fromacc, payment, instructions, ptries) {
 				return remote.preparePayment(fromacc, payment, instructions).then(prepared => {
 				    console.log('Payment transaction prepared...');
@@ -4396,7 +4415,7 @@ function sendOfferCreate(passphrase, fromacc, amount, asset, issuer, price, sell
             if (fok) order['fillOrKill'] = true;
             if (ioc && !fok) order['immediateOrCancel'] = true;
             
-            console.log(order);
+            if (debug) console.log("order prepared");
 			var prepareorder = function(fromacc, order, instructions, ptries) {
 				return remote.prepareOrder(fromacc, order, instructions).then(prepared => {
 				    console.log('OfferCreate transaction prepared...');
@@ -4457,7 +4476,7 @@ function sendOfferCreateOffline(passphrase, fromacc, amount, asset, issuer, pric
             if (fok) order['fillOrKill'] = true;
             if (ioc && !fok) order['immediateOrCancel'] = true;
             
-            console.log(order)
+            if (debug) console.log("order prepared");
             remote.prepareOrder(fromacc, order, instructions).then(prepared => {
  				    console.log('Order transaction prepared...');
 				    const {signedTransaction} = remote.sign(prepared.txJSON, secret);
@@ -4515,7 +4534,7 @@ function sendOfferCancel(passphrase, fromacc, seq, successfunc, failurefunc) {
 			var cancel = {
                 orderSequence: seq
             };
-            console.log(cancel);
+            if (debug) console.log("cancel prepared");
 			var preparecancelorder = function(fromacc, cancel, instructions, ptries) {
 				return remote.prepareOrderCancellation(fromacc, cancel, instructions).then(prepared => {
 				    console.log('OfferCancel transaction prepared...');
@@ -4563,7 +4582,7 @@ function sendOfferCancelOffline(passphrase, fromacc, seq, accSeqID, ledSeqID, fe
                 orderSequence: seq
             };
           
-            console.log(cancel);
+            if (debug) console.log("cancel prepared");
             remote.prepareOrderCancellation(fromacc, cancel, instructions).then(prepared => {
  				    console.log('OfferCancel transaction prepared...');
 				    const {signedTransaction} = remote.sign(prepared.txJSON, secret);
@@ -4795,7 +4814,7 @@ window.submitSignedTransaction = submitSignedTransaction;
 'use strict';
 
 window.AppState = {
-    debug: true,
+    debug: false,
     ontestnet: false,
     emergencybackup: false,
     offlinemode: false,
@@ -5903,6 +5922,7 @@ function doRestoreBackup() {
 	}
     if (getVal('#restorebackup').trim().toLowerCase() == 'delete') {
         var onComplete = function() {
+            if (typeof resetPinThrottle === 'function') resetPinThrottle();
             if (typeof wipeSensitiveDom === 'function') wipeSensitiveDom();
             if (typeof clearClipboard === 'function') clearClipboard();
             if (typeof window !== 'undefined' && window.AppState) {
@@ -6411,6 +6431,7 @@ function doShowLogin() {
     if (paylink_pending != null) addClass('#tablogin>center>div', 'pinpad_pending');
     runPinPad("#tablogin", function(pin) {
 		validatePin(pin, function() {
+			resetPinThrottle();
 			hideEl("#btnbootstrapsequence");
             if (paylink_pending == null) {
                 showTab("#tabaccounts");
@@ -6419,6 +6440,7 @@ function doShowLogin() {
                 doPayLink(); 
             }
 		}, function() {
+			recordPinFailure();
 			hideEl("#btnbootstrapsequence");
             setTimeout(function() {
                 doShakeAndClearPinPad(function() {});
@@ -6479,15 +6501,51 @@ function recoveryboot(corruption) {
 	);
 }
 
+// PIN attempt throttling (exponential backoff). Holds no secrets; persisted best-effort.
+var PIN_LOCK_KEY = 'toastwallet_pin_throttle';
+var PIN_FREE_ATTEMPTS = 3;
+var PIN_MAX_LOCK_MS = 15 * 60 * 1000;
+function getPinThrottle() {
+	try {
+		var t = JSON.parse(localStorage.getItem(PIN_LOCK_KEY) || '{}');
+		return { fails: (t.fails | 0), until: (+t.until || 0) };
+	} catch (e) { return { fails: 0, until: 0 }; }
+}
+function setPinThrottle(t) {
+	try {
+		if (t.fails === 0) localStorage.removeItem(PIN_LOCK_KEY);
+		else localStorage.setItem(PIN_LOCK_KEY, JSON.stringify(t));
+	} catch (e) {}
+}
+function pinLockRemainingMs() {
+	return Math.max(0, getPinThrottle().until - Date.now());
+}
+function recordPinFailure() {
+	var t = getPinThrottle();
+	t.fails++;
+	if (t.fails > PIN_FREE_ATTEMPTS) {
+		t.until = Date.now() + Math.min(PIN_MAX_LOCK_MS, 5000 * Math.pow(2, t.fails - PIN_FREE_ATTEMPTS - 1));
+	}
+	setPinThrottle(t);
+}
+function resetPinThrottle() { setPinThrottle({ fails: 0, until: 0 }); }
+
 function doPinPad(x) {
 	if (debug) console.log("doPinPad");
 	var val = x.trim();
+	var lockms = pinLockRemainingMs();
+	if (lockms > 0 && val != "Help" && currenttab == "#tablogin") {
+		enteredpin = "";
+		setTimeout(renderEnteredPin, 0);
+		navigator.notification.alert("Too many incorrect PIN attempts. Please wait " + Math.ceil(lockms / 1000) + " seconds before trying again.", function(){}, "PIN Locked", "OK");
+		return;
+	}
 	if ((val == "" || val == undefined) && enteredpin != "") {
 		enteredpin = enteredpin.slice(0,-1);
 	}
 	if (val == "Help") {
 		showTab("#tabrecovery");
-		pin = "";
+		enteredpin = "";
 		return;
 	}
 	if (enteredpin.length < PIN_MAX) enteredpin += val;
@@ -6569,6 +6627,7 @@ function __freshinstall() {
                 navigator.notification.alert("Due to corruption the app will re-install. Afterwards restore a backup from the settings menu if you have one.",
                 function() {
                         var onComplete = function() {
+                            if (typeof resetPinThrottle === 'function') resetPinThrottle();
                             if (typeof wipeSensitiveDom === 'function') wipeSensitiveDom();
                             if (typeof clearClipboard === 'function') clearClipboard();
                             if (typeof window !== 'undefined' && window.AppState) {
@@ -8397,7 +8456,7 @@ function setAndShowNewRecoveryPhrase(passphrase) {
 		  if (is_vowel) arr = vowels
 		  else arr = consts
 		  is_vowel = !is_vowel;
-		  word +=  arr[sodium.randombytes_random() % arr.length];
+		  word +=  arr[randUniform(arr.length)];
 		}
 		return word;
 	};

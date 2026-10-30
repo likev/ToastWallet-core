@@ -332,6 +332,7 @@ resetServerStack();
 
 // imported from https://toastwallet.com/backupcheck/
 function dbgdumpdata() {
+	if (!debug) return;
 	var f = function(x) {console.log(x);}
 	
 	db.get("pindata").then(function(x){ console.log("pindata: " + x.data);});

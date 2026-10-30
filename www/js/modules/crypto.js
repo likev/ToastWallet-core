@@ -105,9 +105,20 @@ function fromhex_chksum(hex, format) {
 	return payload;
 }
 
+// Unbiased uniform integer in [0, n) via rejection sampling over 32-bit CSPRNG output.
+function randUniform(n) {
+    if (!(n > 0) || n > 0x100000000) throw new Error('randUniform: bad range');
+    var limit = 0x100000000 - (0x100000000 % n);
+    while (true) {
+        var b = sodium.randombytes_buf(4);
+        var r = ((b[0] * 16777216) + (b[1] << 16) + (b[2] << 8) + b[3]);
+        if (r < limit) return r % n;
+    }
+}
+
 function randShuffleArray(array) {
     for (var i = array.length - 1; i > 0; i--) {
-        var j = Math.floor((sodium.randombytes_buf(1)[0]/256) * (i + 1));
+        var j = randUniform(i + 1);
         var temp = array[i];
         array[i] = array[j];
         array[j] = temp;
@@ -120,6 +131,7 @@ window.validatePin = validatePin;
 window.tohex_chksum = tohex_chksum;
 window.fromhex_chksum = fromhex_chksum;
 window.randShuffleArray = randShuffleArray;
+window.randUniform = randUniform;
 window.getScryptParamsForVersion = getScryptParamsForVersion;
 
 if (typeof module !== 'undefined' && module.exports) {
@@ -129,6 +141,7 @@ if (typeof module !== 'undefined' && module.exports) {
         tohex_chksum,
         fromhex_chksum,
         randShuffleArray,
+        randUniform,
         getScryptParamsForVersion
     };
 }

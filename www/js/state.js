@@ -1,7 +1,7 @@
 'use strict';
 
 window.AppState = {
-    debug: true,
+    debug: false,
     ontestnet: false,
     emergencybackup: false,
     offlinemode: false,

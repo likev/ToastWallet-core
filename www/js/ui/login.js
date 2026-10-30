@@ -6,6 +6,7 @@ function doShowLogin() {
     if (paylink_pending != null) addClass('#tablogin>center>div', 'pinpad_pending');
     runPinPad("#tablogin", function(pin) {
 		validatePin(pin, function() {
+			resetPinThrottle();
 			hideEl("#btnbootstrapsequence");
             if (paylink_pending == null) {
                 showTab("#tabaccounts");
@@ -14,6 +15,7 @@ function doShowLogin() {
                 doPayLink(); 
             }
 		}, function() {
+			recordPinFailure();
 			hideEl("#btnbootstrapsequence");
             setTimeout(function() {
                 doShakeAndClearPinPad(function() {});
@@ -74,15 +76,51 @@ function recoveryboot(corruption) {
 	);
 }
 
+// PIN attempt throttling (exponential backoff). Holds no secrets; persisted best-effort.
+var PIN_LOCK_KEY = 'toastwallet_pin_throttle';
+var PIN_FREE_ATTEMPTS = 3;
+var PIN_MAX_LOCK_MS = 15 * 60 * 1000;
+function getPinThrottle() {
+	try {
+		var t = JSON.parse(localStorage.getItem(PIN_LOCK_KEY) || '{}');
+		return { fails: (t.fails | 0), until: (+t.until || 0) };
+	} catch (e) { return { fails: 0, until: 0 }; }
+}
+function setPinThrottle(t) {
+	try {
+		if (t.fails === 0) localStorage.removeItem(PIN_LOCK_KEY);
+		else localStorage.setItem(PIN_LOCK_KEY, JSON.stringify(t));
+	} catch (e) {}
+}
+function pinLockRemainingMs() {
+	return Math.max(0, getPinThrottle().until - Date.now());
+}
+function recordPinFailure() {
+	var t = getPinThrottle();
+	t.fails++;
+	if (t.fails > PIN_FREE_ATTEMPTS) {
+		t.until = Date.now() + Math.min(PIN_MAX_LOCK_MS, 5000 * Math.pow(2, t.fails - PIN_FREE_ATTEMPTS - 1));
+	}
+	setPinThrottle(t);
+}
+function resetPinThrottle() { setPinThrottle({ fails: 0, until: 0 }); }
+
 function doPinPad(x) {
 	if (debug) console.log("doPinPad");
 	var val = x.trim();
+	var lockms = pinLockRemainingMs();
+	if (lockms > 0 && val != "Help" && currenttab == "#tablogin") {
+		enteredpin = "";
+		setTimeout(renderEnteredPin, 0);
+		navigator.notification.alert("Too many incorrect PIN attempts. Please wait " + Math.ceil(lockms / 1000) + " seconds before trying again.", function(){}, "PIN Locked", "OK");
+		return;
+	}
 	if ((val == "" || val == undefined) && enteredpin != "") {
 		enteredpin = enteredpin.slice(0,-1);
 	}
 	if (val == "Help") {
 		showTab("#tabrecovery");
-		pin = "";
+		enteredpin = "";
 		return;
 	}
 	if (enteredpin.length < PIN_MAX) enteredpin += val;
@@ -164,6 +202,7 @@ function __freshinstall() {
                 navigator.notification.alert("Due to corruption the app will re-install. Afterwards restore a backup from the settings menu if you have one.",
                 function() {
                         var onComplete = function() {
+                            if (typeof resetPinThrottle === 'function') resetPinThrottle();
                             if (typeof wipeSensitiveDom === 'function') wipeSensitiveDom();
                             if (typeof clearClipboard === 'function') clearClipboard();
                             if (typeof window !== 'undefined' && window.AppState) {

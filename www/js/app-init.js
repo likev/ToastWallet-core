@@ -137,7 +137,11 @@ function handleOpenURL(link, e) {
 
 function openExternalUrl(url) {
     try {
-        return window.open(url, '_blank');
+        return (function () {
+            var u = new URL(String(url), window.location.href);
+            if (['https:', 'http:', 'mailto:'].indexOf(u.protocol) === -1) return null;
+            return window.open(u.href, '_blank', 'noopener,noreferrer');
+        })();
     } catch (E) {
         console.log(E);
     }
@@ -373,7 +377,7 @@ function initAppUI() {
 
     // since we're booting, if the wallet was started with a pay link we need to process that now
     if (typeof(document.location) == 'object' && typeof(document.location.search) == 'string') {
-        console.log("paylink passed on boot: " + document.location.search);
+        if (debug) console.log("paylink passed on boot");
         var pieces = document.location.search.split("?paylink=");
         if (pieces.length > 1) {
             var decodedLink = '';
@@ -384,6 +388,7 @@ function initAppUI() {
                     decodedLink += String.fromCharCode(parseInt(pieces[1].substr(i, 2), 16));
                 }
             }
+            try { window.history.replaceState(null, '', window.location.pathname); } catch (e2) {}
             paylink_handler("boot", decodedLink);
         }
     }
