@@ -16,15 +16,19 @@ According to [ripple-lib-history.md](file:///root/downloads/core/www/ripple-lib-
 ---
 
 ## 2. Upgrade Matrix
-
-| Dependency | Current Version | Target Version | Primary Rationale |
+ 
+| Dependency | Original Version | Final Status / Replacement | Primary Rationale |
 | :--- | :--- | :--- | :--- |
-| **`ripple-lib` / `xrpl.js`** | `0.19.1` | `4.6.0` | Support new ledger amendments, X-Address syntax natively, and modern RPC APIs. |
-| **`jQuery`** | `3.3.1` | `3.7.1` | Patch prototype pollution vulnerabilities (CVE-2019-11358). |
-| **`Lodash`** | `4.x` (Obsolete) | `4.17.21` | Address critical prototype pollution risks (CVE-2019-10744). |
-| **`PouchDB`** | `6.x` (Obsolete) | `9.0.0` | Solve database corruption risks on modern browser and WebView engines. |
-| **`Libsodium`** | `sodium.js` (Legacy asm.js) | `@noble/hashes` + `@noble/ciphers` via `sodium-compat.js` | Audited, small pure-JS primitives, permanent `window.sodium` shim, zero Wasm/async initialization issues. |
-| **`Bootstrap`** | `3.x` | `5.3.3` | Modern flexbox grids, removing outdated jQuery selectors and components. |
+| **`ripple-lib` / `xrpl.js`** | `0.19.1` | `4.6.0` (active) | Support new ledger amendments, X-Address syntax natively, and modern RPC APIs. |
+| **`jQuery`** | `3.3.1` | **Replaced: Vanilla DOM (`modules/dom.js`)** | Zero `$` alias, pure native DOM helpers, eliminated prototype pollution surface. |
+| **`Lodash`** | `4.x` | **Purged completely** | Zero runtime usages needed; eliminated prototype pollution risks. |
+| **`PouchDB` & `upsert`** | `6.x` | **Replaced: `WalletDB` (`modules/storage.js`)** | First-party native IndexedDB store (`toastwallet_kv`) with non-destructive legacy migration. |
+| **`Libsodium`** | `sodium.js` (asm.js) | **Replaced: `@noble/hashes` + `@noble/ciphers`** | Audited, pure-JS primitives via `sodium-compat.js` shim with zero Wasm/async issues. |
+| **`Bootstrap`** | `3.x` | **Replaced: `base.css`** | Minimal ~180-line vanilla reboot + 13 utility classes. |
+| **`Select2`** | `4.x` | **Replaced: `custom-select.js` & `.css`** | Accessible vanilla custom select with search and avatar support. |
+| **`FontAwesome`** | `4.x` / `5.x` | **Replaced: CSS SVG Masks (`icons.css`)** | Eliminated 19 MB font bundle with ~7 KB crisp SVG masks. |
+| **`hashicon.js`** | `0.1.x` | **Replaced: `utils-build/hashicon.js`** | Standalone ~80 LOC Keccak-256 canvas renderer with 100% pixel parity. |
+| **`clipboard.js`** | `1.x` | **Replaced: `modules/clipboard.js`** | Secure modern `navigator.clipboard` with `execCommand` fallback. |
 
 ---
 

@@ -27,6 +27,18 @@ The vendored `www/js/sodium.js` (libsodium 1.0.13 asm.js, ~840 KB) has been comp
 - **Rename Legacies:** The legacy initialization routine `afterCordovaLoad` was renamed to `initAppUI` to represent its true function of setting up event listeners, viewport styling, and toggle inputs.
 - **Decimal Math:** Enabled high-precision orderbook rate math using a globally exposed `BigNumber` library instead of standard float divisions.
 
+### 5. Vanilla UI, DOM & Native Storage Architecture
+All 7 external UI, DOM, and storage dependencies have been completely replaced with first-party vanilla JS, CSS, and native IndexedDB (~21.0 MB removed):
+- **PouchDB & pouchdb-upsert → `WalletDB` (`www/js/modules/storage.js`):** Lightweight (~140 LOC) native IndexedDB key-value store (`toastwallet_kv`) with non-destructive, automatic one-time migration from legacy `_pouch_toastwallet`. Zero runtime database dependencies.
+- **jQuery (3.7.1) → `dom.js` (`www/js/modules/dom.js`):** Pure native DOM helpers (`byId`, `qs`, `qsa`, `showEl`, `hideEl`, `setVal`, `getVal`, `domData`, `initTouchClickBridge`). Zero `$` global aliases.
+- **Select2 → `custom-select` (`www/js/modules/custom-select.js` & `www/css/custom-select.css`):** Accessible, lightweight vanilla `<select>` enhancer supporting search, custom icons/avatars, and offline mode.
+- **Bootstrap 3 CSS → `base.css` (`www/css/base.css`):** Minimal ~180-line reboot stylesheet providing essential utility and component styling without bloated legacy CSS frameworks.
+- **FontAwesome (19 MB) → Pure CSS SVG Masks (`www/css/icons.css`):** Crisp, resolution-independent CSS SVG masks (~7 KB total) replacing 19 MB of webfonts and asset files.
+- **hashicon.js → Modern Keccak-256 Canvas Identicon (`utils-build/hashicon.js`):** Standalone ~80 LOC implementation using `@noble/hashes/sha3` with 100% pixel parity.
+- **clipboard.js → Hardened Clipboard Module (`www/js/modules/clipboard.js`):** Secure `navigator.clipboard` with graceful fallback to `document.execCommand`.
+
+The application runtime dependency footprint is reduced to just 4 packages: `@noble/ciphers`, `@noble/hashes`, `qr`, and `xrpl`. Zero vendor files remain in `www/`.
+
 ---
 
 ## Project Structure

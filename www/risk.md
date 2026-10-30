@@ -28,7 +28,7 @@ Inputs, nick-names, and currency values are written to elements using `.innerHTM
 ### PIN Hashing Function (Resolved: scrypt with automatic upgrade from legacy SipHash)
 * **Code Reference:** `www/js/modules/crypto.js` (`setPin`, `validatePin`)
 * **Implementation:** The PIN is now hashed using `sodium.crypto_pwhash_scryptsalsa208sha256(32, pin, salt, 4, 33554432)` with a 32-byte CSPRNG salt.
-* **Legacy Migration:** Existing wallets storing legacy 16-byte-salt PINs hashed with SipHash-2-4 (`sodium.crypto_shorthash`) remain fully supported and are automatically upgraded in PouchDB to 32-byte-salt scrypt on the next successful unlock.
+* **Legacy Migration:** Existing wallets storing legacy 16-byte-salt PINs hashed with SipHash-2-4 (`sodium.crypto_shorthash`) remain fully supported and are automatically upgraded in the database (`WalletDB`) to 32-byte-salt scrypt on the next successful unlock.
 * **Risk (Historical):** Legacy SipHash was designed for hash table lookups, not password/PIN stretching. Modern scrypt KDF provides robust key stretching against offline dictionary and brute-force attacks.
 
 ### Low Memory Limits for KDF (scrypt)
@@ -49,15 +49,23 @@ Inputs, nick-names, and currency values are written to elements using `.innerHTM
 
 ---
 
-## 3. Low Severity: Outdated Library Dependencies
+## 3. Low Severity: Outdated Library Dependencies (Resolved)
 
-| Dependency | Loaded File / Version | Identified Risk |
+All 7 legacy external UI, DOM, and storage libraries (`jquery`, `select2`, `bootstrap`, `hashicon`, `clipboard`, `fontawesome`, `pouchdb` & `pouchdb-upsert`), as well as obsolete `ripple-lib` and `lodash`, have been completely removed from the runtime:
+
+| Original Dependency | Status / Modern Replacement | Security & Architecture Benefit |
 | :--- | :--- | :--- |
-| **`ripple-lib`** | `ripple-0.19.1-debug.js` (released ~2018) | Extremely outdated. Fails to support modern XRP Ledger features (such as AMMs, NFToken amendments, Hooks) and uses obsolete WebSocket structures. |
-| **`jQuery`** | `jquery-3.3.1.min.js` | Subject to prototype pollution vulnerabilities (CVE-2019-11358). |
-| **`Lodash`** | `lodash.js` | Contains historical CVEs (such as CVE-2019-10744) allowing prototype pollution. |
+| **`ripple-lib` (0.19.1)** | Migrated to **`xrpl.js` (4.6.0)** | Supports modern XRP Ledger amendments, native X-Address syntax, and direct RPC WebSocket connectivity. |
+| **`PouchDB` & `pouchdb-upsert`** | Replaced with native **`WalletDB`** (`modules/storage.js`) | Eliminates database corruption risks; zero third-party database dependencies; non-destructive legacy migration. |
+| **`jQuery` (3.3.1 / 3.7.1)** | Replaced with **vanilla DOM** (`modules/dom.js`) | Eliminates prototype pollution attack surface (CVE-2019-11358); zero global `$` aliases. |
+| **`Bootstrap` (3.x)** | Replaced with **`base.css`** | Minimal ~180-line reboot stylesheet; zero framework bloat. |
+| **`Select2`** | Replaced with **`custom-select.js`** | Accessible vanilla custom select; eliminates jQuery dependency. |
+| **`FontAwesome`** | Replaced with **pure CSS SVG masks** (`icons.css`) | 19 MB of webfonts removed; ~7 KB crisp SVG masks. |
+| **`hashicon.js`** | Replaced with **`@noble/hashes/sha3` canvas** | Standalone ~80 LOC Keccak-256 canvas renderer with 100% pixel parity. |
+| **`clipboard.js`** | Replaced with **`clipboard.js` module** | Modern `navigator.clipboard` with graceful fallback to `execCommand`. |
+| **`Lodash`** | **Completely purged** | Eliminates historical prototype pollution risks (CVE-2019-10744). |
 
----
+The production application now depends on only 4 audited packages: `@noble/ciphers`, `@noble/hashes`, `qr`, and `xrpl`.
 
 ## 4. Code Hygiene & Obsolete Elements
 

@@ -29,13 +29,13 @@ This document provides a comprehensive developer reference for the **Toast Walle
 ## Architectural Overview
 
 Toast Wallet follows a single-page web application design. The architecture rests on three main pillars:
-* **The Single-Page Client:** Managed entirely inside [index.html](file:///root/downloads/core/www/index.html), handling both UI (using jQuery Mobile and Bootstrap) and controllers.
-* **A Local Storage Engine:** Powered by PouchDB (`toastwallet` instance) using WebSQL or IndexedDB.
+* **The Single-Page Client:** Managed entirely inside [index.html](file:///root/downloads/core/www/index.html), handling UI (using vanilla base CSS and custom components) and controllers.
+* **A Local Storage Engine:** Powered by native IndexedDB `WalletDB` (`toastwallet_kv` key-value store) with automatic, non-destructive legacy migration from legacy `_pouch_toastwallet`.
 * **Cryptographic Layer:** Secured using pure-JS `@noble` primitives and WebCrypto CSPRNG via permanent compatibility shim `sodium-compat.js` (for PIN and passphrase hashing and database encryption) and modern `xrpl.js` for transactions.
 
 ```mermaid
 graph TD
-    A[index.html (UI & Controllers)] --> B[PouchDB Database 'toastwallet']
+    A[index.html (UI & Controllers)] --> B[WalletDB (IndexedDB 'toastwallet_kv')]
     A --> C[sodium-compat.js (@noble/hashes, @noble/ciphers)]
     A --> D[xrpl.js (XRP Node Connection)]
     A --> E[rippleutils-build.js (Custom Serializers & Shim)]
@@ -86,15 +86,15 @@ It attaches the following libraries to the global `window` context:
 
 ## Database Schema & Cryptography
 
-### PouchDB Document Store
+### IndexedDB Document Store (`WalletDB`)
 
-Toast Wallet uses a single PouchDB database named `'toastwallet'`. It stores JSON-serialized configuration objects under the following document keys:
+Toast Wallet uses a native IndexedDB key-value store named `toastwallet_kv` (`keyvalue` object store). On upgraded installations, `WalletDB` automatically performs a non-destructive one-time migration of existing documents from `_pouch_toastwallet` into `toastwallet_kv`. It stores JSON-serialized configuration objects under the following document keys:
 
 ```
 ┌─────────────────────────┐
-│     PouchDB Stores      │
+│     WalletDB Stores     │
 ├─────────────────────────┤
-│ 1. pindata              │ ──> PIN salt and short hash
+│ 1. pindata              │ ──> PIN salt and scrypt hash
 │ 2. ppdata               │ ──> Passphrase encryption keys & salt
 │ 3. rpdata               │ ──> Recovery phrase encryption keys, salt, & ERK
 │ 4. accounts             │ ──> Map of Ripple addresses and encrypted seeds
@@ -199,7 +199,7 @@ All functions reside under the global JavaScript context in [index.html](file://
   Loads the recovery interface when database corruption is detected, prompting the user to rebuild from their recovery phrase.
 
 * #### `__freshinstall()`
-  Wipes existing PouchDB records and routes the user to the initial setup and PIN selection screens.
+  Wipes existing database records and routes the user to the initial setup and PIN selection screens.
 
 ### Backup, Export & Restore
 
@@ -207,7 +207,7 @@ All functions reside under the global JavaScript context in [index.html](file://
   Serializes `pindata`, `ppdata`, `rpdata`, and `accounts` into a single JSON object, prepends an 8-character hash check, and triggers `exportfunc(payload)`.
 
 * #### `importWallet(wallet, successfunc, failurefunc)`
-  Validates a serialized export string's checksum, parses it, and writes the contents back to PouchDB. Returns database states to original values if transaction updates fail.
+  Validates a serialized export string's checksum, parses it, and writes the contents back to the database. Returns database states to original values if transaction updates fail.
 
 * #### `doCheckBackup(raw)`
   Verifies if the backup string format matches the generic hash format and returns parsed properties.
@@ -218,7 +218,7 @@ All functions reside under the global JavaScript context in [index.html](file://
 ### PIN & Passphrase Security Management
 
 * #### `setPin(pin, successfunc, failfunc)`
-  Hashes the raw PIN string using `sodium.crypto_shorthash` and saves it to PouchDB.
+  Hashes the raw PIN string using `sodium.crypto_pwhash_scryptsalsa208sha256` and saves it to the database.
 
 * #### `validatePin(pin, successfunc, failfunc, nopinsetfunc)`
   Validates the user input PIN. Executes `successfunc` on match, `failfunc` on mismatch, or `nopinsetfunc` if no PIN exists.
@@ -300,11 +300,11 @@ When the HTML5 web application loads, the entry point listener registers the boo
 sequenceDiagram
     participant Window as Browser Window
     participant App as App Lifecycle (index.html)
-    participant DB as PouchDB ("toastwallet")
+    participant DB as WalletDB ("toastwallet_kv")
     participant Network as Ripple Node Network
 
     Window->>App: window load event
-    App->>DB: db = new PouchDB("toastwallet")
+    App->>DB: db = new WalletDB("toastwallet")
     App->>App: initAppUI()
     App->>App: loadSavedInterfaceSettings()
     App->>DB: getSavedGateways()
@@ -318,7 +318,7 @@ sequenceDiagram
 ```
 
 1. **Inbound Trigger:** The document event listener captures the loading sequence and calls the initialization routine.
-2. **PouchDB Instance:** Instantiates the local WebSQL/IndexedDB backend: `db = new PouchDB('toastwallet')`.
+2. **WalletDB Instance:** Instantiates the local native IndexedDB backend: `db = new WalletDB('toastwallet')`.
 3. **Configuration Loading:** Triggers `loadSavedInterfaceSettings()` and fetches custom user gateway configurations via `getSavedGateways(callback)`.
 4. **Data Integrity Check:** Invokes `validateDataStores(normalboot, normalboot, recoveryboot)`.
    - **Case A (Success/Fresh Install):** Triggers `normalboot()`.
