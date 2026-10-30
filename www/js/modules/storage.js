@@ -157,43 +157,73 @@ class WalletDB {
 
                     const allDocsReq = docStore.getAll ? docStore.getAll() : null;
 
-                    if (allDocsReq) {
-                        allDocsReq.onsuccess = async () => {
-                            const entries = (allDocsReq.result || []).filter((e) => e && e.deletedOrLocal !== '1');
-                            const results = [];
-                            for (const entry of entries) {
-                                const doc = await new Promise((resDoc) => {
-                                    const targetKey = entry.id + '::' + entry.winningRev;
-                                    if (bySeqIndex) {
+                    const fetchDocPromises = (entries) => {
+                        return entries.map((entry) => {
+                            return new Promise((resDoc) => {
+                                const targetKey = entry.id + '::' + entry.winningRev;
+                                const onGotDoc = (doc) => {
+                                    if (doc) {
+                                        const cleanDoc = { ...doc };
+                                        delete cleanDoc._doc_id_rev;
+                                        delete cleanDoc._rev;
+                                        cleanDoc._id = entry.id;
+                                        resDoc(cleanDoc);
+                                    } else {
+                                        resDoc(null);
+                                    }
+                                };
+
+                                if (bySeqIndex) {
+                                    try {
                                         const r = bySeqIndex.get(targetKey);
                                         r.onsuccess = () => {
-                                            if (r.result) return resDoc(r.result);
-                                            const rSeq = seqStore.get(entry.seq);
-                                            rSeq.onsuccess = () => resDoc(rSeq.result || null);
-                                            rSeq.onerror = () => resDoc(null);
+                                            if (r.result) return onGotDoc(r.result);
+                                            try {
+                                                const rSeq = seqStore.get(entry.seq);
+                                                rSeq.onsuccess = () => onGotDoc(rSeq.result || null);
+                                                rSeq.onerror = () => onGotDoc(null);
+                                            } catch (_) { onGotDoc(null); }
                                         };
                                         r.onerror = () => {
-                                            const rSeq = seqStore.get(entry.seq);
-                                            rSeq.onsuccess = () => resDoc(rSeq.result || null);
-                                            rSeq.onerror = () => resDoc(null);
+                                            try {
+                                                const rSeq = seqStore.get(entry.seq);
+                                                rSeq.onsuccess = () => onGotDoc(rSeq.result || null);
+                                                rSeq.onerror = () => onGotDoc(null);
+                                            } catch (_) { onGotDoc(null); }
                                         };
-                                    } else {
-                                        const rSeq = seqStore.get(entry.seq);
-                                        rSeq.onsuccess = () => resDoc(rSeq.result || null);
-                                        rSeq.onerror = () => resDoc(null);
+                                    } catch (_) {
+                                        try {
+                                            const rSeq = seqStore.get(entry.seq);
+                                            rSeq.onsuccess = () => onGotDoc(rSeq.result || null);
+                                            rSeq.onerror = () => onGotDoc(null);
+                                        } catch (_) { onGotDoc(null); }
                                     }
-                                });
-
-                                if (doc) {
-                                    const cleanDoc = { ...doc };
-                                    delete cleanDoc._doc_id_rev;
-                                    delete cleanDoc._rev;
-                                    cleanDoc._id = entry.id;
-                                    results.push(cleanDoc);
+                                } else {
+                                    try {
+                                        const rSeq = seqStore.get(entry.seq);
+                                        rSeq.onsuccess = () => onGotDoc(rSeq.result || null);
+                                        rSeq.onerror = () => onGotDoc(null);
+                                    } catch (_) { onGotDoc(null); }
                                 }
+                            });
+                        });
+                    };
+
+                    if (allDocsReq) {
+                        allDocsReq.onsuccess = () => {
+                            const entries = (allDocsReq.result || []).filter((e) => e && e.deletedOrLocal !== '1');
+                            if (entries.length === 0) {
+                                legacyDb.close();
+                                return resolve([]);
                             }
-                            legacyDb.close();
-                            resolve(results);
+                            const promises = fetchDocPromises(entries);
+                            Promise.all(promises).then((items) => {
+                                legacyDb.close();
+                                resolve(items.filter(Boolean));
+                            }).catch(() => {
+                                legacyDb.close();
+                                resolve([]);
+                            });
                         };
                         allDocsReq.onerror = () => {
                             legacyDb.close();
@@ -211,32 +241,18 @@ class WalletDB {
                                 }
                                 cursor.continue();
                             } else {
-                                (async () => {
-                                    const results = [];
-                                    for (const entry of entries) {
-                                        const doc = await new Promise((resDoc) => {
-                                            const targetKey = entry.id + '::' + entry.winningRev;
-                                            if (bySeqIndex) {
-                                                const r = bySeqIndex.get(targetKey);
-                                                r.onsuccess = () => resDoc(r.result || null);
-                                                r.onerror = () => resDoc(null);
-                                            } else {
-                                                const rSeq = seqStore.get(entry.seq);
-                                                rSeq.onsuccess = () => resDoc(rSeq.result || null);
-                                                rSeq.onerror = () => resDoc(null);
-                                            }
-                                        });
-                                        if (doc) {
-                                            const cleanDoc = { ...doc };
-                                            delete cleanDoc._doc_id_rev;
-                                            delete cleanDoc._rev;
-                                            cleanDoc._id = entry.id;
-                                            results.push(cleanDoc);
-                                        }
-                                    }
+                                if (entries.length === 0) {
                                     legacyDb.close();
-                                    resolve(results);
-                                })();
+                                    return resolve([]);
+                                }
+                                const promises = fetchDocPromises(entries);
+                                Promise.all(promises).then((items) => {
+                                    legacyDb.close();
+                                    resolve(items.filter(Boolean));
+                                }).catch(() => {
+                                    legacyDb.close();
+                                    resolve([]);
+                                });
                             }
                         };
                         cursorReq.onerror = () => {
@@ -255,7 +271,7 @@ class WalletDB {
         });
 
         // Write migrated documents atomically into "kv"
-        if (this._db && docsToMigrate.length > 0) {
+        if (this._db) {
             await new Promise((resolve, reject) => {
                 try {
                     const tx = this._db.transaction(['kv'], 'readwrite');
@@ -331,6 +347,12 @@ class WalletDB {
             return this._doUpsert(docId, diffFn);
         })();
 
+        currentLock.finally(() => {
+            if (this._locks.get(docId) === currentLock) {
+                this._locks.delete(docId);
+            }
+        });
+
         this._locks.set(docId, currentLock);
         return currentLock;
     }
@@ -347,7 +369,7 @@ class WalletDB {
             }
         }
 
-        const next = diffFn(currentDoc);
+        const next = await diffFn(currentDoc);
         if (!next) {
             return { updated: false, id: docId };
         }

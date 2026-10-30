@@ -151,7 +151,7 @@ function refreshAccounts(after) {
                 setAttr('#ra' + i + ' .trustlines', 'ontouchend', bottomtouchend);
                 if (!offlinemode) showEl('#ra' + i + ' .accloadspinner');
             }
-			appendHtml("#payfromaccount", '<option data-account="'+i+'" id="opt'+i+'"'+( i == activeaccount ? ' selected=selected' : '' )+'>' + (nickname == "" ? i : nickname) + '</option>');
+			appendHtml("#payfromaccount", '<option value="'+i+'" data-account="'+i+'" id="opt'+i+'"'+( i == activeaccount ? ' selected=selected' : '' )+'>' + (nickname == "" ? i : nickname) + '</option>');
 		}
         // check to see if there are any accounts on the stack which shouldn't be (i.e. one has been deleted)
         var list = qsa('.accountitem');

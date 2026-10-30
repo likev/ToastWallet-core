@@ -1300,8 +1300,8 @@ function renderDefaultOption(opt, selectEl, customRenderer) {
     if (typeof customRenderer === 'function') {
         return customRenderer(opt);
     }
-    if ((selectEl && selectEl.id === 'payfromaccount') || (opt.dataset && opt.dataset.account)) {
-        const acc = (opt.dataset && opt.dataset.account) || opt.value;
+    if ((selectEl && selectEl.id === 'payfromaccount') || (opt.dataset && opt.dataset.account) || opt.getAttribute('data-account')) {
+        const acc = opt.getAttribute('data-account') || (opt.dataset && opt.dataset.account) || opt.value;
         const xacc = (typeof window !== 'undefined' && typeof window.xaddr === 'function') ? window.xaddr(acc, false) : acc;
         const span = document.createElement('span');
         span.className = 'accselect2';
@@ -1393,6 +1393,34 @@ function buildOptionsList(data) {
     });
 }
 
+function attachSearchInput(data) {
+    if (data.searchInput || !data.dropdown) return;
+    const searchBox = document.createElement('div');
+    searchBox.className = 'custom-select-search-box';
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.className = 'custom-select-search-input';
+    searchInput.placeholder = 'Search...';
+    searchBox.appendChild(searchInput);
+    if (data.optionsList && data.optionsList.parentNode === data.dropdown) {
+        data.dropdown.insertBefore(searchBox, data.optionsList);
+    } else {
+        data.dropdown.appendChild(searchBox);
+    }
+    data.searchInput = searchInput;
+
+    searchInput.addEventListener('input', (e) => {
+        filterOptions(data, e.target.value);
+    });
+    searchInput.addEventListener('click', (e) => e.stopPropagation());
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeAllCustomSelects();
+            if (data.trigger) data.trigger.focus();
+        }
+    });
+}
+
 function enhanceSelect(target, opts = {}) {
     if (typeof document === 'undefined') return null;
     const selectEl = resolveSelect(target);
@@ -1427,20 +1455,6 @@ function enhanceSelect(target, opts = {}) {
     const dropdown = document.createElement('div');
     dropdown.className = 'custom-select-dropdown';
 
-    const isSearchable = opts.searchable || selectEl.options.length >= 10;
-    let searchInput = null;
-
-    if (isSearchable) {
-        const searchBox = document.createElement('div');
-        searchBox.className = 'custom-select-search-box';
-        searchInput = document.createElement('input');
-        searchInput.type = 'text';
-        searchInput.className = 'custom-select-search-input';
-        searchInput.placeholder = 'Search...';
-        searchBox.appendChild(searchInput);
-        dropdown.appendChild(searchBox);
-    }
-
     const optionsList = document.createElement('ul');
     optionsList.className = 'custom-select-options';
     optionsList.setAttribute('role', 'listbox');
@@ -1449,6 +1463,8 @@ function enhanceSelect(target, opts = {}) {
     container.appendChild(trigger);
     container.appendChild(dropdown);
 
+    const isSearchable = opts.searchable || selectEl.options.length >= 10 || selectEl.id === 'valuationcurrency' || selectEl.id === 'ntloexpiry';
+
     const data = {
         select: selectEl,
         container,
@@ -1456,9 +1472,13 @@ function enhanceSelect(target, opts = {}) {
         labelEl,
         dropdown,
         optionsList,
-        searchInput,
+        searchInput: null,
         opts
     };
+
+    if (isSearchable) {
+        attachSearchInput(data);
+    }
 
     enhancedSelects.set(selectEl, data);
 
@@ -1472,24 +1492,11 @@ function enhanceSelect(target, opts = {}) {
         if (!wasOpen) {
             container.classList.add('cs-open');
             trigger.setAttribute('aria-expanded', 'true');
-            if (searchInput) {
-                setTimeout(() => searchInput.focus(), 50);
+            if (data.searchInput) {
+                setTimeout(() => data.searchInput.focus(), 50);
             }
         }
     });
-
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            filterOptions(data, e.target.value);
-        });
-        searchInput.addEventListener('click', (e) => e.stopPropagation());
-        searchInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeAllCustomSelects();
-                trigger.focus();
-            }
-        });
-    }
 
     trigger.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowDown' || e.key === 'Enter') {
@@ -1529,6 +1536,11 @@ function refreshSelect(target) {
     const data = enhancedSelects.get(selectEl);
     if (!data) return;
 
+    const shouldSearch = data.opts.searchable || selectEl.options.length >= 10 || selectEl.id === 'valuationcurrency' || selectEl.id === 'ntloexpiry';
+    if (shouldSearch && !data.searchInput) {
+        attachSearchInput(data);
+    }
+
     buildOptionsList(data);
     updateTriggerLabel(data);
 }
@@ -1561,13 +1573,21 @@ function setSelectVisible(target, visible) {
     selectEl.style.display = visible ? '' : 'none';
 }
 
-// Global outside click handler
-if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
-    document.addEventListener('click', (e) => {
+function initGlobalListeners(doc) {
+    const d = doc || (typeof document !== 'undefined' ? document : null);
+    if (!d || typeof d.addEventListener !== 'function') return;
+    const handleOutside = (e) => {
         if (!e.target || !e.target.closest || !e.target.closest('.custom-select-container')) {
             closeAllCustomSelects();
         }
-    });
+    };
+    d.addEventListener('click', handleOutside);
+    d.addEventListener('touchstart', handleOutside, { passive: true });
+}
+
+// Global outside click and touch handlers
+if (typeof document !== 'undefined') {
+    initGlobalListeners(document);
 }
 
 // Expose globally
@@ -1586,7 +1606,8 @@ if (typeof module !== 'undefined' && module.exports) {
         destroySelect,
         setSelectVisible,
         closeAllCustomSelects,
-        renderDefaultOption
+        renderDefaultOption,
+        initGlobalListeners
     };
 }
 
@@ -2152,6 +2173,11 @@ function removeDomData(target, key) {
 let lastTouchTime = 0;
 let bridgeInitialized = false;
 
+function _resetBridgeForTesting() {
+    bridgeInitialized = false;
+    lastTouchTime = 0;
+}
+
 function initTouchClickBridge() {
     if (bridgeInitialized || typeof document === 'undefined') return;
     bridgeInitialized = true;
@@ -2178,25 +2204,38 @@ function initTouchClickBridge() {
         const touchEl = target.closest('[ontouchend], [ontouchstart]');
         if (!touchEl) return;
 
-        if (touchEl.hasAttribute('ontouchstart')) {
-            try {
-                const startEvt = new CustomEvent('touchstart', { bubbles: true, cancelable: true });
-                startEvt.touches = [];
-                startEvt.targetTouches = [];
-                startEvt.changedTouches = [{ clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY }];
-                touchEl.dispatchEvent(startEvt);
-            } catch (err) {}
+        const clientX = e.clientX !== undefined ? e.clientX : 0;
+        const clientY = e.clientY !== undefined ? e.clientY : 0;
+        const pageX = e.pageX !== undefined ? e.pageX : clientX;
+        const pageY = e.pageY !== undefined ? e.pageY : clientY;
+
+        if (typeof window !== 'undefined') window.inClickProxy = true;
+        try {
+            if (touchEl.hasAttribute('ontouchstart')) {
+                try {
+                    const startEvt = new CustomEvent('touchstart', { bubbles: true, cancelable: true });
+                    startEvt.touches = [];
+                    startEvt.targetTouches = [];
+                    startEvt.changedTouches = [{ clientX, clientY, pageX, pageY }];
+                    touchEl.dispatchEvent(startEvt);
+                } catch (err) {}
+            }
+
+            if (touchEl.hasAttribute('ontouchend')) {
+                try {
+                    const endEvt = new CustomEvent('touchend', { bubbles: true, cancelable: true });
+                    endEvt.touches = [];
+                    endEvt.targetTouches = [];
+                    endEvt.changedTouches = [{ clientX, clientY, pageX, pageY }];
+                    touchEl.dispatchEvent(endEvt);
+                } catch (err) {}
+            }
+        } finally {
+            if (typeof window !== 'undefined') window.inClickProxy = false;
         }
 
-        if (touchEl.hasAttribute('ontouchend')) {
-            try {
-                const endEvt = new CustomEvent('touchend', { bubbles: true, cancelable: true });
-                endEvt.touches = [];
-                endEvt.targetTouches = [];
-                endEvt.changedTouches = [{ clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY }];
-                touchEl.dispatchEvent(endEvt);
-            } catch (err) {}
-        }
+        if (typeof e.stopPropagation === 'function') e.stopPropagation();
+        if (typeof e.preventDefault === 'function') e.preventDefault();
     }, { capture: true });
 }
 
@@ -2258,6 +2297,7 @@ if (typeof module !== 'undefined' && module.exports) {
         domData,
         removeDomData,
         initTouchClickBridge,
+        _resetBridgeForTesting,
         resolveElement,
         resolveElements
     };
@@ -2901,43 +2941,73 @@ class WalletDB {
 
                     const allDocsReq = docStore.getAll ? docStore.getAll() : null;
 
-                    if (allDocsReq) {
-                        allDocsReq.onsuccess = async () => {
-                            const entries = (allDocsReq.result || []).filter((e) => e && e.deletedOrLocal !== '1');
-                            const results = [];
-                            for (const entry of entries) {
-                                const doc = await new Promise((resDoc) => {
-                                    const targetKey = entry.id + '::' + entry.winningRev;
-                                    if (bySeqIndex) {
+                    const fetchDocPromises = (entries) => {
+                        return entries.map((entry) => {
+                            return new Promise((resDoc) => {
+                                const targetKey = entry.id + '::' + entry.winningRev;
+                                const onGotDoc = (doc) => {
+                                    if (doc) {
+                                        const cleanDoc = { ...doc };
+                                        delete cleanDoc._doc_id_rev;
+                                        delete cleanDoc._rev;
+                                        cleanDoc._id = entry.id;
+                                        resDoc(cleanDoc);
+                                    } else {
+                                        resDoc(null);
+                                    }
+                                };
+
+                                if (bySeqIndex) {
+                                    try {
                                         const r = bySeqIndex.get(targetKey);
                                         r.onsuccess = () => {
-                                            if (r.result) return resDoc(r.result);
-                                            const rSeq = seqStore.get(entry.seq);
-                                            rSeq.onsuccess = () => resDoc(rSeq.result || null);
-                                            rSeq.onerror = () => resDoc(null);
+                                            if (r.result) return onGotDoc(r.result);
+                                            try {
+                                                const rSeq = seqStore.get(entry.seq);
+                                                rSeq.onsuccess = () => onGotDoc(rSeq.result || null);
+                                                rSeq.onerror = () => onGotDoc(null);
+                                            } catch (_) { onGotDoc(null); }
                                         };
                                         r.onerror = () => {
-                                            const rSeq = seqStore.get(entry.seq);
-                                            rSeq.onsuccess = () => resDoc(rSeq.result || null);
-                                            rSeq.onerror = () => resDoc(null);
+                                            try {
+                                                const rSeq = seqStore.get(entry.seq);
+                                                rSeq.onsuccess = () => onGotDoc(rSeq.result || null);
+                                                rSeq.onerror = () => onGotDoc(null);
+                                            } catch (_) { onGotDoc(null); }
                                         };
-                                    } else {
-                                        const rSeq = seqStore.get(entry.seq);
-                                        rSeq.onsuccess = () => resDoc(rSeq.result || null);
-                                        rSeq.onerror = () => resDoc(null);
+                                    } catch (_) {
+                                        try {
+                                            const rSeq = seqStore.get(entry.seq);
+                                            rSeq.onsuccess = () => onGotDoc(rSeq.result || null);
+                                            rSeq.onerror = () => onGotDoc(null);
+                                        } catch (_) { onGotDoc(null); }
                                     }
-                                });
-
-                                if (doc) {
-                                    const cleanDoc = { ...doc };
-                                    delete cleanDoc._doc_id_rev;
-                                    delete cleanDoc._rev;
-                                    cleanDoc._id = entry.id;
-                                    results.push(cleanDoc);
+                                } else {
+                                    try {
+                                        const rSeq = seqStore.get(entry.seq);
+                                        rSeq.onsuccess = () => onGotDoc(rSeq.result || null);
+                                        rSeq.onerror = () => onGotDoc(null);
+                                    } catch (_) { onGotDoc(null); }
                                 }
+                            });
+                        });
+                    };
+
+                    if (allDocsReq) {
+                        allDocsReq.onsuccess = () => {
+                            const entries = (allDocsReq.result || []).filter((e) => e && e.deletedOrLocal !== '1');
+                            if (entries.length === 0) {
+                                legacyDb.close();
+                                return resolve([]);
                             }
-                            legacyDb.close();
-                            resolve(results);
+                            const promises = fetchDocPromises(entries);
+                            Promise.all(promises).then((items) => {
+                                legacyDb.close();
+                                resolve(items.filter(Boolean));
+                            }).catch(() => {
+                                legacyDb.close();
+                                resolve([]);
+                            });
                         };
                         allDocsReq.onerror = () => {
                             legacyDb.close();
@@ -2955,32 +3025,18 @@ class WalletDB {
                                 }
                                 cursor.continue();
                             } else {
-                                (async () => {
-                                    const results = [];
-                                    for (const entry of entries) {
-                                        const doc = await new Promise((resDoc) => {
-                                            const targetKey = entry.id + '::' + entry.winningRev;
-                                            if (bySeqIndex) {
-                                                const r = bySeqIndex.get(targetKey);
-                                                r.onsuccess = () => resDoc(r.result || null);
-                                                r.onerror = () => resDoc(null);
-                                            } else {
-                                                const rSeq = seqStore.get(entry.seq);
-                                                rSeq.onsuccess = () => resDoc(rSeq.result || null);
-                                                rSeq.onerror = () => resDoc(null);
-                                            }
-                                        });
-                                        if (doc) {
-                                            const cleanDoc = { ...doc };
-                                            delete cleanDoc._doc_id_rev;
-                                            delete cleanDoc._rev;
-                                            cleanDoc._id = entry.id;
-                                            results.push(cleanDoc);
-                                        }
-                                    }
+                                if (entries.length === 0) {
                                     legacyDb.close();
-                                    resolve(results);
-                                })();
+                                    return resolve([]);
+                                }
+                                const promises = fetchDocPromises(entries);
+                                Promise.all(promises).then((items) => {
+                                    legacyDb.close();
+                                    resolve(items.filter(Boolean));
+                                }).catch(() => {
+                                    legacyDb.close();
+                                    resolve([]);
+                                });
                             }
                         };
                         cursorReq.onerror = () => {
@@ -2999,7 +3055,7 @@ class WalletDB {
         });
 
         // Write migrated documents atomically into "kv"
-        if (this._db && docsToMigrate.length > 0) {
+        if (this._db) {
             await new Promise((resolve, reject) => {
                 try {
                     const tx = this._db.transaction(['kv'], 'readwrite');
@@ -3075,6 +3131,12 @@ class WalletDB {
             return this._doUpsert(docId, diffFn);
         })();
 
+        currentLock.finally(() => {
+            if (this._locks.get(docId) === currentLock) {
+                this._locks.delete(docId);
+            }
+        });
+
         this._locks.set(docId, currentLock);
         return currentLock;
     }
@@ -3091,7 +3153,7 @@ class WalletDB {
             }
         }
 
-        const next = diffFn(currentDoc);
+        const next = await diffFn(currentDoc);
         if (!next) {
             return { updated: false, id: docId };
         }
@@ -4661,7 +4723,7 @@ function refreshAccounts(after) {
                 setAttr('#ra' + i + ' .trustlines', 'ontouchend', bottomtouchend);
                 if (!offlinemode) showEl('#ra' + i + ' .accloadspinner');
             }
-			appendHtml("#payfromaccount", '<option data-account="'+i+'" id="opt'+i+'"'+( i == activeaccount ? ' selected=selected' : '' )+'>' + (nickname == "" ? i : nickname) + '</option>');
+			appendHtml("#payfromaccount", '<option value="'+i+'" data-account="'+i+'" id="opt'+i+'"'+( i == activeaccount ? ' selected=selected' : '' )+'>' + (nickname == "" ? i : nickname) + '</option>');
 		}
         // check to see if there are any accounts on the stack which shouldn't be (i.e. one has been deleted)
         var list = qsa('.accountitem');

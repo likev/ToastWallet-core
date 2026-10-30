@@ -206,6 +206,7 @@ i.fa.fa-chevron-circle-left, i.fa.fa-question-circle {
     color: black;
     float: right;
     margin-left: 0.5em;
+    cursor: pointer;
 }
 
 .paygrouping {

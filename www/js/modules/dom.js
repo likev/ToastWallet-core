@@ -378,6 +378,11 @@ function removeDomData(target, key) {
 let lastTouchTime = 0;
 let bridgeInitialized = false;
 
+function _resetBridgeForTesting() {
+    bridgeInitialized = false;
+    lastTouchTime = 0;
+}
+
 function initTouchClickBridge() {
     if (bridgeInitialized || typeof document === 'undefined') return;
     bridgeInitialized = true;
@@ -404,25 +409,38 @@ function initTouchClickBridge() {
         const touchEl = target.closest('[ontouchend], [ontouchstart]');
         if (!touchEl) return;
 
-        if (touchEl.hasAttribute('ontouchstart')) {
-            try {
-                const startEvt = new CustomEvent('touchstart', { bubbles: true, cancelable: true });
-                startEvt.touches = [];
-                startEvt.targetTouches = [];
-                startEvt.changedTouches = [{ clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY }];
-                touchEl.dispatchEvent(startEvt);
-            } catch (err) {}
+        const clientX = e.clientX !== undefined ? e.clientX : 0;
+        const clientY = e.clientY !== undefined ? e.clientY : 0;
+        const pageX = e.pageX !== undefined ? e.pageX : clientX;
+        const pageY = e.pageY !== undefined ? e.pageY : clientY;
+
+        if (typeof window !== 'undefined') window.inClickProxy = true;
+        try {
+            if (touchEl.hasAttribute('ontouchstart')) {
+                try {
+                    const startEvt = new CustomEvent('touchstart', { bubbles: true, cancelable: true });
+                    startEvt.touches = [];
+                    startEvt.targetTouches = [];
+                    startEvt.changedTouches = [{ clientX, clientY, pageX, pageY }];
+                    touchEl.dispatchEvent(startEvt);
+                } catch (err) {}
+            }
+
+            if (touchEl.hasAttribute('ontouchend')) {
+                try {
+                    const endEvt = new CustomEvent('touchend', { bubbles: true, cancelable: true });
+                    endEvt.touches = [];
+                    endEvt.targetTouches = [];
+                    endEvt.changedTouches = [{ clientX, clientY, pageX, pageY }];
+                    touchEl.dispatchEvent(endEvt);
+                } catch (err) {}
+            }
+        } finally {
+            if (typeof window !== 'undefined') window.inClickProxy = false;
         }
 
-        if (touchEl.hasAttribute('ontouchend')) {
-            try {
-                const endEvt = new CustomEvent('touchend', { bubbles: true, cancelable: true });
-                endEvt.touches = [];
-                endEvt.targetTouches = [];
-                endEvt.changedTouches = [{ clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY }];
-                touchEl.dispatchEvent(endEvt);
-            } catch (err) {}
-        }
+        if (typeof e.stopPropagation === 'function') e.stopPropagation();
+        if (typeof e.preventDefault === 'function') e.preventDefault();
     }, { capture: true });
 }
 
@@ -484,6 +502,7 @@ if (typeof module !== 'undefined' && module.exports) {
         domData,
         removeDomData,
         initTouchClickBridge,
+        _resetBridgeForTesting,
         resolveElement,
         resolveElements
     };

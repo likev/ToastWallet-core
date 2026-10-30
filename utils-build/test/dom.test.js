@@ -44,21 +44,23 @@ class MockElement {
         this.offsetHeight = 50;
     }
 
+    _matches(sel) {
+        if (sel.startsWith('.') && this.classList && this.classList.contains(sel.slice(1))) return true;
+        if (sel.startsWith('#') && this.id === sel.slice(1)) return true;
+        if (this.tagName && this.tagName.toLowerCase() === sel.toLowerCase()) return true;
+        if (sel.startsWith('[') && sel.endsWith(']')) {
+            const attrName = sel.slice(1, -1);
+            return this.hasAttribute(attrName);
+        }
+        return false;
+    }
+
     closest(sel) {
+        const parts = sel.includes(',') ? sel.split(',').map(s => s.trim()) : [sel.trim()];
         let cur = this;
         while (cur) {
-            if (sel.startsWith('.') && cur.classList && cur.classList.contains(sel.slice(1))) return cur;
-            if (sel.startsWith('#') && cur.id === sel.slice(1)) return cur;
-            if (cur.tagName && cur.tagName.toLowerCase() === sel.toLowerCase()) return cur;
-            if (sel.includes(',')) {
-                const parts = sel.split(',').map(s => s.trim());
-                for (const part of parts) {
-                    if (cur.closest(part)) return cur;
-                }
-            }
-            if (sel.startsWith('[') && sel.endsWith(']')) {
-                const attrName = sel.slice(1, -1);
-                if (cur.hasAttribute(attrName)) return cur;
+            for (const part of parts) {
+                if (cur._matches(part)) return cur;
             }
             cur = cur.parentNode;
         }
@@ -418,24 +420,39 @@ test('dom: initTouchClickBridge delegates clicks and synthesizes touch events (T
     const cleanup = setupDomGlobals(mockEnv);
 
     try {
-        const { initTouchClickBridge } = require('../../www/js/modules/dom.js');
+        const { initTouchClickBridge, _resetBridgeForTesting } = require('../../www/js/modules/dom.js');
+        if (_resetBridgeForTesting) _resetBridgeForTesting();
         initTouchClickBridge();
 
         const btn = mockEnv.doc.createElement('button');
         btn.setAttribute('ontouchend', 'te(event, fn)');
         mockEnv.doc.body.appendChild(btn);
 
+        const icon = mockEnv.doc.createElement('i');
+        icon.className = 'fa fa-copy';
+        btn.appendChild(icon);
+
         let touchEndDispatched = false;
+        let inClickProxyDuringDispatch = null;
         btn.addEventListener('touchend', (e) => {
             touchEndDispatched = true;
+            inClickProxyDuringDispatch = mockEnv.win.inClickProxy;
         });
 
-        // Click event on button
+        // Click event on child icon inside button
+        let stoppedPropagation = false;
+        let preventedDefault = false;
         const clickEvent = new mockEnv.win.Event('click', { bubbles: true });
-        clickEvent.target = btn;
+        clickEvent.stopPropagation = () => { stoppedPropagation = true; };
+        clickEvent.preventDefault = () => { preventedDefault = true; };
+        clickEvent.target = icon;
         mockEnv.doc.dispatchEvent(clickEvent);
 
-        assert.equal(touchEndDispatched, true, 'Desktop click must synthesize touchend on [ontouchend] target');
+        assert.equal(touchEndDispatched, true, 'Desktop click on child icon must synthesize touchend on [ontouchend] target');
+        assert.equal(inClickProxyDuringDispatch, true, 'window.inClickProxy must be true during synthetic dispatch');
+        assert.equal(mockEnv.win.inClickProxy, false, 'window.inClickProxy must be reset to false after dispatch');
+        assert.equal(stoppedPropagation, true, 'Click event stopPropagation must be called');
+        assert.equal(preventedDefault, true, 'Click event preventDefault must be called');
     } finally {
         cleanup();
     }

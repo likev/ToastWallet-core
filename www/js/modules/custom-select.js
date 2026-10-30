@@ -34,8 +34,8 @@ function renderDefaultOption(opt, selectEl, customRenderer) {
     if (typeof customRenderer === 'function') {
         return customRenderer(opt);
     }
-    if ((selectEl && selectEl.id === 'payfromaccount') || (opt.dataset && opt.dataset.account)) {
-        const acc = (opt.dataset && opt.dataset.account) || opt.value;
+    if ((selectEl && selectEl.id === 'payfromaccount') || (opt.dataset && opt.dataset.account) || opt.getAttribute('data-account')) {
+        const acc = opt.getAttribute('data-account') || (opt.dataset && opt.dataset.account) || opt.value;
         const xacc = (typeof window !== 'undefined' && typeof window.xaddr === 'function') ? window.xaddr(acc, false) : acc;
         const span = document.createElement('span');
         span.className = 'accselect2';
@@ -127,6 +127,34 @@ function buildOptionsList(data) {
     });
 }
 
+function attachSearchInput(data) {
+    if (data.searchInput || !data.dropdown) return;
+    const searchBox = document.createElement('div');
+    searchBox.className = 'custom-select-search-box';
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.className = 'custom-select-search-input';
+    searchInput.placeholder = 'Search...';
+    searchBox.appendChild(searchInput);
+    if (data.optionsList && data.optionsList.parentNode === data.dropdown) {
+        data.dropdown.insertBefore(searchBox, data.optionsList);
+    } else {
+        data.dropdown.appendChild(searchBox);
+    }
+    data.searchInput = searchInput;
+
+    searchInput.addEventListener('input', (e) => {
+        filterOptions(data, e.target.value);
+    });
+    searchInput.addEventListener('click', (e) => e.stopPropagation());
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeAllCustomSelects();
+            if (data.trigger) data.trigger.focus();
+        }
+    });
+}
+
 function enhanceSelect(target, opts = {}) {
     if (typeof document === 'undefined') return null;
     const selectEl = resolveSelect(target);
@@ -161,20 +189,6 @@ function enhanceSelect(target, opts = {}) {
     const dropdown = document.createElement('div');
     dropdown.className = 'custom-select-dropdown';
 
-    const isSearchable = opts.searchable || selectEl.options.length >= 10;
-    let searchInput = null;
-
-    if (isSearchable) {
-        const searchBox = document.createElement('div');
-        searchBox.className = 'custom-select-search-box';
-        searchInput = document.createElement('input');
-        searchInput.type = 'text';
-        searchInput.className = 'custom-select-search-input';
-        searchInput.placeholder = 'Search...';
-        searchBox.appendChild(searchInput);
-        dropdown.appendChild(searchBox);
-    }
-
     const optionsList = document.createElement('ul');
     optionsList.className = 'custom-select-options';
     optionsList.setAttribute('role', 'listbox');
@@ -183,6 +197,8 @@ function enhanceSelect(target, opts = {}) {
     container.appendChild(trigger);
     container.appendChild(dropdown);
 
+    const isSearchable = opts.searchable || selectEl.options.length >= 10 || selectEl.id === 'valuationcurrency' || selectEl.id === 'ntloexpiry';
+
     const data = {
         select: selectEl,
         container,
@@ -190,9 +206,13 @@ function enhanceSelect(target, opts = {}) {
         labelEl,
         dropdown,
         optionsList,
-        searchInput,
+        searchInput: null,
         opts
     };
+
+    if (isSearchable) {
+        attachSearchInput(data);
+    }
 
     enhancedSelects.set(selectEl, data);
 
@@ -206,24 +226,11 @@ function enhanceSelect(target, opts = {}) {
         if (!wasOpen) {
             container.classList.add('cs-open');
             trigger.setAttribute('aria-expanded', 'true');
-            if (searchInput) {
-                setTimeout(() => searchInput.focus(), 50);
+            if (data.searchInput) {
+                setTimeout(() => data.searchInput.focus(), 50);
             }
         }
     });
-
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            filterOptions(data, e.target.value);
-        });
-        searchInput.addEventListener('click', (e) => e.stopPropagation());
-        searchInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeAllCustomSelects();
-                trigger.focus();
-            }
-        });
-    }
 
     trigger.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowDown' || e.key === 'Enter') {
@@ -263,6 +270,11 @@ function refreshSelect(target) {
     const data = enhancedSelects.get(selectEl);
     if (!data) return;
 
+    const shouldSearch = data.opts.searchable || selectEl.options.length >= 10 || selectEl.id === 'valuationcurrency' || selectEl.id === 'ntloexpiry';
+    if (shouldSearch && !data.searchInput) {
+        attachSearchInput(data);
+    }
+
     buildOptionsList(data);
     updateTriggerLabel(data);
 }
@@ -295,13 +307,21 @@ function setSelectVisible(target, visible) {
     selectEl.style.display = visible ? '' : 'none';
 }
 
-// Global outside click handler
-if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
-    document.addEventListener('click', (e) => {
+function initGlobalListeners(doc) {
+    const d = doc || (typeof document !== 'undefined' ? document : null);
+    if (!d || typeof d.addEventListener !== 'function') return;
+    const handleOutside = (e) => {
         if (!e.target || !e.target.closest || !e.target.closest('.custom-select-container')) {
             closeAllCustomSelects();
         }
-    });
+    };
+    d.addEventListener('click', handleOutside);
+    d.addEventListener('touchstart', handleOutside, { passive: true });
+}
+
+// Global outside click and touch handlers
+if (typeof document !== 'undefined') {
+    initGlobalListeners(document);
 }
 
 // Expose globally
@@ -320,6 +340,7 @@ if (typeof module !== 'undefined' && module.exports) {
         destroySelect,
         setSelectVisible,
         closeAllCustomSelects,
-        renderDefaultOption
+        renderDefaultOption,
+        initGlobalListeners
     };
 }

@@ -478,3 +478,56 @@ test('WalletDB: fallback mode operates without IndexedDB', async () => {
         restoreIDB();
     }
 });
+
+test('WalletDB: upsert supports async diffFn', async () => {
+    const mockIDB = createMockIndexedDB();
+    const restoreIDB = setGlobal('indexedDB', mockIDB);
+
+    try {
+        const db = new WalletDB('asynctest');
+        const res = await db.upsert('asyncDoc', async (doc) => {
+            await new Promise((r) => setTimeout(r, 5));
+            return { asyncVal: 'resolvedValue' };
+        });
+
+        assert.equal(res.updated, true);
+        const doc = await db.get('asyncDoc');
+        assert.equal(doc.asyncVal, 'resolvedValue');
+
+        db.close();
+    } finally {
+        restoreIDB();
+    }
+});
+
+test('WalletDB: empty legacy PouchDB sets _meta:pouch_migrated with count 0', async () => {
+    const mockIDB = createMockIndexedDB();
+    // Pre-populate empty legacy PouchDB
+    const legacyDB = {
+        version: 5,
+        stores: new Map([
+            ['document-store', { keyPath: 'id', autoIncrement: false, autoIncrementId: 0, records: new Map(), indexes: new Map() }],
+            ['by-sequence', { keyPath: 'seq', autoIncrement: true, autoIncrementId: 0, records: new Map(), indexes: new Map() }]
+        ])
+    };
+    mockIDB._databases.set('_pouch_emptytest', legacyDB);
+
+    const restoreIDB = setGlobal('indexedDB', mockIDB);
+    try {
+        const db = new WalletDB('emptytest');
+        // Wait for ready
+        await db.upsert('k1', () => ({ v: 1 }));
+
+        // Check that kv contains _meta:pouch_migrated
+        const kvDb = mockIDB._databases.get('emptytest_kv');
+        const kvRecords = kvDb.stores.get('kv').records;
+        const meta = kvRecords.get('_meta:pouch_migrated');
+        assert.ok(meta, '_meta:pouch_migrated must be written even when legacy DB had 0 records');
+        assert.equal(meta.count, 0);
+
+        db.close();
+    } finally {
+        restoreIDB();
+    }
+});
+

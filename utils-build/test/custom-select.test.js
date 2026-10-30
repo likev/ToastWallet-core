@@ -194,6 +194,7 @@ class MockTextNode {
 }
 
 function createMockEnvironment() {
+    const docListeners = new Map();
     const doc = {
         body: new MockElement('body'),
         createElement: (tag) => {
@@ -203,8 +204,19 @@ function createMockEnvironment() {
         createTextNode: (text) => new MockTextNode(text),
         querySelector: (sel) => doc.body.querySelector(sel),
         querySelectorAll: (sel) => doc.body.querySelectorAll(sel),
-        addEventListener: () => {},
-        removeEventListener: () => {}
+        addEventListener: (event, fn) => {
+            if (!docListeners.has(event)) docListeners.set(event, []);
+            docListeners.get(event).push(fn);
+        },
+        removeEventListener: (event, fn) => {
+            if (!docListeners.has(event)) return;
+            docListeners.set(event, docListeners.get(event).filter(f => f !== fn));
+        },
+        dispatchEvent: (event) => {
+            const handlers = docListeners.get(event.type) || [];
+            for (const h of handlers) h(event);
+            return true;
+        }
     };
 
     const win = {
@@ -467,3 +479,115 @@ test('custom-select: setSelectVisible toggles container and select display', () 
         cleanup();
     }
 });
+
+test('custom-select: valuationcurrency and ntloexpiry are searchable regardless of option count', () => {
+    const mockEnv = createMockEnvironment();
+    const cleanup = setupGlobalEnv(mockEnv);
+
+    try {
+        const { enhanceSelect, destroySelect } = require('../../www/js/modules/custom-select.js');
+
+        const valSelect = mockEnv.doc.createElement('select');
+        valSelect.id = 'valuationcurrency';
+        mockEnv.doc.body.appendChild(valSelect);
+
+        for (let i = 0; i < 3; i++) {
+            const opt = mockEnv.doc.createElement('option');
+            opt.value = 'CUR' + i;
+            opt.textContent = 'Currency ' + i;
+            valSelect.appendChild(opt);
+            valSelect.options.push(opt);
+        }
+
+        enhanceSelect(valSelect); // no opts passed, length 3 < 10
+
+        const container = mockEnv.doc.querySelector('.custom-select-container');
+        const searchInput = container.querySelector('.custom-select-search-input');
+        assert.ok(searchInput, '#valuationcurrency must have search input even with only 3 options');
+
+        destroySelect(valSelect);
+    } finally {
+        cleanup();
+    }
+});
+
+test('custom-select: refreshSelect dynamically attaches search input when options grow', () => {
+    const mockEnv = createMockEnvironment();
+    const cleanup = setupGlobalEnv(mockEnv);
+
+    try {
+        const { enhanceSelect, refreshSelect, destroySelect } = require('../../www/js/modules/custom-select.js');
+
+        const select = mockEnv.doc.createElement('select');
+        select.id = 'dynamicselect';
+        mockEnv.doc.body.appendChild(select);
+
+        for (let i = 0; i < 2; i++) {
+            const opt = mockEnv.doc.createElement('option');
+            opt.value = 'val' + i;
+            opt.textContent = 'Option ' + i;
+            select.appendChild(opt);
+            select.options.push(opt);
+        }
+
+        enhanceSelect(select);
+        let container = mockEnv.doc.querySelector('.custom-select-container');
+        assert.equal(container.querySelector('.custom-select-search-input'), null, 'Should not have search input when length < 10');
+
+        // Grow options to 12
+        for (let i = 2; i < 12; i++) {
+            const opt = mockEnv.doc.createElement('option');
+            opt.value = 'val' + i;
+            opt.textContent = 'Option ' + i;
+            select.appendChild(opt);
+            select.options.push(opt);
+        }
+
+        refreshSelect(select);
+        assert.ok(container.querySelector('.custom-select-search-input'), 'Should attach search input after refreshSelect when options >= 10');
+
+        destroySelect(select);
+    } finally {
+        cleanup();
+    }
+});
+
+test('custom-select: outside touchstart closes open dropdown', () => {
+    const mockEnv = createMockEnvironment();
+    const cleanup = setupGlobalEnv(mockEnv);
+
+    try {
+        const { enhanceSelect, destroySelect, initGlobalListeners } = require('../../www/js/modules/custom-select.js');
+        initGlobalListeners(mockEnv.doc);
+
+        const select = mockEnv.doc.createElement('select');
+        select.id = 'outsideTouchSelect';
+        mockEnv.doc.body.appendChild(select);
+
+        const opt = mockEnv.doc.createElement('option');
+        opt.value = '1';
+        opt.textContent = 'One';
+        select.appendChild(opt);
+        select.options.push(opt);
+
+        enhanceSelect(select);
+        const container = mockEnv.doc.querySelector('.custom-select-container');
+        const trigger = container.querySelector('.custom-select-trigger');
+
+        // Open dropdown
+        trigger.dispatchEvent(new mockEnv.win.Event('click', { bubbles: true }));
+        assert.ok(container.classList.contains('cs-open'), 'Dropdown must be open after trigger click');
+
+        // Dispatch outside touchstart on document body
+        const touchEvent = new mockEnv.win.Event('touchstart', { bubbles: true });
+        touchEvent.target = mockEnv.doc.body;
+        mockEnv.doc.dispatchEvent(touchEvent);
+
+        assert.ok(!container.classList.contains('cs-open'), 'Dropdown must close after outside touchstart');
+
+        destroySelect(select);
+    } finally {
+        cleanup();
+    }
+});
+
