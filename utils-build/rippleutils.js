@@ -31,4 +31,5 @@ if (typeof window !== 'undefined') {
 	window['qr'] = qrCompat;
 	window['kjua'] = qrCompat.kjua;
 	window['Instascan'] = qrCompat.Instascan;
+	window['hashicon'] = require('./hashicon.js');
 }
