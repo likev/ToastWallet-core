@@ -203,6 +203,16 @@ function setHtml(target, html) {
     return target;
 }
 
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function emptyEl(target) {
     const els = resolveElements(target);
     for (const el of els) {
@@ -472,6 +482,7 @@ if (typeof window !== 'undefined') {
     window.domData = domData;
     window.removeDomData = removeDomData;
     window.initTouchClickBridge = initTouchClickBridge;
+    window.escapeHtml = escapeHtml;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
@@ -489,6 +500,7 @@ if (typeof module !== 'undefined' && module.exports) {
         setText,
         getHtml,
         setHtml,
+        escapeHtml,
         emptyEl,
         appendHtml,
         appendNode,

@@ -61,10 +61,10 @@ function refreshAccounts(after) {
                                         accountbalancestl[account][currency][issuer] = parseFloat("" + balance);
                                         // populate the dropdown for this account
                                         if (trustlinesdropdown[account] == undefined) trustlinesdropdown[account] = {};
-                                        trustlinesdropdown[account]["" + currency + issuer] = '<option id="optpa-' + currency  + '-' + issuer + '" data-asset="' + currency + '" data-issuer="' + issuer + '">' + currency.replace(/[^A-Za-z0-9?!@#$%\^&*<>(){}[\]|]/mg, "") + ' - ' + dispaddr((""+issuer).replace(/[^A-Za-z0-9]/mg, "")) + '</option>';
+                                        trustlinesdropdown[account]["" + currency + issuer] = '<option id="optpa-' + escapeHtml(currency)  + '-' + escapeHtml(issuer) + '" data-asset="' + escapeHtml(currency) + '" data-issuer="' + escapeHtml(issuer) + '">' + escapeHtml(currency.replace(/[^A-Za-z0-9?!@#$%\^&*<>(){}[\]|]/mg, "")) + ' - ' + escapeHtml(dispaddr((""+issuer).replace(/[^A-Za-z0-9]/mg, ""))) + '</option>';
                                     }
                                     for (var currency in tlbalances) {
-                                        trustlines += '<div class="trustline"><div class="amount"><span class="mono"><div class="currency">' + currency + '</div> ' + display_currency_amount(tlbalances[currency]) + '</span></div></div>';
+                                        trustlines += '<div class="trustline"><div class="amount"><span class="mono"><div class="currency">' + escapeHtml(currency) + '</div> ' + display_currency_amount(tlbalances[currency]) + '</span></div></div>';
                                         tlcount++;
                                     }
                                 }
@@ -73,7 +73,7 @@ function refreshAccounts(after) {
                                 if (exchangerate > 0) {
                                     var amount = exchangerate * (parseFloat("" + xrpBalance) + xrpvalueoftrustlinebalances);
                                     var stramount = display_currency_amount(amount);
-                                    fiatbalance = '<span class="mono" style="opacity:0.7"><div class="currency"><span>' + interface_settings.valuation_currency + ' ' + stramount + '</span></div></span>';
+                                    fiatbalance = '<span class="mono" style="opacity:0.7"><div class="currency"><span>' + escapeHtml(interface_settings.valuation_currency) + ' ' + stramount + '</span></div></span>';
                                 }
                                 setHtml("#ra" + account + ">.accountline>.amount", '<span class="mono">' + fiatbalance + '</span>');
                                 if (trustlines != "")  {
@@ -125,16 +125,65 @@ function refreshAccounts(after) {
 		accountbalances = {};
 		for (var i in acc) {
 			var nickname = (acc[i].nickname == undefined ? "" : acc[i].nickname.replace(/[^a-zA-Z0-9 ]/g, "").trim());
-            var toptouchend = 'te(event, ()=>{doSelectAccount(\''+i+'\', \''+nickname+'\', false);})';
-            var bottomtouchend = toptouchend; // changed the behaviour so it always goes to the account details tab, since the DEX is rarely used
             if (!byId('ra' + i)) {
-                var liHtml = '<li data-account="'+i+'" ontouchstart="ts(event)" ontouchend="'+bottomtouchend+'" class="list-group-item accountitem '+(activeaccount == i?'active':'')+'" id="ra'+i+'"><span class="hashicon"></span><div class="accountline" ontouchstart="ts(event)" ontouchend="'+toptouchend+'"><a class="address"><span class="address">'+(nickname == "" ? dispaddr(i) : nickname)+'</span></a><div class="amount"><small style="opacity: 0.7">' + (offlinemode ? 'offline' : '') + '</small></div></div><div class="trustlines" ontouchstart="ts(event)" ontouchend="'+bottomtouchend+'"></div><i class="fas fa-circle-notch accloadspinner" style="'+(offlinemode? 'display:none' : '')+'"></i></li>';
+                var li = document.createElement('li');
+                li.setAttribute('data-account', i);
+                li.className = 'list-group-item accountitem ' + (activeaccount == i ? 'active' : '');
+                li.id = 'ra' + i;
+
+                var hSpan = document.createElement('span');
+                hSpan.className = 'hashicon';
+
+                var aLine = document.createElement('div');
+                aLine.className = 'accountline';
+
+                var aLink = document.createElement('a');
+                aLink.className = 'address';
+                var addrSpan = document.createElement('span');
+                addrSpan.className = 'address';
+                addrSpan.textContent = (nickname == "" ? dispaddr(i) : nickname);
+                aLink.appendChild(addrSpan);
+                aLine.appendChild(aLink);
+
+                var amtDiv = document.createElement('div');
+                amtDiv.className = 'amount';
+                var smallEl = document.createElement('small');
+                smallEl.style.opacity = '0.7';
+                smallEl.textContent = (offlinemode ? 'offline' : '');
+                amtDiv.appendChild(smallEl);
+                aLine.appendChild(amtDiv);
+
+                var tlDiv = document.createElement('div');
+                tlDiv.className = 'trustlines';
+
+                var spin = document.createElement('i');
+                spin.className = 'fas fa-circle-notch accloadspinner';
+                if (offlinemode) spin.style.display = 'none';
+
+                (function(accId, nick) {
+                    var selectHandler = function(e) {
+                        te(e, function() {
+                            doSelectAccount(accId, nick, false);
+                        });
+                    };
+                    li.addEventListener('touchstart', ts);
+                    li.addEventListener('touchend', selectHandler);
+                    aLine.addEventListener('touchstart', ts);
+                    aLine.addEventListener('touchend', selectHandler);
+                    tlDiv.addEventListener('touchstart', ts);
+                    tlDiv.addEventListener('touchend', selectHandler);
+                })(i, nickname);
+
+                li.appendChild(hSpan);
+                li.appendChild(aLine);
+                li.appendChild(tlDiv);
+                li.appendChild(spin);
+
                 var accountsList = byId('accountslist');
                 if (accountsList) {
-                    accountsList.insertAdjacentHTML('afterbegin', liHtml);
+                    accountsList.insertBefore(li, accountsList.firstChild);
                 }
-                var iconSpan = qs('#ra' + i + ' .hashicon');
-                if (iconSpan) iconSpan.appendChild(hashicon(xaddr(i, false), 35));
+                hSpan.appendChild(hashicon(xaddr(i, false), 35));
             } else {
                 // passively update without rewriting the dom
                 if (activeaccount == i) {
@@ -144,14 +193,19 @@ function refreshAccounts(after) {
                 }
                 // may have changed nickname since last update
                 var addrSpan = qs('#ra' + i + ' span.address');
-                if (addrSpan) addrSpan.innerText = (nickname == "" ? dispaddr(i) : nickname);
-                // update touchend event handlers
-                setAttr('#ra' + i + ' .hashicon', 'ontouchend', toptouchend);
-                setAttr('#ra' + i + ' .accountline', 'ontouchend', toptouchend);
-                setAttr('#ra' + i + ' .trustlines', 'ontouchend', bottomtouchend);
+                if (addrSpan) addrSpan.textContent = (nickname == "" ? dispaddr(i) : nickname);
                 if (!offlinemode) showEl('#ra' + i + ' .accloadspinner');
             }
-			appendHtml("#payfromaccount", '<option value="'+i+'" data-account="'+i+'" id="opt'+i+'"'+( i == activeaccount ? ' selected=selected' : '' )+'>' + (nickname == "" ? i : nickname) + '</option>');
+            var payFromSel = byId('payfromaccount');
+            if (payFromSel) {
+                var opt = document.createElement('option');
+                opt.value = i;
+                opt.setAttribute('data-account', i);
+                opt.id = 'opt' + i;
+                if (i == activeaccount) opt.selected = true;
+                opt.textContent = (nickname == "" ? i : nickname);
+                payFromSel.appendChild(opt);
+            }
 		}
         // check to see if there are any accounts on the stack which shouldn't be (i.e. one has been deleted)
         var list = qsa('.accountitem');
@@ -179,7 +233,30 @@ function doSelectAccount(accselected, nickname, trustlinesSubTab) {
     if (fromList) {
         var itemsToRemove = fromList.querySelectorAll('*:not(.bottom-list-button)');
         itemsToRemove.forEach(el => el.remove());
-        fromList.insertAdjacentHTML('afterbegin', '<li class="list-group-item accountitem active"><span class="hashicon"></span><div class="accountline"><a href="#" class="address"><span class="address">'+accselected+'</span></a><span class="amount">'+( accountbalances[accselected] == undefined ? '' :  accountbalances[accselected] + " XRP")+'</span></div><div class="trustlines"></div></li>');
+        var liSel = document.createElement('li');
+        liSel.className = 'list-group-item accountitem active';
+        var hSpanSel = document.createElement('span');
+        hSpanSel.className = 'hashicon';
+        var aLineSel = document.createElement('div');
+        aLineSel.className = 'accountline';
+        var aLinkSel = document.createElement('a');
+        aLinkSel.href = '#';
+        aLinkSel.className = 'address';
+        var addrSpanSel = document.createElement('span');
+        addrSpanSel.className = 'address';
+        addrSpanSel.textContent = accselected;
+        aLinkSel.appendChild(addrSpanSel);
+        aLineSel.appendChild(aLinkSel);
+        var amtSpanSel = document.createElement('span');
+        amtSpanSel.className = 'amount';
+        amtSpanSel.textContent = (accountbalances[accselected] === undefined ? '' : (accountbalances[accselected] + " XRP"));
+        aLineSel.appendChild(amtSpanSel);
+        var tlDivSel = document.createElement('div');
+        tlDivSel.className = 'trustlines';
+        liSel.appendChild(hSpanSel);
+        liSel.appendChild(aLineSel);
+        liSel.appendChild(tlDivSel);
+        fromList.insertBefore(liSel, fromList.firstChild);
     }
 	showTab("#tabaccountdetails");	
     if (trustlinesSubTab == undefined || !trustlinesSubTab) {
@@ -187,7 +264,19 @@ function doSelectAccount(accselected, nickname, trustlinesSubTab) {
     } else {
         selectAccountDetailsSubTab(byId('btnaccdetailsselecttrustlines'), 'trustlines');
     }
-    setHtml("#accdetailsamount", accountbalances[accselected] == undefined ? '' :  '<b><div class="currency">XRP</div> ' + accountbalances[accselected] + '</b>');
+    var amtEl = byId('accdetailsamount');
+    if (amtEl) {
+        emptyEl(amtEl);
+        if (accountbalances[accselected] !== undefined) {
+            var bEl = document.createElement('b');
+            var currDiv = document.createElement('div');
+            currDiv.className = 'currency';
+            currDiv.textContent = 'XRP';
+            bEl.appendChild(currDiv);
+            bEl.appendChild(document.createTextNode(' ' + accountbalances[accselected]));
+            amtEl.appendChild(bEl);
+        }
+    }
 	domData("#accdetailsaddress", 'content', accselected);
 	emptyEl("#accdetailsqr");
 	appendNode("#accdetailsqr", kjua({text: dispaddr(accselected)}));
@@ -320,8 +409,36 @@ function doChangeNickname(address, nickname) {
     );
 }
 
+function wipeGeneratedAccount() {
+    if (typeof generatedAccount === 'object' && generatedAccount !== null) {
+        if (typeof generatedAccount.secret === 'string') {
+            generatedAccount.secret = '';
+        }
+    }
+    generatedAccount = {};
+    if (typeof window !== 'undefined') {
+        if (window.generatedAccount && typeof window.generatedAccount.secret === 'string') {
+            window.generatedAccount.secret = '';
+        }
+        window.generatedAccount = {};
+        if (window.AppState) {
+            window.AppState.generatedAccount = null;
+        }
+    }
+    if (typeof setVal === 'function') {
+        try {
+            setVal('#txtsecret', '');
+            setVal('#genaccpassword', '');
+            setVal('#vanityaddr', '');
+        } catch (e) {}
+    }
+}
+
 function doImportExistingAccount(passphrase, nickname, secret, vanityaddr) {
 	if (debug) console.log("doImportExistingAccount");
+	if (typeof generatedAccount !== 'object' || generatedAccount === null) {
+		generatedAccount = {};
+	}
 	generatedAccount.secret = secret;
 	if (vanityaddr != "" && vanityaddr != undefined) {
 		if (!validateAddress(vanityaddr)) {
@@ -334,6 +451,7 @@ function doImportExistingAccount(passphrase, nickname, secret, vanityaddr) {
 				"Error", 
 				"OK"
 			);
+            wipeGeneratedAccount();
 			return;
 		} 
 		generatedAccount.address = vanityaddr;
@@ -351,17 +469,19 @@ function doImportGeneratedAccount(passphrase, nickname) {
 			importAddress(generatedAccount.secret, generatedAccount.address, nickname, passphrase, 
 				function() {
 					// success
-					generatedAccount = {};
+					wipeGeneratedAccount();
 					showTab('#tabaccounts'); 
 					unblockInput();
 				},
 				function() {
 					// import failure will produce its own message 
+					wipeGeneratedAccount();
 					unblockInput();
 				}
 			);
 		},
 		function() {
+			wipeGeneratedAccount();
 			navigator.notification.alert("Your passphrase was entered incorrectly. Note you cannot use a recovery phrase here.", 
 				function(){
 					var gap = byId("genaccpassword");
@@ -373,6 +493,7 @@ function doImportGeneratedAccount(passphrase, nickname) {
 			);
 		},
 		function() {
+			wipeGeneratedAccount();
 			navigator.notification.alert("Your wallet data may have been corrupted. Please backup via the settings menu then restart the app to run data recovery.", 
 				function(){
 					unblockInput();
@@ -444,12 +565,16 @@ function importAddress(secret, address, nickname, passphrase, successfunc, failu
 	var rpsalt = sodium.randombytes_buf(sodium.crypto_pwhash_scryptsalsa208sha256_SALTBYTES);
 	getRpPpData(
 		function(ppdata, rpdata) {
+            var ppParams = (typeof getScryptParamsForVersion === 'function')
+                ? getScryptParamsForVersion(ppdata.version)
+                : { opsLimit: (ppdata.version === 2 ? 524288 : 4), memLimit: (ppdata.version === 2 ? 16777216 : 33554432) };
+
             var secret32key =
 				sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
 					passphrase,
 					fromhex_chksum(ppdata.salt1),
-					4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-					33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
+					ppParams.opsLimit,
+					ppParams.memLimit);
 			// decrypt erk
 			var erk = fromhex_chksum(rpdata.erk);
 			var nonce = erk.slice(0, sodium.crypto_box_NONCEBYTES);
@@ -460,24 +585,24 @@ function importAddress(secret, address, nickname, passphrase, successfunc, failu
 				sodium.crypto_pwhash_scryptsalsa208sha256(16,
 					passphrase,
 					fromhex_chksum(ppdata.salt1),
-					4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-					33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);			
+					ppParams.opsLimit,
+					ppParams.memLimit);			
 			passphrase = "";
 			// now generate the keys that will be used to lock the ppsecret and rpsecret boxes
 			var ppsecret32key = 
 				sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
 					secretkey,
 					ppsalt,
-					4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-					33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
+					524288,
+					16777216);
 			
 			secretkey = "";
 			var rpsecret32key = 
 				sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
 					recoverykey,
 					rpsalt,
-					4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-					33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
+					524288,
+					16777216);
 			recoverykey = "";
 			// finally lock the true ripple secret into two boxes: rpsecret and ppsecret
 			var ppnonce = sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES);
@@ -506,7 +631,8 @@ function importAddress(secret, address, nickname, passphrase, successfunc, failu
 				accounts[address] = {
 					ppsalt: tohex_chksum(ppsalt), ppsecret: ppsecret,
 					rpsalt: tohex_chksum(rpsalt), rpsecret: rpsecret,
-					nickname: nickname
+					nickname: nickname,
+					version: 2
 				};
 				db.upsert("accounts", function(doc) { return { data: JSON.stringify(accounts)}; }).then(function(x){
 					navigator.notification.alert("XRP address added successfully.", function(){}, "Success", "OK");
@@ -569,6 +695,8 @@ function importAddress(secret, address, nickname, passphrase, successfunc, failu
                     } else {    
                         return navigator.notification.alert("The address you specified has a regular key set, however that regular key does not correspond to the secret you have provided.", failurefunc, "Failure", "OK");
                     }
+                } else {
+                    return navigator.notification.alert("The address you specified does not have a regular key set, and does not match the secret provided.", failurefunc, "Failure", "OK");
                 }
 			} ).catch( 
 			e => {
@@ -603,21 +731,28 @@ function getSecretForAccount(passphrase, address, successfunc, failurefunc) {
 				return;
 			}
 			
+            var ppParams = (typeof getScryptParamsForVersion === 'function')
+                ? getScryptParamsForVersion(ppdata.version)
+                : { opsLimit: (ppdata.version === 2 ? 524288 : 4), memLimit: (ppdata.version === 2 ? 16777216 : 33554432) };
+            var accParams = (typeof getScryptParamsForVersion === 'function')
+                ? getScryptParamsForVersion(accounts[address].version)
+                : { opsLimit: (accounts[address].version === 2 ? 524288 : 4), memLimit: (accounts[address].version === 2 ? 16777216 : 33554432) };
+
 			// generate regular secret key
 			var secretkey =
 				sodium.crypto_pwhash_scryptsalsa208sha256(16,
 					passphrase,
 					fromhex_chksum(ppdata.salt1),
-					4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-					33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);			
+					ppParams.opsLimit,
+					ppParams.memLimit);			
 			passphrase = "";
 			// now generate the keys that will be used to lock the ppsecret and rpsecret boxes
 			var ppsecret32key = 
 				sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
 					secretkey,
 					fromhex_chksum(accounts[address].ppsalt),
-					4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-					33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
+					accParams.opsLimit,
+					accParams.memLimit);
 			
 			secretkey = "";
 		
@@ -665,6 +800,7 @@ if (typeof window !== 'undefined') {
     window.generateAddress = generateAddress;
     window.getSecretForAccount = getSecretForAccount;
     window.removeSecret = removeSecret;
+    window.wipeGeneratedAccount = wipeGeneratedAccount;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
@@ -681,6 +817,7 @@ if (typeof module !== 'undefined' && module.exports) {
         importAddress,
         generateAddress,
         getSecretForAccount,
-        removeSecret
+        removeSecret,
+        wipeGeneratedAccount
     };
 }

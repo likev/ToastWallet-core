@@ -2,6 +2,7 @@
 
 function doShowLogin() {
 	if (debug) console.log("doShowLogin");
+    if (typeof wipeGeneratedAccount === 'function') wipeGeneratedAccount();
     if (paylink_pending != null) addClass('#tablogin>center>div', 'pinpad_pending');
     runPinPad("#tablogin", function(pin) {
 		validatePin(pin, function() {

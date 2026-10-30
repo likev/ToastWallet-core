@@ -1,3 +1,9 @@
+function isValidTag(tag) {
+    if (tag === undefined || tag === null || tag === false || tag === '') return false;
+    const num = Number(tag);
+    return Number.isInteger(num) && num >= 0 && num <= 4294967295;
+}
+
 function sendPayment(passphrase, fromacc, xrpAmount, destination, sourceTag, destTag, invoiceID, asset, issuer, successfunc, failurefunc) {
 	
 	if (debug) console.log("sendPayment - " + xrpAmount);
@@ -23,11 +29,11 @@ function sendPayment(passphrase, fromacc, xrpAmount, destination, sourceTag, des
 			    },
 			  }
 			};
-			if(sourceTag) {
-				payment.source.tag = parseInt(sourceTag + "");
+			if (isValidTag(sourceTag)) {
+				payment.source.tag = parseInt(sourceTag + "", 10);
 			}
-			if(destTag) {
-				payment.destination.tag = parseInt(destTag + "");
+			if (isValidTag(destTag)) {
+				payment.destination.tag = parseInt(destTag + "", 10);
 			}
 			if (invoiceID !== undefined && invoiceID != "") {
 				payment.invoiceID = invoiceID;
@@ -86,8 +92,7 @@ function sendPaymentOffline(passphrase, fromacc, xrpAmount, destination, sourceT
 			    maxAmount: {
 			      value: xrpAmount + "",
 			      currency: asset,
-			    },
-		      	    tag: parseInt(sourceTag + "")
+			    }
 			  },
 			  destination: {
 			    address: destination,
@@ -97,13 +102,16 @@ function sendPaymentOffline(passphrase, fromacc, xrpAmount, destination, sourceT
 			    }
 			  }
 			};
-            if (destTag) 
-                payment.destination['tag'] = parseInt(destTag + "")
+            if (isValidTag(sourceTag)) {
+                payment.source.tag = parseInt(sourceTag + "", 10);
+            }
+            if (isValidTag(destTag)) {
+                payment.destination.tag = parseInt(destTag + "", 10);
+            }
             
             if (asset != 'XRP' && issuer != '' && issuer != undefined) {
                 payment.source.maxAmount['counterparty'] = issuer;
                 payment.destination.amount['counterparty'] = issuer;
-                payment['allowPartialPayment'] = true;
             }
 			if (invoiceID !== undefined && invoiceID != "") {
 				payment.invoiceID = invoiceID;

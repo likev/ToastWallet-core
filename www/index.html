@@ -2,6 +2,8 @@
 <html>
 <head>
 	<meta charset="utf-8" />
+	<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' wss: https: blob:; object-src 'none'; base-uri 'self'; form-action 'self';" />
+	<meta name="referrer" content="no-referrer" />
 	<meta name="format-detection" content="telephone=no" />
 	<!--meta name="msapplication-tap-highlight" content="no" /-->
 	<meta name="viewport" content="viewport-fit=cover, user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
@@ -293,6 +295,10 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
     <label>These changes require</label>
 	<div id="cafnotransactions"></div>
     </div>
+	<div class="paygrouping">
+    <label>Fee</label>
+	<div id="caffee"></div>
+    </div>
     <br>
     <label>Passphrase</label>    
 	<span class="pasteqr">
@@ -487,6 +493,10 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 	<div class="paygrouping">
     <label>Rippling</label>
 	<div id="ctlrippling"></div>
+    </div>
+	<div class="paygrouping">
+    <label>Fee</label>
+	<div id="ctlfee"></div>
     </div>
     <br>
     <label>Passphrase</label>    
@@ -920,6 +930,9 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
     <div class="paygrouping">
 	<label>Extra Flags</label>
     <div id="confirmorderextra"></div></div>
+    <div class="paygrouping">
+	<label>Fee</label>
+    <div id="confirmorderfee"></div></div>
     <br>
     <label>Passphrase</label>    
 	<span class="pasteqr">
@@ -944,6 +957,10 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
     <div class="paygrouping">
     <label>Sequence Number</label>
     <div id="confirmcancelordersequence"></div>
+    </div>
+    <div class="paygrouping">
+    <label>Fee</label>
+    <div id="confirmcancelorderfee"></div>
     </div>
     <br>
     <label>Passphrase</label>    
@@ -986,6 +1003,9 @@ I understand that the recovery phrase IS NOT A WALLET BACKUP.</p><br>
 	<label>Amount</label>
 	
     <div id="confirmpayamount"></div></div>
+    <div class="paygrouping">
+	<label>Fee</label>
+    <div id="confirmpayfee"></div></div>
     <br>
     <label>Passphrase</label>    
 	<span class="pasteqr">

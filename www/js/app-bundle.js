@@ -1168,10 +1168,19 @@ if (typeof module !== 'undefined' && module.exports) {
 }
 
 },{}],6:[function(require,module,exports){
+function getScryptParamsForVersion(version) {
+    if (version === 2) {
+        return { opsLimit: 524288, memLimit: 16777216 };
+    }
+    return { opsLimit: 4, memLimit: 33554432 };
+}
+
 function setPin(pin, successfunc, failfunc) {
     var salt = sodium.randombytes_buf(32);
-    var hash = sodium.crypto_pwhash_scryptsalsa208sha256(32, pin, salt, 4, 33554432);
+    var p = getScryptParamsForVersion(2);
+    var hash = sodium.crypto_pwhash_scryptsalsa208sha256(32, pin, salt, p.opsLimit, p.memLimit);
     var pindata = {
+            version: 2,
             salt: tohex_chksum(salt),
             hash: tohex_chksum(hash)
     };
@@ -1196,7 +1205,7 @@ function validatePin(pin, successfunc, failfunc, nopinsetfunc) {
                     if (!salt) return failfunc();
                     var hash;
                     if (salt.length === 16) {
-                        // Legacy 16-byte-salt SipHash PIN. Verify first, then transparently re-store as 32-byte-salt scrypt.
+                        // Legacy 16-byte-salt SipHash PIN. Verify first, then transparently re-store as 32-byte-salt scrypt v2.
                         hash = tohex_chksum(sodium.crypto_shorthash(pin, salt));
                         if (hash == pindata.hash) {
                             // Guard against normalboot()'s validatePin("", ...) startup probe.
@@ -1204,7 +1213,7 @@ function validatePin(pin, successfunc, failfunc, nopinsetfunc) {
                                 try {
                                     return setPin(pin,
                                         function() {
-                                            if (typeof debug !== 'undefined' && debug) console.log("validatePin: upgraded legacy PIN to scrypt");
+                                            if (typeof debug !== 'undefined' && debug) console.log("validatePin: upgraded legacy PIN to scrypt v2");
                                             successfunc();
                                         },
                                         function() {
@@ -1220,11 +1229,28 @@ function validatePin(pin, successfunc, failfunc, nopinsetfunc) {
                         }
                         return failfunc();
                     } else {
-                        var scryptHash = sodium.crypto_pwhash_scryptsalsa208sha256(32, pin, salt, 4, 33554432);
+                        var p = getScryptParamsForVersion(pindata.version);
+                        var scryptHash = sodium.crypto_pwhash_scryptsalsa208sha256(32, pin, salt, p.opsLimit, p.memLimit);
                         hash = tohex_chksum(scryptHash);
                     }
-                    if (hash == pindata.hash)
-                            return successfunc();
+                    if (hash == pindata.hash) {
+                        if (pindata.version !== 2 && pin !== "") {
+                            try {
+                                return setPin(pin,
+                                    function() {
+                                        if (typeof debug !== 'undefined' && debug) console.log("validatePin: upgraded legacy scrypt PIN to v2");
+                                        successfunc();
+                                    },
+                                    function() {
+                                        console.warn("validatePin: v2 PIN upgrade write failed; will retry next unlock");
+                                        successfunc();
+                                    });
+                            } catch (upgradeErr) {
+                                return successfunc();
+                            }
+                        }
+                        return successfunc();
+                    }
                     return failfunc();
             } } catch(e) { handle_error(e); } };
     db.get("pindata").then(f).catch(f);
@@ -1262,6 +1288,18 @@ window.validatePin = validatePin;
 window.tohex_chksum = tohex_chksum;
 window.fromhex_chksum = fromhex_chksum;
 window.randShuffleArray = randShuffleArray;
+window.getScryptParamsForVersion = getScryptParamsForVersion;
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        setPin,
+        validatePin,
+        tohex_chksum,
+        fromhex_chksum,
+        randShuffleArray,
+        getScryptParamsForVersion
+    };
+}
 
 },{}],7:[function(require,module,exports){
 'use strict';
@@ -1998,6 +2036,16 @@ function setHtml(target, html) {
     return target;
 }
 
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function emptyEl(target) {
     const els = resolveElements(target);
     for (const el of els) {
@@ -2267,6 +2315,7 @@ if (typeof window !== 'undefined') {
     window.domData = domData;
     window.removeDomData = removeDomData;
     window.initTouchClickBridge = initTouchClickBridge;
+    window.escapeHtml = escapeHtml;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
@@ -2284,6 +2333,7 @@ if (typeof module !== 'undefined' && module.exports) {
         setText,
         getHtml,
         setHtml,
+        escapeHtml,
         emptyEl,
         appendHtml,
         appendNode,
@@ -2372,6 +2422,11 @@ function showTab(tab, dontClearText) {
     domData("#accsecret", 'content', '');
     emptyEl("#accsecretqr");
     hideEl("#accsecret");
+    if (tab === -1 || (tab !== '#tabgenaccount' && tab !== '#tabaddexistingaccount')) {
+        if (typeof wipeGeneratedAccount === 'function') {
+            wipeGeneratedAccount();
+        }
+    }
     if ( tab == -1 && (
         currenttab == '#tabqrscan' || currenttab == '#taborderconfirm' || 
         currenttab == '#tabneworder' || currenttab == '#tabpaymentconfirm' ||
@@ -3232,7 +3287,7 @@ if (typeof module !== 'undefined' && module.exports) {
 },{}],13:[function(require,module,exports){
 function setRemoteGateway(server) {
 	currentServer = server;
-	remote = new xrpl.Client(server, { connectionTimeout: 10000 });
+	remote = new xrpl.Client(server, { connectionTimeout: 10000, maxFeeXRP: '0.01' });
 	injectCompatibilityLayer(remote);
 }
 
@@ -3348,7 +3403,7 @@ function doRetryConnection(gateway) {
 
 function doOfflineMode(withboot) {
 	offlinemode = true;
-	remote = new xrpl.Client("wss://s1.ripple.com");
+	remote = new xrpl.Client("wss://s1.ripple.com", { connectionTimeout: 10000, maxFeeXRP: '0.01' });
 	injectCompatibilityLayer(remote);
 	showEl('#offlinemodewarning');
 	if (withboot) normalboot();	
@@ -3576,6 +3631,57 @@ function injectCompatibilityLayer(client) {
             };
         }
     };
+    function isValidTag(tag) {
+        if (tag === undefined || tag === null || tag === false || tag === '') return false;
+        const num = Number(tag);
+        return Number.isInteger(num) && num >= 0 && num <= 4294967295;
+    }
+
+    var MAX_FEE_DROPS = 10000; // 0.01 XRP
+
+    function finalizeTx(tx, instructions) {
+        if (instructions) {
+            if (instructions.fee !== undefined && instructions.fee !== null && instructions.fee !== '') {
+                var feeDrops = parseInt(xrpl.xrpToDrops(instructions.fee + ""), 10);
+                if (isNaN(feeDrops) || feeDrops <= 0 || feeDrops > MAX_FEE_DROPS) {
+                    return Promise.reject(new Error("Fee exceeds maximum allowed limit of 0.01 XRP: " + feeDrops + " drops"));
+                }
+                tx.Fee = feeDrops + "";
+            }
+            if (instructions.sequence !== undefined) {
+                tx.Sequence = parseInt(instructions.sequence, 10);
+            }
+            if (instructions.maxLedgerVersion !== undefined) {
+                tx.LastLedgerSequence = parseInt(instructions.maxLedgerVersion, 10);
+            }
+        }
+        if (tx.Sequence === undefined || tx.Fee === undefined) {
+            return client.autofill(tx).then(autofilled => {
+                var autoFee = autofilled.Fee ? parseInt(autofilled.Fee, 10) : NaN;
+                if (isNaN(autoFee) || autoFee <= 0 || autoFee > MAX_FEE_DROPS) {
+                    throw new Error("Autofilled fee exceeds maximum allowed limit of 0.01 XRP: " + autofilled.Fee + " drops");
+                }
+                if (instructions && instructions.maxLedgerVersionOffset !== undefined && instructions.maxLedgerVersion === undefined) {
+                    return client.getLedgerIndex().then(currentLedger => {
+                        if (autofilled.LastLedgerSequence > currentLedger + instructions.maxLedgerVersionOffset) {
+                            autofilled.LastLedgerSequence = currentLedger + instructions.maxLedgerVersionOffset;
+                        }
+                        return { txJSON: JSON.stringify(autofilled) };
+                    }).catch(() => {
+                        return { txJSON: JSON.stringify(autofilled) };
+                    });
+                }
+                return { txJSON: JSON.stringify(autofilled) };
+            });
+        } else {
+            var staticFee = tx.Fee ? parseInt(tx.Fee, 10) : NaN;
+            if (isNaN(staticFee) || staticFee <= 0 || staticFee > MAX_FEE_DROPS) {
+                return Promise.reject(new Error("Fee exceeds maximum allowed limit of 0.01 XRP: " + tx.Fee + " drops"));
+            }
+            return Promise.resolve({ txJSON: JSON.stringify(tx) });
+        }
+    }
+
     client.preparePayment = function(fromacc, payment, instructions) {
         var tx = {
             TransactionType: "Payment",
@@ -3589,11 +3695,11 @@ function injectCompatibilityLayer(client) {
                         value: payment.destination.amount.value
                       }
         };
-        if (payment.destination.tag) {
-            tx.DestinationTag = parseInt(payment.destination.tag);
+        if (payment.destination && isValidTag(payment.destination.tag)) {
+            tx.DestinationTag = parseInt(payment.destination.tag, 10);
         }
-        if (payment.source && payment.source.tag) {
-            tx.SourceTag = parseInt(payment.source.tag);
+        if (payment.source && isValidTag(payment.source.tag)) {
+            tx.SourceTag = parseInt(payment.source.tag, 10);
         }
         if (payment.invoiceID) {
             tx.InvoiceID = payment.invoiceID;
@@ -3601,24 +3707,7 @@ function injectCompatibilityLayer(client) {
         if (payment.allowPartialPayment) {
             tx.Flags = 0x00020000;
         }
-        if (instructions) {
-            if (instructions.fee) {
-                tx.Fee = xrpl.xrpToDrops(instructions.fee);
-            }
-            if (instructions.sequence !== undefined) {
-                tx.Sequence = parseInt(instructions.sequence);
-            }
-            if (instructions.maxLedgerVersion !== undefined) {
-                tx.LastLedgerSequence = parseInt(instructions.maxLedgerVersion);
-            }
-        }
-        if (tx.Sequence === undefined || tx.Fee === undefined) {
-            return client.autofill(tx).then(autofilled => {
-                return { txJSON: JSON.stringify(autofilled) };
-            });
-        } else {
-            return Promise.resolve({ txJSON: JSON.stringify(tx) });
-        }
+        return finalizeTx(tx, instructions);
     };
     var asfFlags = {
         requireDestinationTag: 1,
@@ -3653,24 +3742,7 @@ function injectCompatibilityLayer(client) {
                 }
             }
         }
-        if (instructions) {
-            if (instructions.fee) {
-                tx.Fee = xrpl.xrpToDrops(instructions.fee);
-            }
-            if (instructions.sequence !== undefined) {
-                tx.Sequence = parseInt(instructions.sequence);
-            }
-            if (instructions.maxLedgerVersion !== undefined) {
-                tx.LastLedgerSequence = parseInt(instructions.maxLedgerVersion);
-            }
-        }
-        if (tx.Sequence === undefined || tx.Fee === undefined) {
-            return client.autofill(tx).then(autofilled => {
-                return { txJSON: JSON.stringify(autofilled) };
-            });
-        } else {
-            return Promise.resolve({ txJSON: JSON.stringify(tx) });
-        }
+        return finalizeTx(tx, instructions);
     };
     client.prepareTrustline = function(fromacc, trustline, instructions) {
         var tx = {
@@ -3685,24 +3757,7 @@ function injectCompatibilityLayer(client) {
         if (trustline.ripplingDisabled !== undefined) {
             tx.Flags = trustline.ripplingDisabled ? 0x00020000 : 0x00040000;
         }
-        if (instructions) {
-            if (instructions.fee) {
-                tx.Fee = xrpl.xrpToDrops(instructions.fee);
-            }
-            if (instructions.sequence !== undefined) {
-                tx.Sequence = parseInt(instructions.sequence);
-            }
-            if (instructions.maxLedgerVersion !== undefined) {
-                tx.LastLedgerSequence = parseInt(instructions.maxLedgerVersion);
-            }
-        }
-        if (tx.Sequence === undefined || tx.Fee === undefined) {
-            return client.autofill(tx).then(autofilled => {
-                return { txJSON: JSON.stringify(autofilled) };
-            });
-        } else {
-            return Promise.resolve({ txJSON: JSON.stringify(tx) });
-        }
+        return finalizeTx(tx, instructions);
     };
     client.prepareOrder = function(fromacc, order, instructions) {
         var gets = order.direction === 'sell' ? order.quantity : order.totalPrice;
@@ -3732,24 +3787,7 @@ function injectCompatibilityLayer(client) {
         if (order.expirationTime) {
             tx.Expiration = xrpl.isoTimeToRippleTime(order.expirationTime);
         }
-        if (instructions) {
-            if (instructions.fee) {
-                tx.Fee = xrpl.xrpToDrops(instructions.fee);
-            }
-            if (instructions.sequence !== undefined) {
-                tx.Sequence = parseInt(instructions.sequence);
-            }
-            if (instructions.maxLedgerVersion !== undefined) {
-                tx.LastLedgerSequence = parseInt(instructions.maxLedgerVersion);
-            }
-        }
-        if (tx.Sequence === undefined || tx.Fee === undefined) {
-            return client.autofill(tx).then(autofilled => {
-                return { txJSON: JSON.stringify(autofilled) };
-            });
-        } else {
-            return Promise.resolve({ txJSON: JSON.stringify(tx) });
-        }
+        return finalizeTx(tx, instructions);
     };
     client.prepareOrderCancellation = function(fromacc, cancel, instructions) {
         var tx = {
@@ -3757,27 +3795,14 @@ function injectCompatibilityLayer(client) {
             Account: fromacc,
             OfferSequence: parseInt(cancel.orderSequence)
         };
-        if (instructions) {
-            if (instructions.fee) {
-                tx.Fee = xrpl.xrpToDrops(instructions.fee);
-            }
-            if (instructions.sequence !== undefined) {
-                tx.Sequence = parseInt(instructions.sequence);
-            }
-            if (instructions.maxLedgerVersion !== undefined) {
-                tx.LastLedgerSequence = parseInt(instructions.maxLedgerVersion);
-            }
-        }
-        if (tx.Sequence === undefined || tx.Fee === undefined) {
-            return client.autofill(tx).then(autofilled => {
-                return { txJSON: JSON.stringify(autofilled) };
-            });
-        } else {
-            return Promise.resolve({ txJSON: JSON.stringify(tx) });
-        }
+        return finalizeTx(tx, instructions);
     };
     client.sign = function(txJSON, secret) {
         var tx = JSON.parse(txJSON);
+        var signFee = tx.Fee ? parseInt(tx.Fee, 10) : NaN;
+        if (isNaN(signFee) || signFee <= 0 || signFee > MAX_FEE_DROPS) {
+            throw new Error("Transaction fee exceeds maximum allowed limit of 0.01 XRP: " + tx.Fee + " drops");
+        }
         var wallet = xrpl.Wallet.fromSeed(secret, { algorithm: secret.startsWith('sEd') ? 'ed25519' : 'ecdsa-secp256k1' });
         var signed = wallet.sign(tx);
         return {
@@ -3806,6 +3831,12 @@ window.serverCycle = serverCycle;
 window.injectCompatibilityLayer = injectCompatibilityLayer;
 
 },{}],14:[function(require,module,exports){
+function isValidTag(tag) {
+    if (tag === undefined || tag === null || tag === false || tag === '') return false;
+    const num = Number(tag);
+    return Number.isInteger(num) && num >= 0 && num <= 4294967295;
+}
+
 function sendPayment(passphrase, fromacc, xrpAmount, destination, sourceTag, destTag, invoiceID, asset, issuer, successfunc, failurefunc) {
 	
 	if (debug) console.log("sendPayment - " + xrpAmount);
@@ -3831,11 +3862,11 @@ function sendPayment(passphrase, fromacc, xrpAmount, destination, sourceTag, des
 			    },
 			  }
 			};
-			if(sourceTag) {
-				payment.source.tag = parseInt(sourceTag + "");
+			if (isValidTag(sourceTag)) {
+				payment.source.tag = parseInt(sourceTag + "", 10);
 			}
-			if(destTag) {
-				payment.destination.tag = parseInt(destTag + "");
+			if (isValidTag(destTag)) {
+				payment.destination.tag = parseInt(destTag + "", 10);
 			}
 			if (invoiceID !== undefined && invoiceID != "") {
 				payment.invoiceID = invoiceID;
@@ -3894,8 +3925,7 @@ function sendPaymentOffline(passphrase, fromacc, xrpAmount, destination, sourceT
 			    maxAmount: {
 			      value: xrpAmount + "",
 			      currency: asset,
-			    },
-		      	    tag: parseInt(sourceTag + "")
+			    }
 			  },
 			  destination: {
 			    address: destination,
@@ -3905,13 +3935,16 @@ function sendPaymentOffline(passphrase, fromacc, xrpAmount, destination, sourceT
 			    }
 			  }
 			};
-            if (destTag) 
-                payment.destination['tag'] = parseInt(destTag + "")
+            if (isValidTag(sourceTag)) {
+                payment.source.tag = parseInt(sourceTag + "", 10);
+            }
+            if (isValidTag(destTag)) {
+                payment.destination.tag = parseInt(destTag + "", 10);
+            }
             
             if (asset != 'XRP' && issuer != '' && issuer != undefined) {
                 payment.source.maxAmount['counterparty'] = issuer;
                 payment.destination.amount['counterparty'] = issuer;
-                payment['allowPartialPayment'] = true;
             }
 			if (invoiceID !== undefined && invoiceID != "") {
 				payment.invoiceID = invoiceID;
@@ -4633,10 +4666,10 @@ function refreshAccounts(after) {
                                         accountbalancestl[account][currency][issuer] = parseFloat("" + balance);
                                         // populate the dropdown for this account
                                         if (trustlinesdropdown[account] == undefined) trustlinesdropdown[account] = {};
-                                        trustlinesdropdown[account]["" + currency + issuer] = '<option id="optpa-' + currency  + '-' + issuer + '" data-asset="' + currency + '" data-issuer="' + issuer + '">' + currency.replace(/[^A-Za-z0-9?!@#$%\^&*<>(){}[\]|]/mg, "") + ' - ' + dispaddr((""+issuer).replace(/[^A-Za-z0-9]/mg, "")) + '</option>';
+                                        trustlinesdropdown[account]["" + currency + issuer] = '<option id="optpa-' + escapeHtml(currency)  + '-' + escapeHtml(issuer) + '" data-asset="' + escapeHtml(currency) + '" data-issuer="' + escapeHtml(issuer) + '">' + escapeHtml(currency.replace(/[^A-Za-z0-9?!@#$%\^&*<>(){}[\]|]/mg, "")) + ' - ' + escapeHtml(dispaddr((""+issuer).replace(/[^A-Za-z0-9]/mg, ""))) + '</option>';
                                     }
                                     for (var currency in tlbalances) {
-                                        trustlines += '<div class="trustline"><div class="amount"><span class="mono"><div class="currency">' + currency + '</div> ' + display_currency_amount(tlbalances[currency]) + '</span></div></div>';
+                                        trustlines += '<div class="trustline"><div class="amount"><span class="mono"><div class="currency">' + escapeHtml(currency) + '</div> ' + display_currency_amount(tlbalances[currency]) + '</span></div></div>';
                                         tlcount++;
                                     }
                                 }
@@ -4645,7 +4678,7 @@ function refreshAccounts(after) {
                                 if (exchangerate > 0) {
                                     var amount = exchangerate * (parseFloat("" + xrpBalance) + xrpvalueoftrustlinebalances);
                                     var stramount = display_currency_amount(amount);
-                                    fiatbalance = '<span class="mono" style="opacity:0.7"><div class="currency"><span>' + interface_settings.valuation_currency + ' ' + stramount + '</span></div></span>';
+                                    fiatbalance = '<span class="mono" style="opacity:0.7"><div class="currency"><span>' + escapeHtml(interface_settings.valuation_currency) + ' ' + stramount + '</span></div></span>';
                                 }
                                 setHtml("#ra" + account + ">.accountline>.amount", '<span class="mono">' + fiatbalance + '</span>');
                                 if (trustlines != "")  {
@@ -4697,16 +4730,65 @@ function refreshAccounts(after) {
 		accountbalances = {};
 		for (var i in acc) {
 			var nickname = (acc[i].nickname == undefined ? "" : acc[i].nickname.replace(/[^a-zA-Z0-9 ]/g, "").trim());
-            var toptouchend = 'te(event, ()=>{doSelectAccount(\''+i+'\', \''+nickname+'\', false);})';
-            var bottomtouchend = toptouchend; // changed the behaviour so it always goes to the account details tab, since the DEX is rarely used
             if (!byId('ra' + i)) {
-                var liHtml = '<li data-account="'+i+'" ontouchstart="ts(event)" ontouchend="'+bottomtouchend+'" class="list-group-item accountitem '+(activeaccount == i?'active':'')+'" id="ra'+i+'"><span class="hashicon"></span><div class="accountline" ontouchstart="ts(event)" ontouchend="'+toptouchend+'"><a class="address"><span class="address">'+(nickname == "" ? dispaddr(i) : nickname)+'</span></a><div class="amount"><small style="opacity: 0.7">' + (offlinemode ? 'offline' : '') + '</small></div></div><div class="trustlines" ontouchstart="ts(event)" ontouchend="'+bottomtouchend+'"></div><i class="fas fa-circle-notch accloadspinner" style="'+(offlinemode? 'display:none' : '')+'"></i></li>';
+                var li = document.createElement('li');
+                li.setAttribute('data-account', i);
+                li.className = 'list-group-item accountitem ' + (activeaccount == i ? 'active' : '');
+                li.id = 'ra' + i;
+
+                var hSpan = document.createElement('span');
+                hSpan.className = 'hashicon';
+
+                var aLine = document.createElement('div');
+                aLine.className = 'accountline';
+
+                var aLink = document.createElement('a');
+                aLink.className = 'address';
+                var addrSpan = document.createElement('span');
+                addrSpan.className = 'address';
+                addrSpan.textContent = (nickname == "" ? dispaddr(i) : nickname);
+                aLink.appendChild(addrSpan);
+                aLine.appendChild(aLink);
+
+                var amtDiv = document.createElement('div');
+                amtDiv.className = 'amount';
+                var smallEl = document.createElement('small');
+                smallEl.style.opacity = '0.7';
+                smallEl.textContent = (offlinemode ? 'offline' : '');
+                amtDiv.appendChild(smallEl);
+                aLine.appendChild(amtDiv);
+
+                var tlDiv = document.createElement('div');
+                tlDiv.className = 'trustlines';
+
+                var spin = document.createElement('i');
+                spin.className = 'fas fa-circle-notch accloadspinner';
+                if (offlinemode) spin.style.display = 'none';
+
+                (function(accId, nick) {
+                    var selectHandler = function(e) {
+                        te(e, function() {
+                            doSelectAccount(accId, nick, false);
+                        });
+                    };
+                    li.addEventListener('touchstart', ts);
+                    li.addEventListener('touchend', selectHandler);
+                    aLine.addEventListener('touchstart', ts);
+                    aLine.addEventListener('touchend', selectHandler);
+                    tlDiv.addEventListener('touchstart', ts);
+                    tlDiv.addEventListener('touchend', selectHandler);
+                })(i, nickname);
+
+                li.appendChild(hSpan);
+                li.appendChild(aLine);
+                li.appendChild(tlDiv);
+                li.appendChild(spin);
+
                 var accountsList = byId('accountslist');
                 if (accountsList) {
-                    accountsList.insertAdjacentHTML('afterbegin', liHtml);
+                    accountsList.insertBefore(li, accountsList.firstChild);
                 }
-                var iconSpan = qs('#ra' + i + ' .hashicon');
-                if (iconSpan) iconSpan.appendChild(hashicon(xaddr(i, false), 35));
+                hSpan.appendChild(hashicon(xaddr(i, false), 35));
             } else {
                 // passively update without rewriting the dom
                 if (activeaccount == i) {
@@ -4716,14 +4798,19 @@ function refreshAccounts(after) {
                 }
                 // may have changed nickname since last update
                 var addrSpan = qs('#ra' + i + ' span.address');
-                if (addrSpan) addrSpan.innerText = (nickname == "" ? dispaddr(i) : nickname);
-                // update touchend event handlers
-                setAttr('#ra' + i + ' .hashicon', 'ontouchend', toptouchend);
-                setAttr('#ra' + i + ' .accountline', 'ontouchend', toptouchend);
-                setAttr('#ra' + i + ' .trustlines', 'ontouchend', bottomtouchend);
+                if (addrSpan) addrSpan.textContent = (nickname == "" ? dispaddr(i) : nickname);
                 if (!offlinemode) showEl('#ra' + i + ' .accloadspinner');
             }
-			appendHtml("#payfromaccount", '<option value="'+i+'" data-account="'+i+'" id="opt'+i+'"'+( i == activeaccount ? ' selected=selected' : '' )+'>' + (nickname == "" ? i : nickname) + '</option>');
+            var payFromSel = byId('payfromaccount');
+            if (payFromSel) {
+                var opt = document.createElement('option');
+                opt.value = i;
+                opt.setAttribute('data-account', i);
+                opt.id = 'opt' + i;
+                if (i == activeaccount) opt.selected = true;
+                opt.textContent = (nickname == "" ? i : nickname);
+                payFromSel.appendChild(opt);
+            }
 		}
         // check to see if there are any accounts on the stack which shouldn't be (i.e. one has been deleted)
         var list = qsa('.accountitem');
@@ -4751,7 +4838,30 @@ function doSelectAccount(accselected, nickname, trustlinesSubTab) {
     if (fromList) {
         var itemsToRemove = fromList.querySelectorAll('*:not(.bottom-list-button)');
         itemsToRemove.forEach(el => el.remove());
-        fromList.insertAdjacentHTML('afterbegin', '<li class="list-group-item accountitem active"><span class="hashicon"></span><div class="accountline"><a href="#" class="address"><span class="address">'+accselected+'</span></a><span class="amount">'+( accountbalances[accselected] == undefined ? '' :  accountbalances[accselected] + " XRP")+'</span></div><div class="trustlines"></div></li>');
+        var liSel = document.createElement('li');
+        liSel.className = 'list-group-item accountitem active';
+        var hSpanSel = document.createElement('span');
+        hSpanSel.className = 'hashicon';
+        var aLineSel = document.createElement('div');
+        aLineSel.className = 'accountline';
+        var aLinkSel = document.createElement('a');
+        aLinkSel.href = '#';
+        aLinkSel.className = 'address';
+        var addrSpanSel = document.createElement('span');
+        addrSpanSel.className = 'address';
+        addrSpanSel.textContent = accselected;
+        aLinkSel.appendChild(addrSpanSel);
+        aLineSel.appendChild(aLinkSel);
+        var amtSpanSel = document.createElement('span');
+        amtSpanSel.className = 'amount';
+        amtSpanSel.textContent = (accountbalances[accselected] === undefined ? '' : (accountbalances[accselected] + " XRP"));
+        aLineSel.appendChild(amtSpanSel);
+        var tlDivSel = document.createElement('div');
+        tlDivSel.className = 'trustlines';
+        liSel.appendChild(hSpanSel);
+        liSel.appendChild(aLineSel);
+        liSel.appendChild(tlDivSel);
+        fromList.insertBefore(liSel, fromList.firstChild);
     }
 	showTab("#tabaccountdetails");	
     if (trustlinesSubTab == undefined || !trustlinesSubTab) {
@@ -4759,7 +4869,19 @@ function doSelectAccount(accselected, nickname, trustlinesSubTab) {
     } else {
         selectAccountDetailsSubTab(byId('btnaccdetailsselecttrustlines'), 'trustlines');
     }
-    setHtml("#accdetailsamount", accountbalances[accselected] == undefined ? '' :  '<b><div class="currency">XRP</div> ' + accountbalances[accselected] + '</b>');
+    var amtEl = byId('accdetailsamount');
+    if (amtEl) {
+        emptyEl(amtEl);
+        if (accountbalances[accselected] !== undefined) {
+            var bEl = document.createElement('b');
+            var currDiv = document.createElement('div');
+            currDiv.className = 'currency';
+            currDiv.textContent = 'XRP';
+            bEl.appendChild(currDiv);
+            bEl.appendChild(document.createTextNode(' ' + accountbalances[accselected]));
+            amtEl.appendChild(bEl);
+        }
+    }
 	domData("#accdetailsaddress", 'content', accselected);
 	emptyEl("#accdetailsqr");
 	appendNode("#accdetailsqr", kjua({text: dispaddr(accselected)}));
@@ -4892,8 +5014,36 @@ function doChangeNickname(address, nickname) {
     );
 }
 
+function wipeGeneratedAccount() {
+    if (typeof generatedAccount === 'object' && generatedAccount !== null) {
+        if (typeof generatedAccount.secret === 'string') {
+            generatedAccount.secret = '';
+        }
+    }
+    generatedAccount = {};
+    if (typeof window !== 'undefined') {
+        if (window.generatedAccount && typeof window.generatedAccount.secret === 'string') {
+            window.generatedAccount.secret = '';
+        }
+        window.generatedAccount = {};
+        if (window.AppState) {
+            window.AppState.generatedAccount = null;
+        }
+    }
+    if (typeof setVal === 'function') {
+        try {
+            setVal('#txtsecret', '');
+            setVal('#genaccpassword', '');
+            setVal('#vanityaddr', '');
+        } catch (e) {}
+    }
+}
+
 function doImportExistingAccount(passphrase, nickname, secret, vanityaddr) {
 	if (debug) console.log("doImportExistingAccount");
+	if (typeof generatedAccount !== 'object' || generatedAccount === null) {
+		generatedAccount = {};
+	}
 	generatedAccount.secret = secret;
 	if (vanityaddr != "" && vanityaddr != undefined) {
 		if (!validateAddress(vanityaddr)) {
@@ -4906,6 +5056,7 @@ function doImportExistingAccount(passphrase, nickname, secret, vanityaddr) {
 				"Error", 
 				"OK"
 			);
+            wipeGeneratedAccount();
 			return;
 		} 
 		generatedAccount.address = vanityaddr;
@@ -4923,17 +5074,19 @@ function doImportGeneratedAccount(passphrase, nickname) {
 			importAddress(generatedAccount.secret, generatedAccount.address, nickname, passphrase, 
 				function() {
 					// success
-					generatedAccount = {};
+					wipeGeneratedAccount();
 					showTab('#tabaccounts'); 
 					unblockInput();
 				},
 				function() {
 					// import failure will produce its own message 
+					wipeGeneratedAccount();
 					unblockInput();
 				}
 			);
 		},
 		function() {
+			wipeGeneratedAccount();
 			navigator.notification.alert("Your passphrase was entered incorrectly. Note you cannot use a recovery phrase here.", 
 				function(){
 					var gap = byId("genaccpassword");
@@ -4945,6 +5098,7 @@ function doImportGeneratedAccount(passphrase, nickname) {
 			);
 		},
 		function() {
+			wipeGeneratedAccount();
 			navigator.notification.alert("Your wallet data may have been corrupted. Please backup via the settings menu then restart the app to run data recovery.", 
 				function(){
 					unblockInput();
@@ -5016,12 +5170,16 @@ function importAddress(secret, address, nickname, passphrase, successfunc, failu
 	var rpsalt = sodium.randombytes_buf(sodium.crypto_pwhash_scryptsalsa208sha256_SALTBYTES);
 	getRpPpData(
 		function(ppdata, rpdata) {
+            var ppParams = (typeof getScryptParamsForVersion === 'function')
+                ? getScryptParamsForVersion(ppdata.version)
+                : { opsLimit: (ppdata.version === 2 ? 524288 : 4), memLimit: (ppdata.version === 2 ? 16777216 : 33554432) };
+
             var secret32key =
 				sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
 					passphrase,
 					fromhex_chksum(ppdata.salt1),
-					4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-					33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
+					ppParams.opsLimit,
+					ppParams.memLimit);
 			// decrypt erk
 			var erk = fromhex_chksum(rpdata.erk);
 			var nonce = erk.slice(0, sodium.crypto_box_NONCEBYTES);
@@ -5032,24 +5190,24 @@ function importAddress(secret, address, nickname, passphrase, successfunc, failu
 				sodium.crypto_pwhash_scryptsalsa208sha256(16,
 					passphrase,
 					fromhex_chksum(ppdata.salt1),
-					4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-					33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);			
+					ppParams.opsLimit,
+					ppParams.memLimit);			
 			passphrase = "";
 			// now generate the keys that will be used to lock the ppsecret and rpsecret boxes
 			var ppsecret32key = 
 				sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
 					secretkey,
 					ppsalt,
-					4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-					33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
+					524288,
+					16777216);
 			
 			secretkey = "";
 			var rpsecret32key = 
 				sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
 					recoverykey,
 					rpsalt,
-					4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-					33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
+					524288,
+					16777216);
 			recoverykey = "";
 			// finally lock the true ripple secret into two boxes: rpsecret and ppsecret
 			var ppnonce = sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES);
@@ -5078,7 +5236,8 @@ function importAddress(secret, address, nickname, passphrase, successfunc, failu
 				accounts[address] = {
 					ppsalt: tohex_chksum(ppsalt), ppsecret: ppsecret,
 					rpsalt: tohex_chksum(rpsalt), rpsecret: rpsecret,
-					nickname: nickname
+					nickname: nickname,
+					version: 2
 				};
 				db.upsert("accounts", function(doc) { return { data: JSON.stringify(accounts)}; }).then(function(x){
 					navigator.notification.alert("XRP address added successfully.", function(){}, "Success", "OK");
@@ -5141,6 +5300,8 @@ function importAddress(secret, address, nickname, passphrase, successfunc, failu
                     } else {    
                         return navigator.notification.alert("The address you specified has a regular key set, however that regular key does not correspond to the secret you have provided.", failurefunc, "Failure", "OK");
                     }
+                } else {
+                    return navigator.notification.alert("The address you specified does not have a regular key set, and does not match the secret provided.", failurefunc, "Failure", "OK");
                 }
 			} ).catch( 
 			e => {
@@ -5175,21 +5336,28 @@ function getSecretForAccount(passphrase, address, successfunc, failurefunc) {
 				return;
 			}
 			
+            var ppParams = (typeof getScryptParamsForVersion === 'function')
+                ? getScryptParamsForVersion(ppdata.version)
+                : { opsLimit: (ppdata.version === 2 ? 524288 : 4), memLimit: (ppdata.version === 2 ? 16777216 : 33554432) };
+            var accParams = (typeof getScryptParamsForVersion === 'function')
+                ? getScryptParamsForVersion(accounts[address].version)
+                : { opsLimit: (accounts[address].version === 2 ? 524288 : 4), memLimit: (accounts[address].version === 2 ? 16777216 : 33554432) };
+
 			// generate regular secret key
 			var secretkey =
 				sodium.crypto_pwhash_scryptsalsa208sha256(16,
 					passphrase,
 					fromhex_chksum(ppdata.salt1),
-					4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-					33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);			
+					ppParams.opsLimit,
+					ppParams.memLimit);			
 			passphrase = "";
 			// now generate the keys that will be used to lock the ppsecret and rpsecret boxes
 			var ppsecret32key = 
 				sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
 					secretkey,
 					fromhex_chksum(accounts[address].ppsalt),
-					4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-					33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
+					accParams.opsLimit,
+					accParams.memLimit);
 			
 			secretkey = "";
 		
@@ -5237,6 +5405,7 @@ if (typeof window !== 'undefined') {
     window.generateAddress = generateAddress;
     window.getSecretForAccount = getSecretForAccount;
     window.removeSecret = removeSecret;
+    window.wipeGeneratedAccount = wipeGeneratedAccount;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
@@ -5253,7 +5422,8 @@ if (typeof module !== 'undefined' && module.exports) {
         importAddress,
         generateAddress,
         getSecretForAccount,
-        removeSecret
+        removeSecret,
+        wipeGeneratedAccount
     };
 }
 },{}],17:[function(require,module,exports){
@@ -5780,6 +5950,7 @@ function doSetAccountFlags(nonce) {
         setText('#cafrequiredestinationtag', '' + confirmfl.requireDestinationTag);       
         
         setText('#cafnotransactions', changedflagcount + ' transactions');
+        setText('#caffee', fee ? fee + ' XRP' : (offlinemode ? '0.000012 XRP' : 'Network Default (~0.000012 XRP)'));
         showTab("#tabaccountflagsconfirm");
         
         unblockInput();
@@ -5902,6 +6073,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
 function doShowLogin() {
 	if (debug) console.log("doShowLogin");
+    if (typeof wipeGeneratedAccount === 'function') wipeGeneratedAccount();
     if (paylink_pending != null) addClass('#tablogin>center>div', 'pinpad_pending');
     runPinPad("#tablogin", function(pin) {
 		validatePin(pin, function() {
@@ -6117,8 +6289,20 @@ function showNewOrder(account, direction, currency, issuer, balance, bid, ask) {
     setVal('#ntloissuer', currency + ' - ' + dispaddr(issuer));
     domData('#ntloissuer', 'currency', currency);
     domData('#ntloissuer', 'issuer', issuer);
-    removeAttr('#btnntloall', 'ontouchend');
-    setAttr('#btnntloall', 'ontouchend', "te(event, ()=>{setVal('#ntloamount', " + balance + "); renderOrderPreview();})");
+    var btnAll = byId('btnntloall');
+    if (btnAll) {
+        btnAll.onclick = (e) => {
+            e.preventDefault();
+            setVal('#ntloamount', balance);
+            renderOrderPreview();
+        };
+        btnAll.ontouchend = (e) => {
+            te(e, () => {
+                setVal('#ntloamount', balance);
+                renderOrderPreview();
+            });
+        };
+    }
     if (direction == 'buy') {
         // use minimum ask
         setVal('#ntloprice', ask);
@@ -6174,7 +6358,21 @@ function renderOrderPreview(sell) {
     var priceUpdate = byId('ntlopriceupdate');
     if (priceUpdate) {
         priceUpdate.style.border = (sell ? '1px solid rgb(217, 83, 79)' : '1px solid rgb(92, 184, 92)');
-        priceUpdate.innerHTML = '<b>'+(sell ? 'SELL' : 'BUY')+'</b> <span class="currency">'+currency+'</span> '+display_currency_amount(amount1)+' for <span class="currency">XRP</span>'+display_currency_amount(amount2);
+        emptyEl(priceUpdate);
+        var b = document.createElement('b');
+        b.textContent = (sell ? 'SELL' : 'BUY');
+        priceUpdate.appendChild(b);
+        priceUpdate.appendChild(document.createTextNode(' '));
+        var c1 = document.createElement('span');
+        c1.className = 'currency';
+        c1.textContent = currency;
+        priceUpdate.appendChild(c1);
+        priceUpdate.appendChild(document.createTextNode(' ' + display_currency_amount(amount1) + ' for '));
+        var c2 = document.createElement('span');
+        c2.className = 'currency';
+        c2.textContent = 'XRP';
+        priceUpdate.appendChild(c2);
+        priceUpdate.appendChild(document.createTextNode(' ' + display_currency_amount(amount2)));
     }
 }
 
@@ -6235,6 +6433,7 @@ function doPlaceCancelOrder(nonce, dataset) {
 		setText('#confirmcancelorderaccount', dispaddr(account));
         setText('#confirmcancelorderpreview', (sell ? 'SELL ' : 'BUY ') + currency1 + ' ' + display_currency_amount(parseFloat(''+amount1)) + ' @ ' + currency2 + ' ' + display_currency_amount(parseFloat(''+amount2)/parseFloat(''+amount1)));
         setText('#confirmcancelordersequence', '#' + seq);
+        setText('#confirmcancelorderfee', fee ? fee + ' XRP' : (offlinemode ? '0.000012 XRP' : 'Network Default (~0.000012 XRP)'));
 		showTab("#tabcancelorderconfirm");
 		
 		unblockInput();
@@ -6432,6 +6631,7 @@ function doPlaceOrder(nonce) {
         if (!passive && !fok && !ioc) {
             setText('#confirmorderextra', 'NONE');
         }
+        setText('#confirmorderfee', fee ? fee + ' XRP' : (offlinemode ? '0.000012 XRP' : 'Network Default (~0.000012 XRP)'));
 		showTab("#taborderconfirm");
 		
 		unblockInput();
@@ -6712,7 +6912,7 @@ function doPay(nonce) {
 	if (/^(.*)[?&][^=]*=(.*)$/m.test(payto)) {
 		var oldpayto = payto;
 		var newdest = oldpayto.replace(/^(.*)[?&][^=]*=(.*)$/mg, "$2");
-		if (dest != "" && dest.trim() != newdest.trim()) {
+		if (dest !== "" && dest !== null && dest !== undefined && String(dest).trim() != String(newdest).trim()) {
 			navigator.notification.alert("Destination tag specified twice. You specified a destination tag at the end of your send-to address then again in the destination box. Please remove one.", 
 				function(){
 					var dt = byId("desttag");
@@ -6728,22 +6928,21 @@ function doPay(nonce) {
 		payto = oldpayto.replace(/^(.*)[?&][^=]*=(.*)$/mg, "$1");
 	}
 	function parseDestinationTag(value) {
-		var cleaned = String(value || '').trim().replace(/^0+(.+)$/g, "$1");
-		if(cleaned === '') {
-			return null;
-		} else {
-			return cleaned;
-		}
+		if (value === undefined || value === null || value === false || value === '') return null;
+		var str = String(value).trim();
+		if (str === '') return null;
+		var cleaned = str.replace(/^0+(.+)$/g, "$1");
+		return cleaned;
 	}
 	function validateDestinationTag(value) {
-		if(value === null || value === undefined) {
+		if(value === null || value === undefined || value === false || value === '') {
 			return {
 				valid: true,
 				error: null
 			}
 		}
         var MAX_INT = 4294967295;
-		if(!/^[0-9]+$/.test(''+value) || value < 0 || value > MAX_INT) {
+		if(!/^[0-9]+$/.test(''+value) || Number(value) < 0 || Number(value) > MAX_INT) {
 			return {
 					valid: false,
 					error: 'Invalid destination tag be either blank or between 0 and ' + MAX_INT
@@ -6854,7 +7053,7 @@ function doPay(nonce) {
 		return;
     }
     if ( asset == 'XRP' ) issuer = '';
-	if (amount == "" || parseFloat(amount)+ "" != (""+amount).trim()) {
+	if (amount == "" || !/^[0-9]+(\.[0-9]+)?$/.test(amount) || parseFloat(amount) <= 0) {
 		navigator.notification.alert("You must select a valid amount to send", 
 			function(){
 				var pa = byId("payamount");
@@ -6867,9 +7066,12 @@ function doPay(nonce) {
 		return;
 	}
 	var nextscreen = function() {
-        var paytoreal = forceraddrtag(payto, dest)
+        var paytoreal = forceraddrtag(payto, dest);
+        var payfromreal = forceraddrtag(payfrom);
+        var sourcetag = (payfromreal && payfromreal.tag !== false && payfromreal.tag !== null && payfromreal.tag !== undefined) ? payfromreal.tag : undefined;
 		confirmpay = { 
-			payfrom: forceraddr(payfrom),
+			payfrom: payfromreal ? payfromreal.raddr : forceraddr(payfrom),
+			sourcetag: sourcetag,
 			payto: paytoreal.raddr,
 			dest: paytoreal.tag,
 			invid: invid,
@@ -6885,12 +7087,11 @@ function doPay(nonce) {
 		setText('#confirmpayfromaccount', dispaddr(payfrom));
 		setText('#confirmpaytoaddress', payto);
 		var confirmDestTag = byId('confirmdesttag');
-	    if (isXAddress(payto)) {
-            if (confirmDestTag && confirmDestTag.parentNode) confirmDestTag.parentNode.style.display = 'none';
-        } else {
-            if (confirmDestTag && confirmDestTag.parentNode) confirmDestTag.parentNode.style.display = 'inherit';
-    	}
-        setText('#confirmdesttag', paytoreal.tag || '(not provided)');
+        if (confirmDestTag && confirmDestTag.parentNode) confirmDestTag.parentNode.style.display = 'inherit';
+        var hasTag = paytoreal.tag !== false && paytoreal.tag !== null && paytoreal.tag !== undefined && !Number.isNaN(Number(paytoreal.tag));
+        setText('#confirmdesttag', hasTag ? String(paytoreal.tag) : '(not provided)');
+        var displayFee = fee ? fee + " XRP" : (offlinemode ? "0.000012 XRP" : "Network Default (~0.000012 XRP)");
+        setText('#confirmpayfee', displayFee);
 		setText('#confirminvoiceid', ( invid == "" ? "(not provided)" : invid ));
 		setText('#confirmpayamount', amount);
         setText('#confirmasset', asset);
@@ -6956,7 +7157,7 @@ function doConfirmPay(passphrase) {
                 // we're just going to create the payment as a QR code and display it
 				navigator.notification.alert("A QR code of this signed transaction has been generated. Scan it using your online device to complete the transaction.", 
 					function(){
-                        return sendPaymentOffline(passphrase, confirmpay.payfrom, parseFloat(confirmpay.amount), confirmpay.payto, 0, confirmpay.dest, confirmpay.invid, confirmpay.asset, confirmpay.issuer, confirmpay.accseqid, confirmpay.ledseqid, confirmpay.fee);					
+                        return sendPaymentOffline(passphrase, confirmpay.payfrom, parseFloat(confirmpay.amount), confirmpay.payto, confirmpay.sourcetag, confirmpay.dest, confirmpay.invid, confirmpay.asset, confirmpay.issuer, confirmpay.accseqid, confirmpay.ledseqid, confirmpay.fee);					
                     }, 
 					"Offline Transaction", 
 					"OK"
@@ -6965,7 +7166,7 @@ function doConfirmPay(passphrase) {
             }
 			checkConnection(
 				function(){
-					sendPayment(passphrase, confirmpay.payfrom, parseFloat(confirmpay.amount), confirmpay.payto, 0, confirmpay.dest, confirmpay.invid, confirmpay.asset, confirmpay.issuer, 
+					sendPayment(passphrase, confirmpay.payfrom, parseFloat(confirmpay.amount), confirmpay.payto, confirmpay.sourcetag, confirmpay.dest, confirmpay.invid, confirmpay.asset, confirmpay.issuer, 
 						function(wasqueued){
 							if (confirmpay.payto == 'rToastMYRQh8boeo5Ys1CnPySmt3c9x3Y') {
 								getLastDonation(function(donation) {
@@ -7299,7 +7500,7 @@ function doSubmitOfflineTransaction(stage, content) {
                     } else {
                         fee *= 1000000;
                     }
-                    if (fee > 1000000) fee = 1000000; // we'd rather the tx fail than go through for more than 1 xrp
+                    if (fee > 10000) fee = 10000; // cap fee at 0.01 XRP (10,000 drops)
                     remote.getAccountInfo(account).then(info => {
                        var accseqid = info.sequence;
                         remote.getLedger({}).then(info2 => {
@@ -7398,28 +7599,82 @@ function doSubmitOfflineTransaction(stage, content) {
         
         // remove prefix from the tx
         signedTx =  signedTx.slice('ripple:signed-transaction:'.length);
-        checkConnection(function(){
-        submitSignedTransaction(
-            signedTx,       
-            function(wasqueued){
-                    navigator.notification.alert("Your transaction was successfully " + ( wasqueued ? "queued." : "submitted." ), 
-                        function(){
-                            showTab(-1);
-                            unblockInput();
-                        }, "Success", "OK"); 
-                    }
-            , 
-            function(err) {
-                navigator.notification.alert("An error occured when trying to make your payment. This can occur if the gateways Toast Wallet connects to are overloaded, it can also occur if your payment details are incorrect or the receiving address has not been activated. " + err, 
-                function(){
-                    showTab(-1);
-                    unblockInput();
-                }, 
-                "Error", "OK");
+        var decoded;
+        try {
+            decoded = xrpl.decode(signedTx);
+        } catch (e) {
+            unblockInput();
+            return navigator.notification.alert("Failed to decode signed transaction blob: " + e, function(){}, "Invalid Transaction", "OK");
+        }
+        var feeDrops = decoded.Fee ? parseInt(decoded.Fee, 10) : NaN;
+        var feeXRP = (!isNaN(feeDrops) ? (feeDrops / 1000000.0) : 0) + "";
+        if (isNaN(feeDrops) || feeDrops <= 0 || feeDrops > 10000) {
+            unblockInput();
+            return navigator.notification.alert("Transaction Fee (" + feeXRP + " XRP) is invalid or exceeds maximum allowed limit of 0.01 XRP.", function(){}, "Invalid Fee", "OK");
+        }
+
+        var details = "Transaction Type: " + decoded.TransactionType + "\n" +
+                      "Account: " + decoded.Account + "\n";
+        if (decoded.Destination) {
+            details += "Destination: " + decoded.Destination + "\n";
+        }
+        if (decoded.DestinationTag !== undefined && decoded.DestinationTag !== false && decoded.DestinationTag !== null) {
+            details += "Destination Tag: " + decoded.DestinationTag + "\n";
+        }
+        if (decoded.SourceTag !== undefined && decoded.SourceTag !== false && decoded.SourceTag !== null) {
+            details += "Source Tag: " + decoded.SourceTag + "\n";
+        }
+        if (decoded.Amount) {
+            if (typeof decoded.Amount === 'string') {
+                details += "Amount: " + (parseFloat(decoded.Amount) / 1000000.0) + " XRP\n";
+            } else if (typeof decoded.Amount === 'object' && decoded.Amount !== null) {
+                details += "Amount: " + decoded.Amount.value + " " + decoded.Amount.currency + "\n";
+            }
+        }
+        details += "Fee: " + feeXRP + " XRP\n";
+        if (decoded.Sequence !== undefined) {
+            details += "Sequence: " + decoded.Sequence + "\n";
+        }
+        if (decoded.LastLedgerSequence !== undefined) {
+            details += "LastLedgerSequence: " + decoded.LastLedgerSequence + "\n";
+        }
+        if (decoded.Flags && (decoded.Flags & 0x00020000)) {
+            details += "Flags: tfPartialPayment (WARNING: Partial Payment enabled)\n";
+        }
+        details += "\nDo you want to broadcast this transaction to the network?";
+
+        unblockInput();
+        navigator.notification.confirm(
+            details,
+            function(btn) {
+                if (btn == 1) {
+                    blockInput();
+                    checkConnection(function(){
+                        submitSignedTransaction(
+                            signedTx,       
+                            function(wasqueued){
+                                navigator.notification.alert("Your transaction was successfully " + ( wasqueued ? "queued." : "submitted." ), 
+                                    function(){
+                                        showTab(-1);
+                                        unblockInput();
+                                    }, "Success", "OK"); 
+                            }, 
+                            function(err) {
+                                navigator.notification.alert("An error occured when trying to make your payment. This can occur if the gateways Toast Wallet connects to are overloaded, it can also occur if your payment details are incorrect or the receiving address has not been activated. " + err, 
+                                    function(){
+                                        showTab(-1);
+                                        unblockInput();
+                                    }, 
+                                    "Error", "OK");
+                            },
+                            0
+                        );
+                    });
+                }
             },
-            0
+            "Confirm Transaction Broadcast",
+            ["Broadcast", "Cancel"]
         );
-        });        
     }
 }
 
@@ -7542,7 +7797,8 @@ function validateOfflineCode(offlinecode, offlinecodefield) {
         if (codevalid) {
             // grab the checksum from the front
             var checksum = offlinecode.slice(0,2);
-            var compression = utils.hexToBytes(offlinecode.slice(2,4));
+            var compBytes = utils.hexToBytes(offlinecode.slice(2,4));
+            var compression = (Array.isArray(compBytes) || (typeof Uint8Array !== 'undefined' && compBytes instanceof Uint8Array)) ? compBytes[0] : compBytes;
             offlinecode = offlinecode.slice(4);
             var removedZerosLedId = compression & 7;
             var removedZerosAccId = compression >> 3;
@@ -7578,9 +7834,22 @@ function validateOfflineCode(offlinecode, offlinecodefield) {
             );
             return false;
         } 
-        accID = parseInt('0x' + accID);
-        ledID = parseInt('0x' + ledID);
-        fee = (parseInt('0x' + fee)/1000000.0) + "";
+        accID = parseInt('0x' + accID, 16);
+        ledID = parseInt('0x' + ledID, 16);
+        var feeDrops = parseInt('0x' + fee, 16);
+        if (isNaN(accID) || isNaN(ledID) || isNaN(feeDrops) || feeDrops <= 0 || feeDrops > 10000 || ledID <= 0 || ledID > 500000000 || accID < 0 || accID > 4294967295) {
+            navigator.notification.alert("Offline code contains invalid parameters or fee exceeds maximum allowed limit of 0.01 XRP.", 
+                function(){
+                    var ocf = resolveElement(offlinecodefield);
+                    if (ocf && ocf.focus) ocf.focus();
+                    unblockInput();
+                }, 
+                "Offline code invalid", 
+                "OK"
+            );
+            return false;
+        } 
+        fee = (feeDrops/1000000.0) + "";
         console.log("Reconstructed LedID: " + accID);
         console.log("Reconstructed AccID: " + ledID);                        
         console.log("Reconstructed Fee: " + fee);   
@@ -7931,10 +8200,13 @@ function validatePassphrase(passphrase, isrecoveryphrase, successfunc, failurefu
                         ppdata = JSON.parse(ppdata.data);
 			salt1 = fromhex_chksum(ppdata.salt1);
 			salt2 = fromhex_chksum(ppdata.salt2);
+            var p = (typeof getScryptParamsForVersion === 'function')
+                ? getScryptParamsForVersion(ppdata.version)
+                : { opsLimit: (ppdata.version === 2 ? 524288 : 4), memLimit: (ppdata.version === 2 ? 16777216 : 33554432) };
 			var pphash = sodium.crypto_pwhash_scryptsalsa208sha256(16, 
 				sodium.crypto_pwhash_scryptsalsa208sha256(16, passphrase, 
-				salt1, 4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/, 33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/),
-			salt2, 4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/, 33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
+				salt1, p.opsLimit, p.memLimit),
+			salt2, p.opsLimit, p.memLimit);
 			pphash = tohex_chksum(pphash);
                         if (pphash == ppdata.hash) {
 				if (debug) console.log("validatePassphrase - correct");
@@ -7993,18 +8265,20 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
 			** the ppdata update fail.
 			*/
 			var updateData = function(backupsecrets) {
+				var v2p = { opsLimit: 524288, memLimit: 16777216 };
 				data.salt1 = tohex_chksum(newsalt1);
 				data.salt2 = tohex_chksum(newsalt2);
+				data.version = 2;
 				var secret;
 				data.hash = tohex_chksum(sodium.crypto_pwhash_scryptsalsa208sha256(16,
 			                                secret = sodium.crypto_pwhash_scryptsalsa208sha256(16, 
 								newphrase, 
 								newsalt1,
-								4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/, 
-								33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/),
+								v2p.opsLimit, 
+								v2p.memLimit),
 				                        newsalt2, 
-							4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/, 
-							33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/));
+							v2p.opsLimit, 
+							v2p.memLimit));
 	                        
 				var commit = function(data, storagekey, success, failure) {
 					db.upsert(storagekey, function(doc) { return { data: JSON.stringify(data)}; }).then(function(x){
@@ -8035,7 +8309,11 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
 					var nonce = sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES);
 					ppdata = JSON.parse(ppdata.data);
 					var ppsalt1 = fromhex_chksum(ppdata.salt1);
+                    var ppp = (typeof getScryptParamsForVersion === 'function')
+                        ? getScryptParamsForVersion(ppdata.version)
+                        : { opsLimit: (ppdata.version === 2 ? 524288 : 4), memLimit: (ppdata.version === 2 ? 16777216 : 33554432) };
 					// no need to decrypt the old erk because were setting a new recovery phrase so we already have the erk
+                    data.version = 2;
 					data.erk =
 					tohex_chksum(sodium.from_hex(sodium.to_hex(nonce) + sodium.crypto_secretbox_easy(
 						secret, /* the recovery key */
@@ -8044,8 +8322,8 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
 						sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
 							oldphrase,
 							ppsalt1,
-							4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-							33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/),
+							ppp.opsLimit,
+							ppp.memLimit),
 						/* end secret key */
 					'hex')));
 					commit(data, "rpdata", successfunc, failurefunc);
@@ -8059,13 +8337,19 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
 					var nonce = sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES);
 					rpdata = JSON.parse(rpdata.data);
 					var rpsalt1 = fromhex_chksum(rpdata.salt1);
+                    var rpp = (typeof getScryptParamsForVersion === 'function')
+                        ? getScryptParamsForVersion(rpdata.version)
+                        : { opsLimit: (rpdata.version === 2 ? 524288 : 4), memLimit: (rpdata.version === 2 ? 16777216 : 33554432) };
+                    var v2p = { opsLimit: 524288, memLimit: 16777216 };
 					// we have the recovery phrase (oldphrase) so we just need to generate the recovery key from it
 					// and encrypt it using the 32byte secretkey
 					var recoverykey = sodium.crypto_pwhash_scryptsalsa208sha256(16,
                                                         oldphrase,
                                                         rpsalt1,
-                                                        4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-                                                        33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
+                                                        rpp.opsLimit,
+                                                        rpp.memLimit);
+                    data.version = 2;
+                    rpdata.version = 2;
 					rpdata.erk = 
 					tohex_chksum(sodium.from_hex(sodium.to_hex(nonce) + sodium.crypto_secretbox_easy(
 						recoverykey, /* the recovery key */
@@ -8074,8 +8358,8 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
                                                 sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
                                                         newphrase,
                                                         newsalt1,
-                                                        4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-                                                        33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/),					
+                                                        v2p.opsLimit,
+                                                        v2p.memLimit),					
 						/* end secret key */
 					'hex')));
 					commit(data, "ppdata", function() {
@@ -8097,30 +8381,36 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
 					rpdata = JSON.parse(rpdata.data);
 					var rpsalt1 = fromhex_chksum(rpdata.salt1);
 					/* this is the most complicated of the seterk functions, we must first decrypt the existing erk */
-                                        // generate old 32byte secret key
-                                        var old32secret =
-                                                sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
-                                                        oldphrase,
-                                                        oldsalt1,
-                                                        4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-                                                        33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
-                                        // decrypt the old erk
-                                        olderk = fromhex_chksum(rpdata.erk);
-                                        var oldnonce = olderk.slice(0, sodium.crypto_box_NONCEBYTES);
-                                        olderk = olderk.slice(sodium.crypto_box_NONCEBYTES);
-                                        var recoverykey = sodium.crypto_secretbox_open_easy(olderk, oldnonce, old32secret);
+                    var oldppParams = (typeof getScryptParamsForVersion === 'function')
+                        ? getScryptParamsForVersion(ppdata.version)
+                        : { opsLimit: (ppdata.version === 2 ? 524288 : 4), memLimit: (ppdata.version === 2 ? 16777216 : 33554432) };
+                    var v2p = { opsLimit: 524288, memLimit: 16777216 };
+                    // generate old 32byte secret key
+                    var old32secret =
+                            sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
+                                    oldphrase,
+                                    oldsalt1,
+                                    oldppParams.opsLimit,
+                                    oldppParams.memLimit);
+                    // decrypt the old erk
+                    var olderk = fromhex_chksum(rpdata.erk);
+                    var oldnonce = olderk.slice(0, sodium.crypto_box_NONCEBYTES);
+                    olderk = olderk.slice(sodium.crypto_box_NONCEBYTES);
+                    var recoverykey = sodium.crypto_secretbox_open_easy(olderk, oldnonce, old32secret);
 					// now re-encrypt it with the new 32byte secret key
+                    data.version = 2;
+                    rpdata.version = 2;
 					rpdata.erk = 
 					tohex_chksum(sodium.from_hex(sodium.to_hex(nonce) + sodium.crypto_secretbox_easy(
 						recoverykey, /* the recovery key */
 						nonce,
-                                                /* 32 byte secret key */
-                                                sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
-                                                        newphrase,
-                                                        newsalt1,
-                                                        4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-                                                        33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/),
-                                                /* end secret key */
+                        /* 32 byte secret key */
+                        sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
+                                newphrase,
+                                newsalt1,
+                                v2p.opsLimit,
+                                v2p.memLimit),
+                        /* end secret key */
 					
 					'hex')));
 					commit(data, "ppdata", function() {
@@ -8153,6 +8443,7 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
 				
 				backupaccounts = JSON.parse(accounts.data);
 				accounts = JSON.parse(accounts.data);
+				var v2p = { opsLimit: 524288, memLimit: 16777216 };
 				for (var public_addr in accounts) {
 					var oldppsalt;
 					var oldppciphertext;
@@ -8167,24 +8458,32 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
 					var oldppciphertext = oldppciphertext.slice(sodium.crypto_box_NONCEBYTES);					
 					var newnonce = sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES);
 					var newppsalt = sodium.randombytes_buf(sodium.crypto_pwhash_scryptsalsa208sha256_SALTBYTES);
+
+                    var oldSourceParams = (mode == 0)
+                        ? ((typeof getScryptParamsForVersion === 'function') ? getScryptParamsForVersion(ppdata.version) : { opsLimit: (ppdata.version === 2 ? 524288 : 4), memLimit: (ppdata.version === 2 ? 16777216 : 33554432) })
+                        : ((typeof getScryptParamsForVersion === 'function') ? getScryptParamsForVersion(rpdata.version) : { opsLimit: (rpdata.version === 2 ? 524288 : 4), memLimit: (rpdata.version === 2 ? 16777216 : 33554432) });
+                    var oldAccParams = (typeof getScryptParamsForVersion === 'function')
+                        ? getScryptParamsForVersion(accounts[public_addr].version)
+                        : { opsLimit: (accounts[public_addr].version === 2 ? 524288 : 4), memLimit: (accounts[public_addr].version === 2 ? 16777216 : 33554432) };
+
 					var oldsecret32key = sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_box_SECRETKEYBYTES,  
 								sodium.crypto_pwhash_scryptsalsa208sha256(16,
                                                                 	oldphrase,
 	                                                                oldsalt1,
-        	                                                        4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-                	                                                33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/),
+        	                                                        oldSourceParams.opsLimit,
+                	                                                oldSourceParams.memLimit),
                         	                                oldppsalt,
-                                	                        4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-                                        	                33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
+                                	                        oldAccParams.opsLimit,
+                                        	                oldAccParams.memLimit);
 					var newsecret32key = sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_box_SECRETKEYBYTES,  
 								sodium.crypto_pwhash_scryptsalsa208sha256(16,
                                                                 	newphrase,
 	                                                                newsalt1,
-        	                                                        4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-                	                                                33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/),
+        	                                                        v2p.opsLimit,
+                	                                                v2p.memLimit),
                         	                                newppsalt,
-                                	                        4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-                                        	                33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
+                                	                        v2p.opsLimit,
+                                        	                v2p.memLimit);
 					
 					var secret = sodium.crypto_secretbox_open_easy(oldppciphertext, oldnonce, oldsecret32key);
 					oldsecret32key = "";
@@ -8203,6 +8502,7 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
 						accounts[public_addr].ppsalt = tohex_chksum(newppsalt);
 						accounts[public_addr].ppsecret = newppciphertext;
 					}
+                    accounts[public_addr].version = 2;
 				}
 				/* at this point the data structure for the accounts now contains fully updated
 				** ciphertext and salts, so we can do a db.upsert then move to part B */
@@ -8241,15 +8541,21 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
 
 function getRpPpData(successfunc) {
 	var f = function(ppdata) {
-		if (ppdata.data == undefined || ppdata.data == "") ppdata = {};
-		try {
-			ppdata = JSON.parse(ppdata.data);
-		} catch(e) {handle_error(e); ppdata={};}
-		var g = function(rpdata) {
-			if (rpdata.data == undefined || rpdata.data == "") rpdata = {};
+		if (ppdata && ppdata.data != undefined && ppdata.data != "") {
 			try {
-				rpdata = JSON.parse(rpdata.data);
-			} catch(e) {handle_error(e); rpdata={};}
+				ppdata = JSON.parse(ppdata.data);
+			} catch(e) {handle_error(e); ppdata={};}
+		} else {
+			ppdata = {};
+		}
+		var g = function(rpdata) {
+			if (rpdata && rpdata.data != undefined && rpdata.data != "") {
+				try {
+					rpdata = JSON.parse(rpdata.data);
+				} catch(e) {handle_error(e); rpdata={};}
+			} else {
+				rpdata = {};
+			}
 			try {
 			successfunc(ppdata, rpdata);
 			} catch(e) {handle_error(e);}
@@ -8302,35 +8608,56 @@ function doViewTransaction(hash) {
         command: "tx",
         transaction: hash
     }).then(res => {
-        var tx = res.result;
+        var tx = res.result ? (res.result.tx_json || res.result) : null;
+        var meta = res.result ? (res.result.meta || res.result.metaData || (tx ? (tx.meta || tx.metaData) : null)) : null;
+        var isValidated = !!(res.result && (res.result.validated === true || (tx && tx.validated === true)));
         var x = {
             result: 'success',
             transaction: {
                 tx: tx,
-                meta: tx.meta
+                meta: meta
             }
         };
         unblockInput();
-        // todo: better server error handling here
-        if (typeof(x.transaction) == "undefined" || typeof(x.transaction.tx) == "undefined" || typeof(x.transaction.meta) == "undefined") {
+        if (!tx || !meta) {
             setVal('#vtxstatus', 'Unknown / Not Found');
             hideEl('#vtxdetails');
             showTab('#tabviewtransaction', true);
             return;
         }
-        // execution to here means the tx details were returned
         showEl('#vtxdetails');
-        setVal('#vtxstatus', x.transaction.tx.TransactionType + (typeof(x.transaction.meta.TransactionResult) != 'undefined' ? ' - ' + x.transaction.meta.TransactionResult : ' - Unknown Status')); 
-        setVal('#vtxfrom', dispaddr(x.transaction.tx.Account));
-        setVal('#vtxdtag', typeof(x.transaction.tx.DestinationTag) == 'undefined' ? 'not specified' : x.transaction.tx.DestinationTag);
+        var statusStr = tx.TransactionType + (meta.TransactionResult ? ' - ' + meta.TransactionResult : ' - Unknown Status');
+        if (!isValidated) statusStr += ' (UNVALIDATED)';
+        setVal('#vtxstatus', statusStr); 
+        setVal('#vtxfrom', dispaddr(tx.Account));
+        var hasDtag = tx.DestinationTag !== undefined && tx.DestinationTag !== null && tx.DestinationTag !== false && !Number.isNaN(Number(tx.DestinationTag));
+        setVal('#vtxdtag', hasDtag ? String(tx.DestinationTag) : 'not specified');
         if (interface_settings.display_xaddresses) {
-            setVal('#vtxto', xaddr(x.transaction.tx.Destination, x.transaction.tx.DestinationTag == undefined ? false : x.transaction.tx.DestinationTag));
+            setVal('#vtxto', xaddr(tx.Destination, hasDtag ? tx.DestinationTag : false));
             hideEl('#vtxdtgroup');
         } else {
             showEl('#vtxdtgroup');
-            setVal('#vtxto', x.transaction.tx.Destination);
+            setVal('#vtxto', tx.Destination);
         }
-        setVal('#vtxdeliveredamount', typeof(x.transaction.meta.delivered_amount) != 'undefined' ? x.transaction.meta.delivered_amount/1000000.0 : 'not specified');
+        var delivered;
+        var rawDelivered = meta.delivered_amount !== undefined ? meta.delivered_amount : meta.DeliveredAmount;
+        if (rawDelivered !== undefined && rawDelivered !== null) {
+            if (typeof rawDelivered === 'string') {
+                var dNum = Number(rawDelivered);
+                if (!Number.isNaN(dNum)) {
+                    delivered = (dNum / 1000000.0) + ' XRP';
+                } else {
+                    delivered = String(rawDelivered);
+                }
+            } else if (typeof rawDelivered === 'object' && rawDelivered !== null) {
+                delivered = (rawDelivered.value !== undefined ? rawDelivered.value : '') + ' ' + (rawDelivered.currency || '');
+            } else {
+                delivered = String(rawDelivered);
+            }
+        } else {
+            delivered = 'not specified';
+        }
+        setVal('#vtxdeliveredamount', delivered);
         setText('#vtxrawtx', JSON.stringify(x, null, 4) + '');
         showTab('#tabviewtransaction', true);
     }).catch(err => {
@@ -8361,21 +8688,41 @@ function doGetTransactions(address, marker) {
     
     remote.request(reqParam).then(res => {
         var payments = [];
-        var txs = res.result.transactions || [];
+        var txs = (res.result && res.result.transactions) ? res.result.transactions : [];
         for (var i = 0; i < txs.length; i++) {
-            var t = txs[i].tx;
-            if (t && t.TransactionType === 'Payment' && typeof t.Amount === 'string') {
-                payments.push({
-                    source: t.Account,
-                    destination: t.Destination,
-                    amount: parseFloat(t.Amount) / 1000000.0,
-                    tx_hash: t.hash || t.TxnSignature
-                });
-                if (payments.length >= 10) break;
+            var item = txs[i];
+            var isVal = (item.validated === true || (res.result && res.result.validated === true));
+            if (!isVal) continue;
+            var t = item.tx_json || item.tx;
+            if (!t) continue;
+            var meta = item.meta || item.metaData;
+            if (!meta || meta.TransactionResult !== 'tesSUCCESS') continue;
+            if (t.TransactionType !== 'Payment') continue;
+
+            var rawDelivered = meta.delivered_amount !== undefined ? meta.delivered_amount : meta.DeliveredAmount;
+            if (rawDelivered === undefined || rawDelivered === null) continue;
+
+            var amountStr;
+            if (typeof rawDelivered === 'string') {
+                var dNum = Number(rawDelivered);
+                if (Number.isNaN(dNum)) continue; // skip non-numeric e.g. 'unavailable'
+                amountStr = (dNum / 1000000.0) + ' XRP';
+            } else if (typeof rawDelivered === 'object' && rawDelivered !== null) {
+                amountStr = (rawDelivered.value !== undefined ? rawDelivered.value : '') + ' ' + (rawDelivered.currency || '');
+            } else {
+                amountStr = String(rawDelivered);
             }
+
+            payments.push({
+                source: t.Account,
+                destination: t.Destination,
+                amount: amountStr,
+                tx_hash: item.hash || t.hash || t.TxnSignature
+            });
+            if (payments.length >= 10) break;
         }
         
-        var nextMarker = res.result.marker ? JSON.stringify(res.result.marker) : undefined;
+        var nextMarker = (res.result && res.result.marker) ? JSON.stringify(res.result.marker) : undefined;
         var x = {
             payments: payments,
             marker: nextMarker
@@ -8383,28 +8730,83 @@ function doGetTransactions(address, marker) {
         
 		var root = byId('accdetailstransactiondetails');
 		emptyEl(root);
-		var tx = "";
+		var ul = document.createElement('ul');
+		ul.className = 'transactionlist';
 		var count = 0;
-		if (x.payments != undefined) {
-			for (var i in x.payments) {
-				tx += '<li class="txrow '+(x.payments[i].source == address ? 'txsent' : 'txreceived')+'" data-txhash="'+x.payments[i].tx_hash+'" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doViewTransaction(\''+x.payments[i].tx_hash+'\')})">';
-				var outgoing = (x.payments[i].source == address);
-				tx += '<span><i class="fa ' + ( outgoing ? 'fa-paper-plane' : 'fa-inbox' ) + '" aria-hidden="true"></i>';
-				var addr = ( outgoing ? x.payments[i].destination : x.payments[i].source );
-                tx += dispaddr(addr) + '</span>';
-				tx += '<span >' + x.payments[i].amount + '</span>';
-				tx += '</li>';
-				count++;
+		if (x.payments && x.payments.length > 0) {
+			for (var j = 0; j < x.payments.length; j++) {
+                var p = x.payments[j];
+                var li = document.createElement('li');
+                var outgoing = (p.source === address);
+                li.className = 'txrow ' + (outgoing ? 'txsent' : 'txreceived');
+                if (p.tx_hash) li.setAttribute('data-txhash', p.tx_hash);
+                
+                (function(h) {
+                    li.addEventListener('touchstart', ts);
+                    li.addEventListener('touchend', function(e) {
+                        te(e, function() {
+                            doViewTransaction(h);
+                        });
+                    });
+                })(p.tx_hash);
+
+                var sLeft = document.createElement('span');
+                var icon = document.createElement('i');
+                icon.className = 'fa ' + (outgoing ? 'fa-paper-plane' : 'fa-inbox');
+                icon.setAttribute('aria-hidden', 'true');
+                sLeft.appendChild(icon);
+                sLeft.appendChild(document.createTextNode(' '));
+                var addr = outgoing ? p.destination : p.source;
+                sLeft.appendChild(document.createTextNode(dispaddr(addr)));
+
+                var sRight = document.createElement('span');
+                sRight.textContent = p.amount;
+
+                li.appendChild(sLeft);
+                li.appendChild(sRight);
+                ul.appendChild(li);
+                count++;
 			}
 		}
-		if (count == 0) {
-			tx = '<li style="color:black;"><center><i>No transactions found</i></center></li>';
+		if (count === 0) {
+            var emptyLi = document.createElement('li');
+            emptyLi.style.color = 'black';
+            var center = document.createElement('center');
+            var em = document.createElement('i');
+            em.textContent = 'No transactions found';
+            center.appendChild(em);
+            emptyLi.appendChild(center);
+            ul.appendChild(emptyLi);
 		}
-		appendHtml(root, '<ul class="transactionlist">'+tx+'</ul>');
-		if (x.marker != undefined && count > 0) {
-			appendHtml(root, '<button type="button" class="btn btn-primary" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doGetTransactions(\'' + address + '\', ' + JSON.stringify(x.marker).replace(/"/g, '&quot;') + ')})">More</button>');
+		root.appendChild(ul);
+		if (x.marker !== undefined) {
+            var btnMore = document.createElement('button');
+            btnMore.type = 'button';
+            btnMore.className = 'btn btn-primary';
+            btnMore.textContent = 'More';
+            (function(a, m) {
+                btnMore.addEventListener('touchstart', ts);
+                btnMore.addEventListener('touchend', function(e) {
+                    te(e, function() {
+                        doGetTransactions(a, m);
+                    });
+                });
+            })(address, x.marker);
+            root.appendChild(btnMore);
 		} else if (count > 0) {
-			appendHtml(root, '<button type="button" class="btn btn-primary" ontouchstart="ts(event)" ontouchend="te(event, ()=>{doGetTransactions(\'' + address + '\', \'\')})">Back to Start</button>');			
+            var btnBack = document.createElement('button');
+            btnBack.type = 'button';
+            btnBack.className = 'btn btn-primary';
+            btnBack.textContent = 'Back to Start';
+            (function(a) {
+                btnBack.addEventListener('touchstart', ts);
+                btnBack.addEventListener('touchend', function(e) {
+                    te(e, function() {
+                        doGetTransactions(a, '');
+                    });
+                });
+            })(address);
+            root.appendChild(btnBack);
 		}
 		clickProxy();	
 		unblockInput();
@@ -8412,8 +8814,20 @@ function doGetTransactions(address, marker) {
         if (debug) console.log("Get transactions error: " + err);
         unblockInput();
 		var root = byId('accdetailstransactiondetails');
-		emptyEl(root);
-		appendHtml(root, '<ul class="transactionlist"><li style="color:black;"><center><i>Error loading transactions</i></center></li></ul>');
+		if (root) {
+			emptyEl(root);
+			var errUl = document.createElement('ul');
+			errUl.className = 'transactionlist';
+			var errLi = document.createElement('li');
+			errLi.style.color = 'black';
+			var center = document.createElement('center');
+			var em = document.createElement('i');
+			em.textContent = 'Error loading transactions';
+			center.appendChild(em);
+			errLi.appendChild(center);
+			errUl.appendChild(errLi);
+			root.appendChild(errUl);
+		}
     });
 }
 
@@ -8440,8 +8854,10 @@ function refreshTrustlines(account, after) {
     
     setHtml('#adtrustlines', '<li><center><i>Loading...</i></center></li>');
     var f = (res) => {
-        var trustlines = "";
-        var tlcount = 0;
+        var tlContainer = byId('adtrustlines');
+        if (!tlContainer) return;
+        emptyEl(tlContainer);
+        var validTls = [];
         if (res['trustlines'] != undefined && typeof(res['trustlines']) == 'object' && 
             res['trustlines'].length != undefined && res['trustlines'].length > 0) {
             for (var t in res['trustlines']) {
@@ -8449,14 +8865,139 @@ function refreshTrustlines(account, after) {
                 var issuer, currency, balance;
                 if (tl['specification'] == undefined || tl['state'] == undefined || (issuer = tl['specification']['counterparty']) == undefined || 
                 (currency = tl['specification']['currency']) == undefined || (balance = tl['state']['balance']) == undefined || tl['specification']['limit'] === "0") continue;
-                trustlines += '<li class="adtrustline"><div class="adtlheader"><div class="tlcurrency"><div class="currency">' + currency + '</div> ' + display_currency_amount(parseFloat(""+balance)) + '</div><div class="tlissuer">' + dispaddr(issuer) + '</div><div class="tlvaluation" style="display:none"><div class="currency"></div></div></div><div class="adtlorders"><ul class="adtlorderslist" id="olt-'+currency+'-'+issuer+'"></ul></div><div class="adtlgraph" id="grp-'+currency+'-'+issuer+'"></div><div class="bidask"><span class="bid"></span><span class="ask"></span></div><center><div class="adtlsubheader"><button class="btn btn-warning adtlbutton" ontouchstart="ts(event)" ontouchend="te(event,()=>{showModifyTrustline(\''+account+'\', \''+currency+'\', \''+issuer+'\', '+tl['specification']['limit']+')})"><i class="fa fa-cog" aria-hidden="true"></i></button><button class="btn btn-primary adtlbutton"  ontouchstart="ts(event)" ontouchend="te(event,()=>{showNewOrder(\''+account+'\', \'buy\', \''+currency+'\', \''+issuer+'\', '+balance+', domData(\'#grp-'+currency+'-'+issuer+'\', \'bid\'), domData(\'#grp-'+currency+'-'+issuer+'\', \'ask\'))})"><small>BUY</small></button><button class="btn btn-danger adtlbutton" ontouchstart="ts(event)" ontouchend="te(event,()=>{showNewOrder(\''+account+'\', \'sell\', \''+currency+'\', \''+issuer+'\', '+balance+', domData(\'#grp-'+currency+'-'+issuer+'\', \'bid\'), domData(\'#grp-'+currency+'-'+issuer+'\', \'ask\'))})"><small>SELL</small></button><button class="btn btn-success adtlbutton" ontouchstart="ts(event)" ontouchend="te(event,()=>{showPaymentTab(\''+account+'\', \''+currency+'\', \''+issuer+'\', '+balance+')})"><i class="fa fa-paper-plane"></i></button></div></center></li>';
+                validTls.push(tl);
+
+                var li = document.createElement('li');
+                li.className = 'adtrustline';
+
+                var header = document.createElement('div');
+                header.className = 'adtlheader';
+
+                var tlcurrency = document.createElement('div');
+                tlcurrency.className = 'tlcurrency';
+                var currDiv = document.createElement('div');
+                currDiv.className = 'currency';
+                currDiv.textContent = currency;
+                tlcurrency.appendChild(currDiv);
+                tlcurrency.appendChild(document.createTextNode(' ' + display_currency_amount(parseFloat("" + balance))));
+
+                var tlissuer = document.createElement('div');
+                tlissuer.className = 'tlissuer';
+                tlissuer.textContent = dispaddr(issuer);
+
+                var tlval = document.createElement('div');
+                tlval.className = 'tlvaluation';
+                tlval.style.display = 'none';
+                var tlvalCurr = document.createElement('div');
+                tlvalCurr.className = 'currency';
+                tlval.appendChild(tlvalCurr);
+
+                header.appendChild(tlcurrency);
+                header.appendChild(tlissuer);
+                header.appendChild(tlval);
+
+                var adtlorders = document.createElement('div');
+                adtlorders.className = 'adtlorders';
+                var ulOrders = document.createElement('ul');
+                ulOrders.className = 'adtlorderslist';
+                ulOrders.id = 'olt-' + currency + '-' + issuer;
+                adtlorders.appendChild(ulOrders);
+
+                var adtlgraph = document.createElement('div');
+                adtlgraph.className = 'adtlgraph';
+                adtlgraph.id = 'grp-' + currency + '-' + issuer;
+
+                var bidask = document.createElement('div');
+                bidask.className = 'bidask';
+                var spanBid = document.createElement('span');
+                spanBid.className = 'bid';
+                var spanAsk = document.createElement('span');
+                spanAsk.className = 'ask';
+                bidask.appendChild(spanBid);
+                bidask.appendChild(spanAsk);
+
+                var center = document.createElement('center');
+                var subheader = document.createElement('div');
+                subheader.className = 'adtlsubheader';
+
+                var btnMod = document.createElement('button');
+                btnMod.className = 'btn btn-warning adtlbutton';
+                var iMod = document.createElement('i');
+                iMod.className = 'fa fa-cog';
+                iMod.setAttribute('aria-hidden', 'true');
+                btnMod.appendChild(iMod);
+                (function(acc, curr, iss, lim) {
+                    btnMod.addEventListener('touchstart', ts);
+                    btnMod.addEventListener('touchend', function(e) {
+                        te(e, function() {
+                            showModifyTrustline(acc, curr, iss, lim);
+                        });
+                    });
+                })(account, currency, issuer, tl['specification']['limit']);
+
+                var btnBuy = document.createElement('button');
+                btnBuy.className = 'btn btn-primary adtlbutton';
+                var smBuy = document.createElement('small');
+                smBuy.textContent = 'BUY';
+                btnBuy.appendChild(smBuy);
+                (function(acc, curr, iss, bal) {
+                    btnBuy.addEventListener('touchstart', ts);
+                    btnBuy.addEventListener('touchend', function(e) {
+                        te(e, function() {
+                            var grpId = '#grp-' + curr + '-' + iss;
+                            showNewOrder(acc, 'buy', curr, iss, bal, domData(grpId, 'bid'), domData(grpId, 'ask'));
+                        });
+                    });
+                })(account, currency, issuer, balance);
+
+                var btnSell = document.createElement('button');
+                btnSell.className = 'btn btn-danger adtlbutton';
+                var smSell = document.createElement('small');
+                smSell.textContent = 'SELL';
+                btnSell.appendChild(smSell);
+                (function(acc, curr, iss, bal) {
+                    btnSell.addEventListener('touchstart', ts);
+                    btnSell.addEventListener('touchend', function(e) {
+                        te(e, function() {
+                            var grpId = '#grp-' + curr + '-' + iss;
+                            showNewOrder(acc, 'sell', curr, iss, bal, domData(grpId, 'bid'), domData(grpId, 'ask'));
+                        });
+                    });
+                })(account, currency, issuer, balance);
+
+                var btnPay = document.createElement('button');
+                btnPay.className = 'btn btn-success adtlbutton';
+                var iPay = document.createElement('i');
+                iPay.className = 'fa fa-paper-plane';
+                btnPay.appendChild(iPay);
+                (function(acc, curr, iss, bal) {
+                    btnPay.addEventListener('touchstart', ts);
+                    btnPay.addEventListener('touchend', function(e) {
+                        te(e, function() {
+                            showPaymentTab(acc, curr, iss, bal);
+                        });
+                    });
+                })(account, currency, issuer, balance);
+
+                subheader.appendChild(btnMod);
+                subheader.appendChild(btnBuy);
+                subheader.appendChild(btnSell);
+                subheader.appendChild(btnPay);
+                center.appendChild(subheader);
+
+                li.appendChild(header);
+                li.appendChild(adtlorders);
+                li.appendChild(adtlgraph);
+                li.appendChild(bidask);
+                li.appendChild(center);
+
+                tlContainer.appendChild(li);
             }
-        } else {
-            trustlines = '<li><center><i>No trustlines on this account.</i></center></li>';
-            setHtml('#adtrustlines', trustlines);
+        }
+        if (validTls.length === 0) {
+            setHtml('#adtrustlines', '<li><center><i>No trustlines on this account.</i></center></li>');
             return;
         }
-        setHtml('#adtrustlines', trustlines);
                           
         // get current exchange rate
        getExchangeRate("", "", (exchangerate, data) => { 
@@ -8472,20 +9013,79 @@ function refreshTrustlines(account, after) {
                     console.log("orders - " + account + ": ");
                     console.log(orders);
                     var ordersele = byId('olt-' + currency + '-' + issuer);
-                    emptyEl(ordersele);
-                    for (var o in orders) {
-                        var order = orders[o];
-                        var currency1 = order.specification.quantity.currency.toUpperCase();
-                        if (currency1 == currency && issuer == order.specification.quantity.counterparty) {
-                            // this is an order that relates to the current graph so pass
-                        } else continue;
-                        var amount1 = parseFloat(''+order.specification.quantity.value);
-                        var currency2 = order.specification.totalPrice.currency.toUpperCase();
-                        var amount2 = parseFloat(''+order.specification.totalPrice.value);
-                        var seq = order.properties.sequence;
-                        var direction = order.specification.direction;
-                        var rate = amount2/amount1;
-                        appendHtml(ordersele, '<li><span class="offer">#'+seq+'</span> <span class="orderentry"><span class="orderdirection">'+direction.toUpperCase()+'</span> <span class="currency existingorder'+order.specification.direction+'">'+currency1+' ' + display_currency_amount(amount1) + '</span> @ <span class="currency">'+currency2+' '+display_currency_amount(rate)+'</span></span> <a class="orderkill" href="" ontouchend="te(event, (e)=>{doPlaceCancelOrder(sodium.randombytes_random(), confirmcancelorder={account:\''+account+'\', seq: '+seq+', currency1: \''+currency1+'\', amount1: '+amount1+', currency2: \''+currency2+'\', amount2: '+amount2+', sell: '+(direction == 'sell')+'} );})"><i class="fa fa-times-circle" style="color:red;"></i></a></li>');
+                    if (ordersele) {
+                        emptyEl(ordersele);
+                        for (var o in orders) {
+                            var order = orders[o];
+                            var currency1 = order.specification.quantity.currency.toUpperCase();
+                            if (currency1 == currency && issuer == order.specification.quantity.counterparty) {
+                                // this is an order that relates to the current graph so pass
+                            } else continue;
+                            var amount1 = parseFloat(''+order.specification.quantity.value);
+                            var currency2 = order.specification.totalPrice.currency.toUpperCase();
+                            var amount2 = parseFloat(''+order.specification.totalPrice.value);
+                            var seq = order.properties.sequence;
+                            var direction = order.specification.direction;
+                            var rate = amount2/amount1;
+
+                            var oli = document.createElement('li');
+
+                            var spanOffer = document.createElement('span');
+                            spanOffer.className = 'offer';
+                            spanOffer.textContent = '#' + seq;
+                            oli.appendChild(spanOffer);
+                            oli.appendChild(document.createTextNode(' '));
+
+                            var spanEntry = document.createElement('span');
+                            spanEntry.className = 'orderentry';
+
+                            var spanDir = document.createElement('span');
+                            spanDir.className = 'orderdirection';
+                            spanDir.textContent = direction.toUpperCase();
+                            spanEntry.appendChild(spanDir);
+                            spanEntry.appendChild(document.createTextNode(' '));
+
+                            var spanCurr1 = document.createElement('span');
+                            spanCurr1.className = 'currency existingorder' + order.specification.direction;
+                            spanCurr1.textContent = currency1 + ' ' + display_currency_amount(amount1);
+                            spanEntry.appendChild(spanCurr1);
+                            spanEntry.appendChild(document.createTextNode(' @ '));
+
+                            var spanCurr2 = document.createElement('span');
+                            spanCurr2.className = 'currency';
+                            spanCurr2.textContent = currency2 + ' ' + display_currency_amount(rate);
+                            spanEntry.appendChild(spanCurr2);
+
+                            oli.appendChild(spanEntry);
+                            oli.appendChild(document.createTextNode(' '));
+
+                            var aKill = document.createElement('a');
+                            aKill.className = 'orderkill';
+                            aKill.href = '';
+                            var iKill = document.createElement('i');
+                            iKill.className = 'fa fa-times-circle';
+                            iKill.style.color = 'red';
+                            aKill.appendChild(iKill);
+
+                            (function(acc, sq, c1, a1, c2, a2, dir) {
+                                aKill.addEventListener('touchend', function(e) {
+                                    te(e, function() {
+                                        doPlaceCancelOrder(sodium.randombytes_random(), {
+                                            account: acc,
+                                            seq: sq,
+                                            currency1: c1,
+                                            amount1: a1,
+                                            currency2: c2,
+                                            amount2: a2,
+                                            sell: (dir == 'sell')
+                                        });
+                                    });
+                                });
+                            })(account, seq, currency1, amount1, currency2, amount2, direction);
+
+                            oli.appendChild(aKill);
+                            ordersele.appendChild(oli);
+                        }
                     }
                     
 		            clickProxy();	
@@ -8698,6 +9298,7 @@ function doModifyTrustline(nonce) {
         setText('#ctlcurrency', mtlcurrency);
         setText('#ctllimit', mtllimit);
         setText('#ctlrippling', 'UNCHANGED');
+        setText('#ctlfee', fee ? fee + ' XRP' : (offlinemode ? '0.000012 XRP' : 'Network Default (~0.000012 XRP)'));
         showTab("#tabtrustlineconfirm");
         unblockInput();
     };
@@ -8821,6 +9422,7 @@ function doAddTrustline(nonce) {
         setText('#ctlcurrency', atlcurrency);
         setText('#ctllimit', atllimit);
         setText('#ctlrippling', (atlrippling ? 'ENABLED' : 'DISABLED'));
+        setText('#ctlfee', fee ? fee + ' XRP' : (offlinemode ? '0.000012 XRP' : 'Network Default (~0.000012 XRP)'));
         showTab("#tabtrustlineconfirm");
         unblockInput();
     };

@@ -326,10 +326,13 @@ function validatePassphrase(passphrase, isrecoveryphrase, successfunc, failurefu
                         ppdata = JSON.parse(ppdata.data);
 			salt1 = fromhex_chksum(ppdata.salt1);
 			salt2 = fromhex_chksum(ppdata.salt2);
+            var p = (typeof getScryptParamsForVersion === 'function')
+                ? getScryptParamsForVersion(ppdata.version)
+                : { opsLimit: (ppdata.version === 2 ? 524288 : 4), memLimit: (ppdata.version === 2 ? 16777216 : 33554432) };
 			var pphash = sodium.crypto_pwhash_scryptsalsa208sha256(16, 
 				sodium.crypto_pwhash_scryptsalsa208sha256(16, passphrase, 
-				salt1, 4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/, 33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/),
-			salt2, 4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/, 33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
+				salt1, p.opsLimit, p.memLimit),
+			salt2, p.opsLimit, p.memLimit);
 			pphash = tohex_chksum(pphash);
                         if (pphash == ppdata.hash) {
 				if (debug) console.log("validatePassphrase - correct");
@@ -388,18 +391,20 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
 			** the ppdata update fail.
 			*/
 			var updateData = function(backupsecrets) {
+				var v2p = { opsLimit: 524288, memLimit: 16777216 };
 				data.salt1 = tohex_chksum(newsalt1);
 				data.salt2 = tohex_chksum(newsalt2);
+				data.version = 2;
 				var secret;
 				data.hash = tohex_chksum(sodium.crypto_pwhash_scryptsalsa208sha256(16,
 			                                secret = sodium.crypto_pwhash_scryptsalsa208sha256(16, 
 								newphrase, 
 								newsalt1,
-								4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/, 
-								33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/),
+								v2p.opsLimit, 
+								v2p.memLimit),
 				                        newsalt2, 
-							4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/, 
-							33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/));
+							v2p.opsLimit, 
+							v2p.memLimit));
 	                        
 				var commit = function(data, storagekey, success, failure) {
 					db.upsert(storagekey, function(doc) { return { data: JSON.stringify(data)}; }).then(function(x){
@@ -430,7 +435,11 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
 					var nonce = sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES);
 					ppdata = JSON.parse(ppdata.data);
 					var ppsalt1 = fromhex_chksum(ppdata.salt1);
+                    var ppp = (typeof getScryptParamsForVersion === 'function')
+                        ? getScryptParamsForVersion(ppdata.version)
+                        : { opsLimit: (ppdata.version === 2 ? 524288 : 4), memLimit: (ppdata.version === 2 ? 16777216 : 33554432) };
 					// no need to decrypt the old erk because were setting a new recovery phrase so we already have the erk
+                    data.version = 2;
 					data.erk =
 					tohex_chksum(sodium.from_hex(sodium.to_hex(nonce) + sodium.crypto_secretbox_easy(
 						secret, /* the recovery key */
@@ -439,8 +448,8 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
 						sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
 							oldphrase,
 							ppsalt1,
-							4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-							33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/),
+							ppp.opsLimit,
+							ppp.memLimit),
 						/* end secret key */
 					'hex')));
 					commit(data, "rpdata", successfunc, failurefunc);
@@ -454,13 +463,19 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
 					var nonce = sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES);
 					rpdata = JSON.parse(rpdata.data);
 					var rpsalt1 = fromhex_chksum(rpdata.salt1);
+                    var rpp = (typeof getScryptParamsForVersion === 'function')
+                        ? getScryptParamsForVersion(rpdata.version)
+                        : { opsLimit: (rpdata.version === 2 ? 524288 : 4), memLimit: (rpdata.version === 2 ? 16777216 : 33554432) };
+                    var v2p = { opsLimit: 524288, memLimit: 16777216 };
 					// we have the recovery phrase (oldphrase) so we just need to generate the recovery key from it
 					// and encrypt it using the 32byte secretkey
 					var recoverykey = sodium.crypto_pwhash_scryptsalsa208sha256(16,
                                                         oldphrase,
                                                         rpsalt1,
-                                                        4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-                                                        33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
+                                                        rpp.opsLimit,
+                                                        rpp.memLimit);
+                    data.version = 2;
+                    rpdata.version = 2;
 					rpdata.erk = 
 					tohex_chksum(sodium.from_hex(sodium.to_hex(nonce) + sodium.crypto_secretbox_easy(
 						recoverykey, /* the recovery key */
@@ -469,8 +484,8 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
                                                 sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
                                                         newphrase,
                                                         newsalt1,
-                                                        4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-                                                        33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/),					
+                                                        v2p.opsLimit,
+                                                        v2p.memLimit),					
 						/* end secret key */
 					'hex')));
 					commit(data, "ppdata", function() {
@@ -492,30 +507,36 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
 					rpdata = JSON.parse(rpdata.data);
 					var rpsalt1 = fromhex_chksum(rpdata.salt1);
 					/* this is the most complicated of the seterk functions, we must first decrypt the existing erk */
-                                        // generate old 32byte secret key
-                                        var old32secret =
-                                                sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
-                                                        oldphrase,
-                                                        oldsalt1,
-                                                        4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-                                                        33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
-                                        // decrypt the old erk
-                                        olderk = fromhex_chksum(rpdata.erk);
-                                        var oldnonce = olderk.slice(0, sodium.crypto_box_NONCEBYTES);
-                                        olderk = olderk.slice(sodium.crypto_box_NONCEBYTES);
-                                        var recoverykey = sodium.crypto_secretbox_open_easy(olderk, oldnonce, old32secret);
+                    var oldppParams = (typeof getScryptParamsForVersion === 'function')
+                        ? getScryptParamsForVersion(ppdata.version)
+                        : { opsLimit: (ppdata.version === 2 ? 524288 : 4), memLimit: (ppdata.version === 2 ? 16777216 : 33554432) };
+                    var v2p = { opsLimit: 524288, memLimit: 16777216 };
+                    // generate old 32byte secret key
+                    var old32secret =
+                            sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
+                                    oldphrase,
+                                    oldsalt1,
+                                    oldppParams.opsLimit,
+                                    oldppParams.memLimit);
+                    // decrypt the old erk
+                    var olderk = fromhex_chksum(rpdata.erk);
+                    var oldnonce = olderk.slice(0, sodium.crypto_box_NONCEBYTES);
+                    olderk = olderk.slice(sodium.crypto_box_NONCEBYTES);
+                    var recoverykey = sodium.crypto_secretbox_open_easy(olderk, oldnonce, old32secret);
 					// now re-encrypt it with the new 32byte secret key
+                    data.version = 2;
+                    rpdata.version = 2;
 					rpdata.erk = 
 					tohex_chksum(sodium.from_hex(sodium.to_hex(nonce) + sodium.crypto_secretbox_easy(
 						recoverykey, /* the recovery key */
 						nonce,
-                                                /* 32 byte secret key */
-                                                sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
-                                                        newphrase,
-                                                        newsalt1,
-                                                        4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-                                                        33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/),
-                                                /* end secret key */
+                        /* 32 byte secret key */
+                        sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_secretbox_KEYBYTES,
+                                newphrase,
+                                newsalt1,
+                                v2p.opsLimit,
+                                v2p.memLimit),
+                        /* end secret key */
 					
 					'hex')));
 					commit(data, "ppdata", function() {
@@ -548,6 +569,7 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
 				
 				backupaccounts = JSON.parse(accounts.data);
 				accounts = JSON.parse(accounts.data);
+				var v2p = { opsLimit: 524288, memLimit: 16777216 };
 				for (var public_addr in accounts) {
 					var oldppsalt;
 					var oldppciphertext;
@@ -562,24 +584,32 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
 					var oldppciphertext = oldppciphertext.slice(sodium.crypto_box_NONCEBYTES);					
 					var newnonce = sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES);
 					var newppsalt = sodium.randombytes_buf(sodium.crypto_pwhash_scryptsalsa208sha256_SALTBYTES);
+
+                    var oldSourceParams = (mode == 0)
+                        ? ((typeof getScryptParamsForVersion === 'function') ? getScryptParamsForVersion(ppdata.version) : { opsLimit: (ppdata.version === 2 ? 524288 : 4), memLimit: (ppdata.version === 2 ? 16777216 : 33554432) })
+                        : ((typeof getScryptParamsForVersion === 'function') ? getScryptParamsForVersion(rpdata.version) : { opsLimit: (rpdata.version === 2 ? 524288 : 4), memLimit: (rpdata.version === 2 ? 16777216 : 33554432) });
+                    var oldAccParams = (typeof getScryptParamsForVersion === 'function')
+                        ? getScryptParamsForVersion(accounts[public_addr].version)
+                        : { opsLimit: (accounts[public_addr].version === 2 ? 524288 : 4), memLimit: (accounts[public_addr].version === 2 ? 16777216 : 33554432) };
+
 					var oldsecret32key = sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_box_SECRETKEYBYTES,  
 								sodium.crypto_pwhash_scryptsalsa208sha256(16,
                                                                 	oldphrase,
 	                                                                oldsalt1,
-        	                                                        4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-                	                                                33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/),
+        	                                                        oldSourceParams.opsLimit,
+                	                                                oldSourceParams.memLimit),
                         	                                oldppsalt,
-                                	                        4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-                                        	                33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
+                                	                        oldAccParams.opsLimit,
+                                        	                oldAccParams.memLimit);
 					var newsecret32key = sodium.crypto_pwhash_scryptsalsa208sha256(sodium.crypto_box_SECRETKEYBYTES,  
 								sodium.crypto_pwhash_scryptsalsa208sha256(16,
                                                                 	newphrase,
 	                                                                newsalt1,
-        	                                                        4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-                	                                                33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/),
+        	                                                        v2p.opsLimit,
+                	                                                v2p.memLimit),
                         	                                newppsalt,
-                                	                        4 /*sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE*/,
-                                        	                33554432 /*sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE*/);
+                                	                        v2p.opsLimit,
+                                        	                v2p.memLimit);
 					
 					var secret = sodium.crypto_secretbox_open_easy(oldppciphertext, oldnonce, oldsecret32key);
 					oldsecret32key = "";
@@ -598,6 +628,7 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
 						accounts[public_addr].ppsalt = tohex_chksum(newppsalt);
 						accounts[public_addr].ppsecret = newppciphertext;
 					}
+                    accounts[public_addr].version = 2;
 				}
 				/* at this point the data structure for the accounts now contains fully updated
 				** ciphertext and salts, so we can do a db.upsert then move to part B */
@@ -636,15 +667,21 @@ function setPassphrase(newphrase, oldphrase, issettingrecoveryphrase, successfun
 
 function getRpPpData(successfunc) {
 	var f = function(ppdata) {
-		if (ppdata.data == undefined || ppdata.data == "") ppdata = {};
-		try {
-			ppdata = JSON.parse(ppdata.data);
-		} catch(e) {handle_error(e); ppdata={};}
-		var g = function(rpdata) {
-			if (rpdata.data == undefined || rpdata.data == "") rpdata = {};
+		if (ppdata && ppdata.data != undefined && ppdata.data != "") {
 			try {
-				rpdata = JSON.parse(rpdata.data);
-			} catch(e) {handle_error(e); rpdata={};}
+				ppdata = JSON.parse(ppdata.data);
+			} catch(e) {handle_error(e); ppdata={};}
+		} else {
+			ppdata = {};
+		}
+		var g = function(rpdata) {
+			if (rpdata && rpdata.data != undefined && rpdata.data != "") {
+				try {
+					rpdata = JSON.parse(rpdata.data);
+				} catch(e) {handle_error(e); rpdata={};}
+			} else {
+				rpdata = {};
+			}
 			try {
 			successfunc(ppdata, rpdata);
 			} catch(e) {handle_error(e);}

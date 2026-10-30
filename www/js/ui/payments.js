@@ -45,7 +45,7 @@ function doPay(nonce) {
 	if (/^(.*)[?&][^=]*=(.*)$/m.test(payto)) {
 		var oldpayto = payto;
 		var newdest = oldpayto.replace(/^(.*)[?&][^=]*=(.*)$/mg, "$2");
-		if (dest != "" && dest.trim() != newdest.trim()) {
+		if (dest !== "" && dest !== null && dest !== undefined && String(dest).trim() != String(newdest).trim()) {
 			navigator.notification.alert("Destination tag specified twice. You specified a destination tag at the end of your send-to address then again in the destination box. Please remove one.", 
 				function(){
 					var dt = byId("desttag");
@@ -61,22 +61,21 @@ function doPay(nonce) {
 		payto = oldpayto.replace(/^(.*)[?&][^=]*=(.*)$/mg, "$1");
 	}
 	function parseDestinationTag(value) {
-		var cleaned = String(value || '').trim().replace(/^0+(.+)$/g, "$1");
-		if(cleaned === '') {
-			return null;
-		} else {
-			return cleaned;
-		}
+		if (value === undefined || value === null || value === false || value === '') return null;
+		var str = String(value).trim();
+		if (str === '') return null;
+		var cleaned = str.replace(/^0+(.+)$/g, "$1");
+		return cleaned;
 	}
 	function validateDestinationTag(value) {
-		if(value === null || value === undefined) {
+		if(value === null || value === undefined || value === false || value === '') {
 			return {
 				valid: true,
 				error: null
 			}
 		}
         var MAX_INT = 4294967295;
-		if(!/^[0-9]+$/.test(''+value) || value < 0 || value > MAX_INT) {
+		if(!/^[0-9]+$/.test(''+value) || Number(value) < 0 || Number(value) > MAX_INT) {
 			return {
 					valid: false,
 					error: 'Invalid destination tag be either blank or between 0 and ' + MAX_INT
@@ -187,7 +186,7 @@ function doPay(nonce) {
 		return;
     }
     if ( asset == 'XRP' ) issuer = '';
-	if (amount == "" || parseFloat(amount)+ "" != (""+amount).trim()) {
+	if (amount == "" || !/^[0-9]+(\.[0-9]+)?$/.test(amount) || parseFloat(amount) <= 0) {
 		navigator.notification.alert("You must select a valid amount to send", 
 			function(){
 				var pa = byId("payamount");
@@ -200,9 +199,12 @@ function doPay(nonce) {
 		return;
 	}
 	var nextscreen = function() {
-        var paytoreal = forceraddrtag(payto, dest)
+        var paytoreal = forceraddrtag(payto, dest);
+        var payfromreal = forceraddrtag(payfrom);
+        var sourcetag = (payfromreal && payfromreal.tag !== false && payfromreal.tag !== null && payfromreal.tag !== undefined) ? payfromreal.tag : undefined;
 		confirmpay = { 
-			payfrom: forceraddr(payfrom),
+			payfrom: payfromreal ? payfromreal.raddr : forceraddr(payfrom),
+			sourcetag: sourcetag,
 			payto: paytoreal.raddr,
 			dest: paytoreal.tag,
 			invid: invid,
@@ -218,12 +220,11 @@ function doPay(nonce) {
 		setText('#confirmpayfromaccount', dispaddr(payfrom));
 		setText('#confirmpaytoaddress', payto);
 		var confirmDestTag = byId('confirmdesttag');
-	    if (isXAddress(payto)) {
-            if (confirmDestTag && confirmDestTag.parentNode) confirmDestTag.parentNode.style.display = 'none';
-        } else {
-            if (confirmDestTag && confirmDestTag.parentNode) confirmDestTag.parentNode.style.display = 'inherit';
-    	}
-        setText('#confirmdesttag', paytoreal.tag || '(not provided)');
+        if (confirmDestTag && confirmDestTag.parentNode) confirmDestTag.parentNode.style.display = 'inherit';
+        var hasTag = paytoreal.tag !== false && paytoreal.tag !== null && paytoreal.tag !== undefined && !Number.isNaN(Number(paytoreal.tag));
+        setText('#confirmdesttag', hasTag ? String(paytoreal.tag) : '(not provided)');
+        var displayFee = fee ? fee + " XRP" : (offlinemode ? "0.000012 XRP" : "Network Default (~0.000012 XRP)");
+        setText('#confirmpayfee', displayFee);
 		setText('#confirminvoiceid', ( invid == "" ? "(not provided)" : invid ));
 		setText('#confirmpayamount', amount);
         setText('#confirmasset', asset);
@@ -289,7 +290,7 @@ function doConfirmPay(passphrase) {
                 // we're just going to create the payment as a QR code and display it
 				navigator.notification.alert("A QR code of this signed transaction has been generated. Scan it using your online device to complete the transaction.", 
 					function(){
-                        return sendPaymentOffline(passphrase, confirmpay.payfrom, parseFloat(confirmpay.amount), confirmpay.payto, 0, confirmpay.dest, confirmpay.invid, confirmpay.asset, confirmpay.issuer, confirmpay.accseqid, confirmpay.ledseqid, confirmpay.fee);					
+                        return sendPaymentOffline(passphrase, confirmpay.payfrom, parseFloat(confirmpay.amount), confirmpay.payto, confirmpay.sourcetag, confirmpay.dest, confirmpay.invid, confirmpay.asset, confirmpay.issuer, confirmpay.accseqid, confirmpay.ledseqid, confirmpay.fee);					
                     }, 
 					"Offline Transaction", 
 					"OK"
@@ -298,7 +299,7 @@ function doConfirmPay(passphrase) {
             }
 			checkConnection(
 				function(){
-					sendPayment(passphrase, confirmpay.payfrom, parseFloat(confirmpay.amount), confirmpay.payto, 0, confirmpay.dest, confirmpay.invid, confirmpay.asset, confirmpay.issuer, 
+					sendPayment(passphrase, confirmpay.payfrom, parseFloat(confirmpay.amount), confirmpay.payto, confirmpay.sourcetag, confirmpay.dest, confirmpay.invid, confirmpay.asset, confirmpay.issuer, 
 						function(wasqueued){
 							if (confirmpay.payto == 'rToastMYRQh8boeo5Ys1CnPySmt3c9x3Y') {
 								getLastDonation(function(donation) {
@@ -632,7 +633,7 @@ function doSubmitOfflineTransaction(stage, content) {
                     } else {
                         fee *= 1000000;
                     }
-                    if (fee > 1000000) fee = 1000000; // we'd rather the tx fail than go through for more than 1 xrp
+                    if (fee > 10000) fee = 10000; // cap fee at 0.01 XRP (10,000 drops)
                     remote.getAccountInfo(account).then(info => {
                        var accseqid = info.sequence;
                         remote.getLedger({}).then(info2 => {
@@ -731,28 +732,82 @@ function doSubmitOfflineTransaction(stage, content) {
         
         // remove prefix from the tx
         signedTx =  signedTx.slice('ripple:signed-transaction:'.length);
-        checkConnection(function(){
-        submitSignedTransaction(
-            signedTx,       
-            function(wasqueued){
-                    navigator.notification.alert("Your transaction was successfully " + ( wasqueued ? "queued." : "submitted." ), 
-                        function(){
-                            showTab(-1);
-                            unblockInput();
-                        }, "Success", "OK"); 
-                    }
-            , 
-            function(err) {
-                navigator.notification.alert("An error occured when trying to make your payment. This can occur if the gateways Toast Wallet connects to are overloaded, it can also occur if your payment details are incorrect or the receiving address has not been activated. " + err, 
-                function(){
-                    showTab(-1);
-                    unblockInput();
-                }, 
-                "Error", "OK");
+        var decoded;
+        try {
+            decoded = xrpl.decode(signedTx);
+        } catch (e) {
+            unblockInput();
+            return navigator.notification.alert("Failed to decode signed transaction blob: " + e, function(){}, "Invalid Transaction", "OK");
+        }
+        var feeDrops = decoded.Fee ? parseInt(decoded.Fee, 10) : NaN;
+        var feeXRP = (!isNaN(feeDrops) ? (feeDrops / 1000000.0) : 0) + "";
+        if (isNaN(feeDrops) || feeDrops <= 0 || feeDrops > 10000) {
+            unblockInput();
+            return navigator.notification.alert("Transaction Fee (" + feeXRP + " XRP) is invalid or exceeds maximum allowed limit of 0.01 XRP.", function(){}, "Invalid Fee", "OK");
+        }
+
+        var details = "Transaction Type: " + decoded.TransactionType + "\n" +
+                      "Account: " + decoded.Account + "\n";
+        if (decoded.Destination) {
+            details += "Destination: " + decoded.Destination + "\n";
+        }
+        if (decoded.DestinationTag !== undefined && decoded.DestinationTag !== false && decoded.DestinationTag !== null) {
+            details += "Destination Tag: " + decoded.DestinationTag + "\n";
+        }
+        if (decoded.SourceTag !== undefined && decoded.SourceTag !== false && decoded.SourceTag !== null) {
+            details += "Source Tag: " + decoded.SourceTag + "\n";
+        }
+        if (decoded.Amount) {
+            if (typeof decoded.Amount === 'string') {
+                details += "Amount: " + (parseFloat(decoded.Amount) / 1000000.0) + " XRP\n";
+            } else if (typeof decoded.Amount === 'object' && decoded.Amount !== null) {
+                details += "Amount: " + decoded.Amount.value + " " + decoded.Amount.currency + "\n";
+            }
+        }
+        details += "Fee: " + feeXRP + " XRP\n";
+        if (decoded.Sequence !== undefined) {
+            details += "Sequence: " + decoded.Sequence + "\n";
+        }
+        if (decoded.LastLedgerSequence !== undefined) {
+            details += "LastLedgerSequence: " + decoded.LastLedgerSequence + "\n";
+        }
+        if (decoded.Flags && (decoded.Flags & 0x00020000)) {
+            details += "Flags: tfPartialPayment (WARNING: Partial Payment enabled)\n";
+        }
+        details += "\nDo you want to broadcast this transaction to the network?";
+
+        unblockInput();
+        navigator.notification.confirm(
+            details,
+            function(btn) {
+                if (btn == 1) {
+                    blockInput();
+                    checkConnection(function(){
+                        submitSignedTransaction(
+                            signedTx,       
+                            function(wasqueued){
+                                navigator.notification.alert("Your transaction was successfully " + ( wasqueued ? "queued." : "submitted." ), 
+                                    function(){
+                                        showTab(-1);
+                                        unblockInput();
+                                    }, "Success", "OK"); 
+                            }, 
+                            function(err) {
+                                navigator.notification.alert("An error occured when trying to make your payment. This can occur if the gateways Toast Wallet connects to are overloaded, it can also occur if your payment details are incorrect or the receiving address has not been activated. " + err, 
+                                    function(){
+                                        showTab(-1);
+                                        unblockInput();
+                                    }, 
+                                    "Error", "OK");
+                            },
+                            0
+                        );
+                    });
+                }
             },
-            0
+            "Confirm Transaction Broadcast",
+            ["Broadcast", "Cancel"]
         );
-        });        
     }
 }
 
@@ -875,7 +930,8 @@ function validateOfflineCode(offlinecode, offlinecodefield) {
         if (codevalid) {
             // grab the checksum from the front
             var checksum = offlinecode.slice(0,2);
-            var compression = utils.hexToBytes(offlinecode.slice(2,4));
+            var compBytes = utils.hexToBytes(offlinecode.slice(2,4));
+            var compression = (Array.isArray(compBytes) || (typeof Uint8Array !== 'undefined' && compBytes instanceof Uint8Array)) ? compBytes[0] : compBytes;
             offlinecode = offlinecode.slice(4);
             var removedZerosLedId = compression & 7;
             var removedZerosAccId = compression >> 3;
@@ -911,9 +967,22 @@ function validateOfflineCode(offlinecode, offlinecodefield) {
             );
             return false;
         } 
-        accID = parseInt('0x' + accID);
-        ledID = parseInt('0x' + ledID);
-        fee = (parseInt('0x' + fee)/1000000.0) + "";
+        accID = parseInt('0x' + accID, 16);
+        ledID = parseInt('0x' + ledID, 16);
+        var feeDrops = parseInt('0x' + fee, 16);
+        if (isNaN(accID) || isNaN(ledID) || isNaN(feeDrops) || feeDrops <= 0 || feeDrops > 10000 || ledID <= 0 || ledID > 500000000 || accID < 0 || accID > 4294967295) {
+            navigator.notification.alert("Offline code contains invalid parameters or fee exceeds maximum allowed limit of 0.01 XRP.", 
+                function(){
+                    var ocf = resolveElement(offlinecodefield);
+                    if (ocf && ocf.focus) ocf.focus();
+                    unblockInput();
+                }, 
+                "Offline code invalid", 
+                "OK"
+            );
+            return false;
+        } 
+        fee = (feeDrops/1000000.0) + "";
         console.log("Reconstructed LedID: " + accID);
         console.log("Reconstructed AccID: " + ledID);                        
         console.log("Reconstructed Fee: " + fee);   

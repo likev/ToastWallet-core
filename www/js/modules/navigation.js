@@ -66,6 +66,11 @@ function showTab(tab, dontClearText) {
     domData("#accsecret", 'content', '');
     emptyEl("#accsecretqr");
     hideEl("#accsecret");
+    if (tab === -1 || (tab !== '#tabgenaccount' && tab !== '#tabaddexistingaccount')) {
+        if (typeof wipeGeneratedAccount === 'function') {
+            wipeGeneratedAccount();
+        }
+    }
     if ( tab == -1 && (
         currenttab == '#tabqrscan' || currenttab == '#taborderconfirm' || 
         currenttab == '#tabneworder' || currenttab == '#tabpaymentconfirm' ||

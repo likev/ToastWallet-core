@@ -15,8 +15,20 @@ function showNewOrder(account, direction, currency, issuer, balance, bid, ask) {
     setVal('#ntloissuer', currency + ' - ' + dispaddr(issuer));
     domData('#ntloissuer', 'currency', currency);
     domData('#ntloissuer', 'issuer', issuer);
-    removeAttr('#btnntloall', 'ontouchend');
-    setAttr('#btnntloall', 'ontouchend', "te(event, ()=>{setVal('#ntloamount', " + balance + "); renderOrderPreview();})");
+    var btnAll = byId('btnntloall');
+    if (btnAll) {
+        btnAll.onclick = (e) => {
+            e.preventDefault();
+            setVal('#ntloamount', balance);
+            renderOrderPreview();
+        };
+        btnAll.ontouchend = (e) => {
+            te(e, () => {
+                setVal('#ntloamount', balance);
+                renderOrderPreview();
+            });
+        };
+    }
     if (direction == 'buy') {
         // use minimum ask
         setVal('#ntloprice', ask);
@@ -72,7 +84,21 @@ function renderOrderPreview(sell) {
     var priceUpdate = byId('ntlopriceupdate');
     if (priceUpdate) {
         priceUpdate.style.border = (sell ? '1px solid rgb(217, 83, 79)' : '1px solid rgb(92, 184, 92)');
-        priceUpdate.innerHTML = '<b>'+(sell ? 'SELL' : 'BUY')+'</b> <span class="currency">'+currency+'</span> '+display_currency_amount(amount1)+' for <span class="currency">XRP</span>'+display_currency_amount(amount2);
+        emptyEl(priceUpdate);
+        var b = document.createElement('b');
+        b.textContent = (sell ? 'SELL' : 'BUY');
+        priceUpdate.appendChild(b);
+        priceUpdate.appendChild(document.createTextNode(' '));
+        var c1 = document.createElement('span');
+        c1.className = 'currency';
+        c1.textContent = currency;
+        priceUpdate.appendChild(c1);
+        priceUpdate.appendChild(document.createTextNode(' ' + display_currency_amount(amount1) + ' for '));
+        var c2 = document.createElement('span');
+        c2.className = 'currency';
+        c2.textContent = 'XRP';
+        priceUpdate.appendChild(c2);
+        priceUpdate.appendChild(document.createTextNode(' ' + display_currency_amount(amount2)));
     }
 }
 
@@ -133,6 +159,7 @@ function doPlaceCancelOrder(nonce, dataset) {
 		setText('#confirmcancelorderaccount', dispaddr(account));
         setText('#confirmcancelorderpreview', (sell ? 'SELL ' : 'BUY ') + currency1 + ' ' + display_currency_amount(parseFloat(''+amount1)) + ' @ ' + currency2 + ' ' + display_currency_amount(parseFloat(''+amount2)/parseFloat(''+amount1)));
         setText('#confirmcancelordersequence', '#' + seq);
+        setText('#confirmcancelorderfee', fee ? fee + ' XRP' : (offlinemode ? '0.000012 XRP' : 'Network Default (~0.000012 XRP)'));
 		showTab("#tabcancelorderconfirm");
 		
 		unblockInput();
@@ -330,6 +357,7 @@ function doPlaceOrder(nonce) {
         if (!passive && !fok && !ioc) {
             setText('#confirmorderextra', 'NONE');
         }
+        setText('#confirmorderfee', fee ? fee + ' XRP' : (offlinemode ? '0.000012 XRP' : 'Network Default (~0.000012 XRP)'));
 		showTab("#taborderconfirm");
 		
 		unblockInput();

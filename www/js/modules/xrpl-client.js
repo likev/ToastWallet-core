@@ -1,6 +1,6 @@
 function setRemoteGateway(server) {
 	currentServer = server;
-	remote = new xrpl.Client(server, { connectionTimeout: 10000 });
+	remote = new xrpl.Client(server, { connectionTimeout: 10000, maxFeeXRP: '0.01' });
 	injectCompatibilityLayer(remote);
 }
 
@@ -116,7 +116,7 @@ function doRetryConnection(gateway) {
 
 function doOfflineMode(withboot) {
 	offlinemode = true;
-	remote = new xrpl.Client("wss://s1.ripple.com");
+	remote = new xrpl.Client("wss://s1.ripple.com", { connectionTimeout: 10000, maxFeeXRP: '0.01' });
 	injectCompatibilityLayer(remote);
 	showEl('#offlinemodewarning');
 	if (withboot) normalboot();	
@@ -344,6 +344,57 @@ function injectCompatibilityLayer(client) {
             };
         }
     };
+    function isValidTag(tag) {
+        if (tag === undefined || tag === null || tag === false || tag === '') return false;
+        const num = Number(tag);
+        return Number.isInteger(num) && num >= 0 && num <= 4294967295;
+    }
+
+    var MAX_FEE_DROPS = 10000; // 0.01 XRP
+
+    function finalizeTx(tx, instructions) {
+        if (instructions) {
+            if (instructions.fee !== undefined && instructions.fee !== null && instructions.fee !== '') {
+                var feeDrops = parseInt(xrpl.xrpToDrops(instructions.fee + ""), 10);
+                if (isNaN(feeDrops) || feeDrops <= 0 || feeDrops > MAX_FEE_DROPS) {
+                    return Promise.reject(new Error("Fee exceeds maximum allowed limit of 0.01 XRP: " + feeDrops + " drops"));
+                }
+                tx.Fee = feeDrops + "";
+            }
+            if (instructions.sequence !== undefined) {
+                tx.Sequence = parseInt(instructions.sequence, 10);
+            }
+            if (instructions.maxLedgerVersion !== undefined) {
+                tx.LastLedgerSequence = parseInt(instructions.maxLedgerVersion, 10);
+            }
+        }
+        if (tx.Sequence === undefined || tx.Fee === undefined) {
+            return client.autofill(tx).then(autofilled => {
+                var autoFee = autofilled.Fee ? parseInt(autofilled.Fee, 10) : NaN;
+                if (isNaN(autoFee) || autoFee <= 0 || autoFee > MAX_FEE_DROPS) {
+                    throw new Error("Autofilled fee exceeds maximum allowed limit of 0.01 XRP: " + autofilled.Fee + " drops");
+                }
+                if (instructions && instructions.maxLedgerVersionOffset !== undefined && instructions.maxLedgerVersion === undefined) {
+                    return client.getLedgerIndex().then(currentLedger => {
+                        if (autofilled.LastLedgerSequence > currentLedger + instructions.maxLedgerVersionOffset) {
+                            autofilled.LastLedgerSequence = currentLedger + instructions.maxLedgerVersionOffset;
+                        }
+                        return { txJSON: JSON.stringify(autofilled) };
+                    }).catch(() => {
+                        return { txJSON: JSON.stringify(autofilled) };
+                    });
+                }
+                return { txJSON: JSON.stringify(autofilled) };
+            });
+        } else {
+            var staticFee = tx.Fee ? parseInt(tx.Fee, 10) : NaN;
+            if (isNaN(staticFee) || staticFee <= 0 || staticFee > MAX_FEE_DROPS) {
+                return Promise.reject(new Error("Fee exceeds maximum allowed limit of 0.01 XRP: " + tx.Fee + " drops"));
+            }
+            return Promise.resolve({ txJSON: JSON.stringify(tx) });
+        }
+    }
+
     client.preparePayment = function(fromacc, payment, instructions) {
         var tx = {
             TransactionType: "Payment",
@@ -357,11 +408,11 @@ function injectCompatibilityLayer(client) {
                         value: payment.destination.amount.value
                       }
         };
-        if (payment.destination.tag) {
-            tx.DestinationTag = parseInt(payment.destination.tag);
+        if (payment.destination && isValidTag(payment.destination.tag)) {
+            tx.DestinationTag = parseInt(payment.destination.tag, 10);
         }
-        if (payment.source && payment.source.tag) {
-            tx.SourceTag = parseInt(payment.source.tag);
+        if (payment.source && isValidTag(payment.source.tag)) {
+            tx.SourceTag = parseInt(payment.source.tag, 10);
         }
         if (payment.invoiceID) {
             tx.InvoiceID = payment.invoiceID;
@@ -369,24 +420,7 @@ function injectCompatibilityLayer(client) {
         if (payment.allowPartialPayment) {
             tx.Flags = 0x00020000;
         }
-        if (instructions) {
-            if (instructions.fee) {
-                tx.Fee = xrpl.xrpToDrops(instructions.fee);
-            }
-            if (instructions.sequence !== undefined) {
-                tx.Sequence = parseInt(instructions.sequence);
-            }
-            if (instructions.maxLedgerVersion !== undefined) {
-                tx.LastLedgerSequence = parseInt(instructions.maxLedgerVersion);
-            }
-        }
-        if (tx.Sequence === undefined || tx.Fee === undefined) {
-            return client.autofill(tx).then(autofilled => {
-                return { txJSON: JSON.stringify(autofilled) };
-            });
-        } else {
-            return Promise.resolve({ txJSON: JSON.stringify(tx) });
-        }
+        return finalizeTx(tx, instructions);
     };
     var asfFlags = {
         requireDestinationTag: 1,
@@ -421,24 +455,7 @@ function injectCompatibilityLayer(client) {
                 }
             }
         }
-        if (instructions) {
-            if (instructions.fee) {
-                tx.Fee = xrpl.xrpToDrops(instructions.fee);
-            }
-            if (instructions.sequence !== undefined) {
-                tx.Sequence = parseInt(instructions.sequence);
-            }
-            if (instructions.maxLedgerVersion !== undefined) {
-                tx.LastLedgerSequence = parseInt(instructions.maxLedgerVersion);
-            }
-        }
-        if (tx.Sequence === undefined || tx.Fee === undefined) {
-            return client.autofill(tx).then(autofilled => {
-                return { txJSON: JSON.stringify(autofilled) };
-            });
-        } else {
-            return Promise.resolve({ txJSON: JSON.stringify(tx) });
-        }
+        return finalizeTx(tx, instructions);
     };
     client.prepareTrustline = function(fromacc, trustline, instructions) {
         var tx = {
@@ -453,24 +470,7 @@ function injectCompatibilityLayer(client) {
         if (trustline.ripplingDisabled !== undefined) {
             tx.Flags = trustline.ripplingDisabled ? 0x00020000 : 0x00040000;
         }
-        if (instructions) {
-            if (instructions.fee) {
-                tx.Fee = xrpl.xrpToDrops(instructions.fee);
-            }
-            if (instructions.sequence !== undefined) {
-                tx.Sequence = parseInt(instructions.sequence);
-            }
-            if (instructions.maxLedgerVersion !== undefined) {
-                tx.LastLedgerSequence = parseInt(instructions.maxLedgerVersion);
-            }
-        }
-        if (tx.Sequence === undefined || tx.Fee === undefined) {
-            return client.autofill(tx).then(autofilled => {
-                return { txJSON: JSON.stringify(autofilled) };
-            });
-        } else {
-            return Promise.resolve({ txJSON: JSON.stringify(tx) });
-        }
+        return finalizeTx(tx, instructions);
     };
     client.prepareOrder = function(fromacc, order, instructions) {
         var gets = order.direction === 'sell' ? order.quantity : order.totalPrice;
@@ -500,24 +500,7 @@ function injectCompatibilityLayer(client) {
         if (order.expirationTime) {
             tx.Expiration = xrpl.isoTimeToRippleTime(order.expirationTime);
         }
-        if (instructions) {
-            if (instructions.fee) {
-                tx.Fee = xrpl.xrpToDrops(instructions.fee);
-            }
-            if (instructions.sequence !== undefined) {
-                tx.Sequence = parseInt(instructions.sequence);
-            }
-            if (instructions.maxLedgerVersion !== undefined) {
-                tx.LastLedgerSequence = parseInt(instructions.maxLedgerVersion);
-            }
-        }
-        if (tx.Sequence === undefined || tx.Fee === undefined) {
-            return client.autofill(tx).then(autofilled => {
-                return { txJSON: JSON.stringify(autofilled) };
-            });
-        } else {
-            return Promise.resolve({ txJSON: JSON.stringify(tx) });
-        }
+        return finalizeTx(tx, instructions);
     };
     client.prepareOrderCancellation = function(fromacc, cancel, instructions) {
         var tx = {
@@ -525,27 +508,14 @@ function injectCompatibilityLayer(client) {
             Account: fromacc,
             OfferSequence: parseInt(cancel.orderSequence)
         };
-        if (instructions) {
-            if (instructions.fee) {
-                tx.Fee = xrpl.xrpToDrops(instructions.fee);
-            }
-            if (instructions.sequence !== undefined) {
-                tx.Sequence = parseInt(instructions.sequence);
-            }
-            if (instructions.maxLedgerVersion !== undefined) {
-                tx.LastLedgerSequence = parseInt(instructions.maxLedgerVersion);
-            }
-        }
-        if (tx.Sequence === undefined || tx.Fee === undefined) {
-            return client.autofill(tx).then(autofilled => {
-                return { txJSON: JSON.stringify(autofilled) };
-            });
-        } else {
-            return Promise.resolve({ txJSON: JSON.stringify(tx) });
-        }
+        return finalizeTx(tx, instructions);
     };
     client.sign = function(txJSON, secret) {
         var tx = JSON.parse(txJSON);
+        var signFee = tx.Fee ? parseInt(tx.Fee, 10) : NaN;
+        if (isNaN(signFee) || signFee <= 0 || signFee > MAX_FEE_DROPS) {
+            throw new Error("Transaction fee exceeds maximum allowed limit of 0.01 XRP: " + tx.Fee + " drops");
+        }
         var wallet = xrpl.Wallet.fromSeed(secret, { algorithm: secret.startsWith('sEd') ? 'ed25519' : 'ecdsa-secp256k1' });
         var signed = wallet.sign(tx);
         return {

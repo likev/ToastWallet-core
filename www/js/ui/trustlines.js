@@ -8,8 +8,10 @@ function refreshTrustlines(account, after) {
     
     setHtml('#adtrustlines', '<li><center><i>Loading...</i></center></li>');
     var f = (res) => {
-        var trustlines = "";
-        var tlcount = 0;
+        var tlContainer = byId('adtrustlines');
+        if (!tlContainer) return;
+        emptyEl(tlContainer);
+        var validTls = [];
         if (res['trustlines'] != undefined && typeof(res['trustlines']) == 'object' && 
             res['trustlines'].length != undefined && res['trustlines'].length > 0) {
             for (var t in res['trustlines']) {
@@ -17,14 +19,139 @@ function refreshTrustlines(account, after) {
                 var issuer, currency, balance;
                 if (tl['specification'] == undefined || tl['state'] == undefined || (issuer = tl['specification']['counterparty']) == undefined || 
                 (currency = tl['specification']['currency']) == undefined || (balance = tl['state']['balance']) == undefined || tl['specification']['limit'] === "0") continue;
-                trustlines += '<li class="adtrustline"><div class="adtlheader"><div class="tlcurrency"><div class="currency">' + currency + '</div> ' + display_currency_amount(parseFloat(""+balance)) + '</div><div class="tlissuer">' + dispaddr(issuer) + '</div><div class="tlvaluation" style="display:none"><div class="currency"></div></div></div><div class="adtlorders"><ul class="adtlorderslist" id="olt-'+currency+'-'+issuer+'"></ul></div><div class="adtlgraph" id="grp-'+currency+'-'+issuer+'"></div><div class="bidask"><span class="bid"></span><span class="ask"></span></div><center><div class="adtlsubheader"><button class="btn btn-warning adtlbutton" ontouchstart="ts(event)" ontouchend="te(event,()=>{showModifyTrustline(\''+account+'\', \''+currency+'\', \''+issuer+'\', '+tl['specification']['limit']+')})"><i class="fa fa-cog" aria-hidden="true"></i></button><button class="btn btn-primary adtlbutton"  ontouchstart="ts(event)" ontouchend="te(event,()=>{showNewOrder(\''+account+'\', \'buy\', \''+currency+'\', \''+issuer+'\', '+balance+', domData(\'#grp-'+currency+'-'+issuer+'\', \'bid\'), domData(\'#grp-'+currency+'-'+issuer+'\', \'ask\'))})"><small>BUY</small></button><button class="btn btn-danger adtlbutton" ontouchstart="ts(event)" ontouchend="te(event,()=>{showNewOrder(\''+account+'\', \'sell\', \''+currency+'\', \''+issuer+'\', '+balance+', domData(\'#grp-'+currency+'-'+issuer+'\', \'bid\'), domData(\'#grp-'+currency+'-'+issuer+'\', \'ask\'))})"><small>SELL</small></button><button class="btn btn-success adtlbutton" ontouchstart="ts(event)" ontouchend="te(event,()=>{showPaymentTab(\''+account+'\', \''+currency+'\', \''+issuer+'\', '+balance+')})"><i class="fa fa-paper-plane"></i></button></div></center></li>';
+                validTls.push(tl);
+
+                var li = document.createElement('li');
+                li.className = 'adtrustline';
+
+                var header = document.createElement('div');
+                header.className = 'adtlheader';
+
+                var tlcurrency = document.createElement('div');
+                tlcurrency.className = 'tlcurrency';
+                var currDiv = document.createElement('div');
+                currDiv.className = 'currency';
+                currDiv.textContent = currency;
+                tlcurrency.appendChild(currDiv);
+                tlcurrency.appendChild(document.createTextNode(' ' + display_currency_amount(parseFloat("" + balance))));
+
+                var tlissuer = document.createElement('div');
+                tlissuer.className = 'tlissuer';
+                tlissuer.textContent = dispaddr(issuer);
+
+                var tlval = document.createElement('div');
+                tlval.className = 'tlvaluation';
+                tlval.style.display = 'none';
+                var tlvalCurr = document.createElement('div');
+                tlvalCurr.className = 'currency';
+                tlval.appendChild(tlvalCurr);
+
+                header.appendChild(tlcurrency);
+                header.appendChild(tlissuer);
+                header.appendChild(tlval);
+
+                var adtlorders = document.createElement('div');
+                adtlorders.className = 'adtlorders';
+                var ulOrders = document.createElement('ul');
+                ulOrders.className = 'adtlorderslist';
+                ulOrders.id = 'olt-' + currency + '-' + issuer;
+                adtlorders.appendChild(ulOrders);
+
+                var adtlgraph = document.createElement('div');
+                adtlgraph.className = 'adtlgraph';
+                adtlgraph.id = 'grp-' + currency + '-' + issuer;
+
+                var bidask = document.createElement('div');
+                bidask.className = 'bidask';
+                var spanBid = document.createElement('span');
+                spanBid.className = 'bid';
+                var spanAsk = document.createElement('span');
+                spanAsk.className = 'ask';
+                bidask.appendChild(spanBid);
+                bidask.appendChild(spanAsk);
+
+                var center = document.createElement('center');
+                var subheader = document.createElement('div');
+                subheader.className = 'adtlsubheader';
+
+                var btnMod = document.createElement('button');
+                btnMod.className = 'btn btn-warning adtlbutton';
+                var iMod = document.createElement('i');
+                iMod.className = 'fa fa-cog';
+                iMod.setAttribute('aria-hidden', 'true');
+                btnMod.appendChild(iMod);
+                (function(acc, curr, iss, lim) {
+                    btnMod.addEventListener('touchstart', ts);
+                    btnMod.addEventListener('touchend', function(e) {
+                        te(e, function() {
+                            showModifyTrustline(acc, curr, iss, lim);
+                        });
+                    });
+                })(account, currency, issuer, tl['specification']['limit']);
+
+                var btnBuy = document.createElement('button');
+                btnBuy.className = 'btn btn-primary adtlbutton';
+                var smBuy = document.createElement('small');
+                smBuy.textContent = 'BUY';
+                btnBuy.appendChild(smBuy);
+                (function(acc, curr, iss, bal) {
+                    btnBuy.addEventListener('touchstart', ts);
+                    btnBuy.addEventListener('touchend', function(e) {
+                        te(e, function() {
+                            var grpId = '#grp-' + curr + '-' + iss;
+                            showNewOrder(acc, 'buy', curr, iss, bal, domData(grpId, 'bid'), domData(grpId, 'ask'));
+                        });
+                    });
+                })(account, currency, issuer, balance);
+
+                var btnSell = document.createElement('button');
+                btnSell.className = 'btn btn-danger adtlbutton';
+                var smSell = document.createElement('small');
+                smSell.textContent = 'SELL';
+                btnSell.appendChild(smSell);
+                (function(acc, curr, iss, bal) {
+                    btnSell.addEventListener('touchstart', ts);
+                    btnSell.addEventListener('touchend', function(e) {
+                        te(e, function() {
+                            var grpId = '#grp-' + curr + '-' + iss;
+                            showNewOrder(acc, 'sell', curr, iss, bal, domData(grpId, 'bid'), domData(grpId, 'ask'));
+                        });
+                    });
+                })(account, currency, issuer, balance);
+
+                var btnPay = document.createElement('button');
+                btnPay.className = 'btn btn-success adtlbutton';
+                var iPay = document.createElement('i');
+                iPay.className = 'fa fa-paper-plane';
+                btnPay.appendChild(iPay);
+                (function(acc, curr, iss, bal) {
+                    btnPay.addEventListener('touchstart', ts);
+                    btnPay.addEventListener('touchend', function(e) {
+                        te(e, function() {
+                            showPaymentTab(acc, curr, iss, bal);
+                        });
+                    });
+                })(account, currency, issuer, balance);
+
+                subheader.appendChild(btnMod);
+                subheader.appendChild(btnBuy);
+                subheader.appendChild(btnSell);
+                subheader.appendChild(btnPay);
+                center.appendChild(subheader);
+
+                li.appendChild(header);
+                li.appendChild(adtlorders);
+                li.appendChild(adtlgraph);
+                li.appendChild(bidask);
+                li.appendChild(center);
+
+                tlContainer.appendChild(li);
             }
-        } else {
-            trustlines = '<li><center><i>No trustlines on this account.</i></center></li>';
-            setHtml('#adtrustlines', trustlines);
+        }
+        if (validTls.length === 0) {
+            setHtml('#adtrustlines', '<li><center><i>No trustlines on this account.</i></center></li>');
             return;
         }
-        setHtml('#adtrustlines', trustlines);
                           
         // get current exchange rate
        getExchangeRate("", "", (exchangerate, data) => { 
@@ -40,20 +167,79 @@ function refreshTrustlines(account, after) {
                     console.log("orders - " + account + ": ");
                     console.log(orders);
                     var ordersele = byId('olt-' + currency + '-' + issuer);
-                    emptyEl(ordersele);
-                    for (var o in orders) {
-                        var order = orders[o];
-                        var currency1 = order.specification.quantity.currency.toUpperCase();
-                        if (currency1 == currency && issuer == order.specification.quantity.counterparty) {
-                            // this is an order that relates to the current graph so pass
-                        } else continue;
-                        var amount1 = parseFloat(''+order.specification.quantity.value);
-                        var currency2 = order.specification.totalPrice.currency.toUpperCase();
-                        var amount2 = parseFloat(''+order.specification.totalPrice.value);
-                        var seq = order.properties.sequence;
-                        var direction = order.specification.direction;
-                        var rate = amount2/amount1;
-                        appendHtml(ordersele, '<li><span class="offer">#'+seq+'</span> <span class="orderentry"><span class="orderdirection">'+direction.toUpperCase()+'</span> <span class="currency existingorder'+order.specification.direction+'">'+currency1+' ' + display_currency_amount(amount1) + '</span> @ <span class="currency">'+currency2+' '+display_currency_amount(rate)+'</span></span> <a class="orderkill" href="" ontouchend="te(event, (e)=>{doPlaceCancelOrder(sodium.randombytes_random(), confirmcancelorder={account:\''+account+'\', seq: '+seq+', currency1: \''+currency1+'\', amount1: '+amount1+', currency2: \''+currency2+'\', amount2: '+amount2+', sell: '+(direction == 'sell')+'} );})"><i class="fa fa-times-circle" style="color:red;"></i></a></li>');
+                    if (ordersele) {
+                        emptyEl(ordersele);
+                        for (var o in orders) {
+                            var order = orders[o];
+                            var currency1 = order.specification.quantity.currency.toUpperCase();
+                            if (currency1 == currency && issuer == order.specification.quantity.counterparty) {
+                                // this is an order that relates to the current graph so pass
+                            } else continue;
+                            var amount1 = parseFloat(''+order.specification.quantity.value);
+                            var currency2 = order.specification.totalPrice.currency.toUpperCase();
+                            var amount2 = parseFloat(''+order.specification.totalPrice.value);
+                            var seq = order.properties.sequence;
+                            var direction = order.specification.direction;
+                            var rate = amount2/amount1;
+
+                            var oli = document.createElement('li');
+
+                            var spanOffer = document.createElement('span');
+                            spanOffer.className = 'offer';
+                            spanOffer.textContent = '#' + seq;
+                            oli.appendChild(spanOffer);
+                            oli.appendChild(document.createTextNode(' '));
+
+                            var spanEntry = document.createElement('span');
+                            spanEntry.className = 'orderentry';
+
+                            var spanDir = document.createElement('span');
+                            spanDir.className = 'orderdirection';
+                            spanDir.textContent = direction.toUpperCase();
+                            spanEntry.appendChild(spanDir);
+                            spanEntry.appendChild(document.createTextNode(' '));
+
+                            var spanCurr1 = document.createElement('span');
+                            spanCurr1.className = 'currency existingorder' + order.specification.direction;
+                            spanCurr1.textContent = currency1 + ' ' + display_currency_amount(amount1);
+                            spanEntry.appendChild(spanCurr1);
+                            spanEntry.appendChild(document.createTextNode(' @ '));
+
+                            var spanCurr2 = document.createElement('span');
+                            spanCurr2.className = 'currency';
+                            spanCurr2.textContent = currency2 + ' ' + display_currency_amount(rate);
+                            spanEntry.appendChild(spanCurr2);
+
+                            oli.appendChild(spanEntry);
+                            oli.appendChild(document.createTextNode(' '));
+
+                            var aKill = document.createElement('a');
+                            aKill.className = 'orderkill';
+                            aKill.href = '';
+                            var iKill = document.createElement('i');
+                            iKill.className = 'fa fa-times-circle';
+                            iKill.style.color = 'red';
+                            aKill.appendChild(iKill);
+
+                            (function(acc, sq, c1, a1, c2, a2, dir) {
+                                aKill.addEventListener('touchend', function(e) {
+                                    te(e, function() {
+                                        doPlaceCancelOrder(sodium.randombytes_random(), {
+                                            account: acc,
+                                            seq: sq,
+                                            currency1: c1,
+                                            amount1: a1,
+                                            currency2: c2,
+                                            amount2: a2,
+                                            sell: (dir == 'sell')
+                                        });
+                                    });
+                                });
+                            })(account, seq, currency1, amount1, currency2, amount2, direction);
+
+                            oli.appendChild(aKill);
+                            ordersele.appendChild(oli);
+                        }
                     }
                     
 		            clickProxy();	
@@ -266,6 +452,7 @@ function doModifyTrustline(nonce) {
         setText('#ctlcurrency', mtlcurrency);
         setText('#ctllimit', mtllimit);
         setText('#ctlrippling', 'UNCHANGED');
+        setText('#ctlfee', fee ? fee + ' XRP' : (offlinemode ? '0.000012 XRP' : 'Network Default (~0.000012 XRP)'));
         showTab("#tabtrustlineconfirm");
         unblockInput();
     };
@@ -389,6 +576,7 @@ function doAddTrustline(nonce) {
         setText('#ctlcurrency', atlcurrency);
         setText('#ctllimit', atllimit);
         setText('#ctlrippling', (atlrippling ? 'ENABLED' : 'DISABLED'));
+        setText('#ctlfee', fee ? fee + ' XRP' : (offlinemode ? '0.000012 XRP' : 'Network Default (~0.000012 XRP)'));
         showTab("#tabtrustlineconfirm");
         unblockInput();
     };

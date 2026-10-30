@@ -36965,16 +36965,27 @@ function pickScryptParams(opslimit, memlimit) {
   return { N: Math.pow(2, N_log2), r, p };
 }
 
+function memzero(buf) {
+  if (buf instanceof Uint8Array) {
+    buf.fill(0);
+  }
+}
+
 function crypto_pwhash_scryptsalsa208sha256(keyLength, password, salt, opsLimit, memLimit, fmt) {
   checkFormat(fmt);
   if (typeof keyLength !== 'number' || !Number.isInteger(keyLength) || keyLength < 16) {
     throw new Error('invalid keyLength');
   }
+  const isTempPw = typeof password === 'string';
   const pwBytes = toBytes(password, 'password');
   const saltBytes = toBytes(salt, 'salt');
   if (saltBytes.length !== 32) throw new TypeError('invalid salt length');
   const { N, r, p } = pickScryptParams(opsLimit, memLimit);
-  return format(scrypt(pwBytes, saltBytes, { N, r, p, dkLen: keyLength }), fmt);
+  try {
+    return format(scrypt(pwBytes, saltBytes, { N, r, p, dkLen: keyLength }), fmt);
+  } finally {
+    if (isTempPw && pwBytes instanceof Uint8Array) pwBytes.fill(0);
+  }
 }
 
 // --- XSalsa20-Poly1305 secretbox ---
@@ -37015,6 +37026,7 @@ module.exports = {
   from_string,
   randombytes_buf,
   randombytes_random,
+  memzero,
   crypto_generichash,
   crypto_pwhash_scryptsalsa208sha256,
   crypto_secretbox_easy,
@@ -37030,6 +37042,10 @@ module.exports = {
   crypto_shorthash_BYTES: 8,
   crypto_pwhash_OPSLIMIT_INTERACTIVE: 4,
   crypto_pwhash_MEMLIMIT_INTERACTIVE: 33554432,
+  crypto_pwhash_scryptsalsa208sha256_OPSLIMIT_INTERACTIVE: 524288,
+  crypto_pwhash_scryptsalsa208sha256_MEMLIMIT_INTERACTIVE: 16777216,
+  crypto_pwhash_scryptsalsa208sha256_OPSLIMIT_SENSITIVE: 1048576,
+  crypto_pwhash_scryptsalsa208sha256_MEMLIMIT_SENSITIVE: 33554432,
 };
 
 },{"./siphash24.js":249,"@noble/ciphers/salsa":4,"@noble/hashes/blake2b":21,"@noble/hashes/scrypt":27}],251:[function(require,module,exports){

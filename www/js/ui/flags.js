@@ -123,6 +123,7 @@ function doSetAccountFlags(nonce) {
         setText('#cafrequiredestinationtag', '' + confirmfl.requireDestinationTag);       
         
         setText('#cafnotransactions', changedflagcount + ' transactions');
+        setText('#caffee', fee ? fee + ' XRP' : (offlinemode ? '0.000012 XRP' : 'Network Default (~0.000012 XRP)'));
         showTab("#tabaccountflagsconfirm");
         
         unblockInput();
